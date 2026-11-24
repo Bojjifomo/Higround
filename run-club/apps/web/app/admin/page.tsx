@@ -40,6 +40,7 @@ export default async function Admin() {
               <span className="text-hg-red">{a.flagReasons.map((r) => REASON[r] ?? r).join(", ")}</span>
               <form action={review} className="ml-auto flex gap-2">
                 <input type="hidden" name="id" value={a.id} />
+                <input type="hidden" name="userId" value={a.userId} />
                 <Button name="decision" value="approved">Setujui</Button>
                 <Button name="decision" value="rejected" variant="danger">Tolak</Button>
               </form>

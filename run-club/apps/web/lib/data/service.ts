@@ -31,7 +31,7 @@ const addDays = (day: string, n: number) => {
 // ── activities in ─────────────────────────────────────────────────────────────
 
 /** A provider activity as stored: eligibility decided once, flagged runs wait for review. */
-export function toStored(a: Activity, name: string | null = null): StoredActivity {
+export function toStored(a: Activity, name: string | null = a.name ?? null): StoredActivity {
   const el = eligibility(a, rules);
   return { ...a, name, isHigroundStart: el.counted && isHigroundStart(a, rules), counted: el.counted,
            flagged: el.flagged, flagReasons: el.reasons, reviewStatus: el.counted && el.flagged ? "pending" : "none" };
@@ -191,12 +191,12 @@ export async function claimTimer(store: Store, member: Member, timerId: string, 
 const isAdmin = (m: Member) => m.role === "admin";
 const isStaff = (m: Member) => m.role === "admin" || m.role === "instructor";
 
-export async function reviewActivity(store: Store, staff: Member, activityId: string, decision: "approved" | "rejected",
-                                     now: number): Promise<void> {
+export async function reviewActivity(store: Store, staff: Member, userId: string, activityId: string,
+                                     decision: "approved" | "rejected", now: number): Promise<void> {
   if (!isAdmin(staff)) throw new Forbidden("admin");
-  const a = await store.activity(activityId);
+  const a = await store.activity(userId, activityId);
   if (!a || a.reviewStatus !== "pending") throw new NotFound("aktivitas");
-  await store.updateActivity(activityId, { reviewStatus: decision });
+  await store.updateActivity(userId, activityId, { reviewStatus: decision });
   await syncRunXp(store, a.userId, now);
   await syncBadges(store, a.userId, now);
   await syncEvents(store, a.userId, now);

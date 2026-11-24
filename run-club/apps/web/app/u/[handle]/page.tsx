@@ -7,6 +7,7 @@ import { currentMember, getStore, profileView, type ProfileView, type RunView } 
 import { dateLong, dateShort, duration, int, km, pace, PB_LABEL, ruleLabel } from "@/lib/format";
 import { defaultConfig as yoga } from "@/lib/yoga";
 import { togglePublic } from "../../actions";
+import { Connection } from "./Connection";
 
 export const dynamic = "force-dynamic";
 
@@ -18,12 +19,17 @@ const REASON: Record<string, string> = {
   max_speed: "kecepatan maks > 25 km/jam", distance: "> 100 km",
 };
 
-export default async function Profile({ params }: { params: Promise<{ handle: string }> }) {
+export default async function Profile({ params, searchParams }: {
+  params: Promise<{ handle: string }>; searchParams: Promise<{ intervals?: string; welcome?: string }>;
+}) {
   const { handle } = await params;
+  const q = await searchParams;
   const viewer = await currentMember();
-  const p = await profileView(await getStore(), handle, viewer, Date.now());
+  const store = await getStore();
+  const p = await profileView(store, handle, viewer, Date.now());
   if (!p) notFound();
   const { member, level } = p;
+  const integ = p.isOwner ? await store.integration(member.id) : null;
 
   return (
     <div className="space-y-5">
@@ -49,6 +55,8 @@ export default async function Profile({ params }: { params: Promise<{ handle: st
           </form>
         )}
       </Panel>
+
+      {p.isOwner && <Connection integ={integ} note={q.intervals} handle={member.handle} welcome={q.welcome === "1"} />}
 
       {p.hidden ? (
         <Panel title="Profil privat"><p className="text-sm">{member.displayName} memilih menyembunyikan dashboard-nya.</p></Panel>
