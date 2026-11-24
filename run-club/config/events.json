@@ -1,0 +1,49 @@
+{
+  "_note": "[KEPUTUSAN] default event templates (SPEC §10). Admins create events from these; every number can be changed per event.",
+  "qr_rotate_seconds": 60,
+  "checkin_early_minutes": 30,
+  "templates": {
+    "sunday_long_run": {
+      "name": "Sunday Long Run @Higround",
+      "kind": "run",
+      "description": "Long run minimal 10 km, start dari Higround. Check-in otomatis dari lari kamu, XP lari dikali 2.",
+      "duration_hours": 4,
+      "multiplier": 2,
+      "min_km": 10,
+      "checkin": ["activity", "qr"],
+      "bonus_xp": 0,
+      "badge_rarity": "rare"
+    },
+    "monthly_virtual": {
+      "name": "Monthly Virtual Challenge",
+      "kind": "virtual",
+      "description": "Kumpulkan 50 km lari sebulan, dari mana saja. Badge untuk yang tembus target.",
+      "duration_hours": 0,
+      "multiplier": 1,
+      "target_km": 50,
+      "checkin": ["activity"],
+      "bonus_xp": 100,
+      "badge_rarity": "rare"
+    },
+    "run_brew": {
+      "name": "Run + Brew",
+      "kind": "brew",
+      "description": "Habis lari, mampir ke Higround dan scan QR di kasir. Dapat bonus XP.",
+      "duration_hours": 3,
+      "multiplier": 1,
+      "checkin": ["qr"],
+      "bonus_xp": 50,
+      "badge_rarity": "common"
+    },
+    "yoga_saturday": {
+      "name": "Yoga Saturday",
+      "kind": "yoga",
+      "description": "Kelas yoga di Studio Room lantai 2. Bintang dari instruktur (Class Mode) plus bonus XP.",
+      "duration_hours": 2,
+      "multiplier": 1,
+      "checkin": ["class", "qr"],
+      "bonus_xp": 40,
+      "badge_rarity": "common"
+    }
+  }
+}

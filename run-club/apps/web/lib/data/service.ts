@@ -3,6 +3,7 @@
  * read models the pages render. Every function takes `now` (ms) so tests control the clock.
  */
 import { dateShort, km as fmtKm } from "../format";
+import { activeEvent, checkinFromClass, eventBadgesOf, syncEvents } from "./events-service";
 import { badgeXpEntries, catalogue, earnedBadges, unlockedCosmetics, type Badge, type MemberStats } from "../badges";
 import {
   defaultRules as rules, earns, effortsOf, eligibility, isHigroundStart, ledgerFor, levelFor, localDate, weekKey,
@@ -30,7 +31,7 @@ const addDays = (day: string, n: number) => {
 // ── activities in ─────────────────────────────────────────────────────────────
 
 /** A provider activity as stored: eligibility decided once, flagged runs wait for review. */
-export function toStored(a: Activity, name: string | null = null): StoredActivity {
+export function toStored(a: Activity, name: string | null = a.name ?? null): StoredActivity {
   const el = eligibility(a, rules);
   return { ...a, name, isHigroundStart: el.counted && isHigroundStart(a, rules), counted: el.counted,
            flagged: el.flagged, flagReasons: el.reasons, reviewStatus: el.counted && el.flagged ? "pending" : "none" };
@@ -111,6 +112,7 @@ export async function syncAll(store: Store, userId: string, now: number): Promis
   await syncRunXp(store, userId, now);
   for (const key of Object.keys(await yogaBests(store, userId))) await syncYogaXp(store, userId, key, now);
   await syncBadges(store, userId, now);
+  await syncEvents(store, userId, now);
 }
 
 export async function levelOf(store: Store, userId: string): Promise<LevelInfo> {
@@ -189,14 +191,15 @@ export async function claimTimer(store: Store, member: Member, timerId: string, 
 const isAdmin = (m: Member) => m.role === "admin";
 const isStaff = (m: Member) => m.role === "admin" || m.role === "instructor";
 
-export async function reviewActivity(store: Store, staff: Member, activityId: string, decision: "approved" | "rejected",
-                                     now: number): Promise<void> {
+export async function reviewActivity(store: Store, staff: Member, userId: string, activityId: string,
+                                     decision: "approved" | "rejected", now: number): Promise<void> {
   if (!isAdmin(staff)) throw new Forbidden("admin");
-  const a = await store.activity(activityId);
+  const a = await store.activity(userId, activityId);
   if (!a || a.reviewStatus !== "pending") throw new NotFound("aktivitas");
-  await store.updateActivity(activityId, { reviewStatus: decision });
+  await store.updateActivity(userId, activityId, { reviewStatus: decision });
   await syncRunXp(store, a.userId, now);
   await syncBadges(store, a.userId, now);
+  await syncEvents(store, a.userId, now);
 }
 
 export async function rejectAttempt(store: Store, staff: Member, attemptId: string, reason: string, now: number): Promise<void> {
@@ -225,6 +228,7 @@ export async function classAward(store: Store, staff: Member, userId: string, mi
                            stars, mode: "class", status: "approved", reviewerId: staff.id, reason: null, createdAt: now });
   await syncYogaXp(store, userId, missionKey, now);
   await syncBadges(store, userId, now);
+  await checkinFromClass(store, userId, now);
 }
 
 // ── read models ───────────────────────────────────────────────────────────────
@@ -282,6 +286,7 @@ export interface ProfileView {
   badges: { all: Badge[]; earned: Set<string>; pinned: Badge[] };
   cosmetics: string[];
   history: HistoryItem[];
+  eventBadges: { key: string; name: string; rarity: string }[];
 }
 
 /** A ledger entry dated by what earned it (the run, the week, the claim), with a human detail. */
@@ -290,7 +295,8 @@ export interface HistoryItem extends StoredLedgerEntry {
   detail: string | null;
 }
 
-function historyOf(ledger: StoredLedgerEntry[], acts: StoredActivity[], limit: number): HistoryItem[] {
+function historyOf(ledger: StoredLedgerEntry[], acts: StoredActivity[], limit: number,
+                   eventNames: Map<string, string> = new Map()): HistoryItem[] {
   const byId = new Map(acts.map((a) => [a.id, a]));
   const missions = new Map(yoga.levels.flatMap((l) => l.missions).map((m) => [m.key, m.name]));
   const badges = new Map(catalogue.badges.map((b) => [b.key, b.name]));
@@ -300,7 +306,8 @@ function historyOf(ledger: StoredLedgerEntry[], acts: StoredActivity[], limit: n
     const detail = a ? (a.name ?? a.type)
       : e.sourceType === "week" ? `minggu ${dateShort(e.sourceId)}`
       : e.sourceType === "yoga" ? (missions.get(e.sourceId) ?? "Flow Challenge")
-      : e.sourceType === "badge" ? (badges.get(e.sourceId) ?? e.sourceId) : null;
+      : e.sourceType === "badge" ? (badges.get(e.sourceId) ?? e.sourceId)
+      : e.sourceType === "event" ? (eventNames.get(e.sourceId) ?? "Event") : null;
     return { ...e, when, detail };
   }).sort((x, y) => Date.parse(y.when) - Date.parse(x.when) || y.idempotencyKey.localeCompare(x.idempotencyKey)).slice(0, limit);
 }
@@ -323,7 +330,9 @@ export async function profileView(store: Store, handle: string, viewer: Member |
     yoga: hidden ? null : { progress: stats.yoga, bests, masteredPoses: mastered },
     badges: { all: catalogue.badges, earned, pinned },
     cosmetics: unlockedCosmetics(level.level, earned).map((c) => c.name),
-    history: hidden ? [] : historyOf(await store.ledger(member.id), await store.activities(member.id), 25),
+    history: hidden ? [] : historyOf(await store.ledger(member.id), await store.activities(member.id), 25,
+                                     new Map((await store.events()).map((e) => [e.id, e.name]))),
+    eventBadges: hidden ? [] : await eventBadgesOf(store, member.id),
   };
 }
 
@@ -381,7 +390,8 @@ export interface WorldMember {
 
 export interface WorldView {
   members: WorldMember[];
-  hud: { week: number; communityKmWeek: number; myXp: number | null; myLevel: number | null };
+  hud: { week: number; communityKmWeek: number; myXp: number | null; myLevel: number | null;
+         event: { id: string; name: string; multiplier: number } | null };
   ticker: string[];
 }
 
@@ -443,9 +453,11 @@ export async function worldView(store: Store, viewer: Member | null, now: number
     }
   }
   const me = viewer ? await levelOf(store, viewer.id) : null;
+  const ev = await activeEvent(store, now);
   return {
     members,
-    hud: { week: ISO_WEEK(nowIso), communityKmWeek, myXp: me?.totalXp ?? null, myLevel: me?.level ?? null },
+    hud: { week: ISO_WEEK(nowIso), communityKmWeek, myXp: me?.totalXp ?? null, myLevel: me?.level ?? null,
+           event: ev ? { id: ev.id, name: ev.name, multiplier: ev.multiplier } : null },
     ticker: events.sort((a, b) => b.at - a.at).slice(0, 12).map((e) => e.text),
   };
 }

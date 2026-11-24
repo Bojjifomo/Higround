@@ -46,6 +46,8 @@ export interface Activity {
   maxSpeedKmh: number | null;
   startLat: number | null;
   startLng: number | null;
+  /** The run's title from the provider, when it has one. */
+  name?: string | null;
   /** Fastest time (s) over each standard distance inside this activity, when the provider has it. */
   bestEffortsS?: Partial<Record<PbKey, number>>;
 }

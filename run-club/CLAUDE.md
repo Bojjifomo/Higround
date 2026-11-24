@@ -39,11 +39,11 @@ Supabase: create a cloud project (or `supabase start` with Docker), then `supaba
 
 ## Demo mode (no Supabase yet)
 
-While `NEXT_PUBLIC_SUPABASE_URL` is empty the app runs on `lib/data` with an **in-memory demo store**
+While Supabase is not configured the app runs on `lib/data` with an **in-memory demo store**
 (`lib/data/demo.ts`): 8 made-up members, 12 weeks of mock runs, some yoga claims, all XP synced through the
 real rules. `/login` lets you pick a member (admin "Demo Owner", instructor "Sari", a private member "Gita").
-Data resets when the server restarts. Pages only talk to `lib/data/service.ts`, which talks to a `Store`;
-the Supabase store (same interface) comes with Supabase Auth.
+Data resets when the server restarts. Pages only talk to `lib/data/service.ts`, which talks to a `Store`
+(memory in demo, Postgres in Supabase mode).
 
 Pages: `/` (members by XP), `/login`, `/u/[handle]` (profile + run dashboard + yoga + badges + XP history),
 `/yoga` (consent, server-timed claims, flow challenge), `/admin` (flagged runs, yoga claims, WhatsApp),
@@ -66,6 +66,35 @@ Pages: `/` (members by XP), `/login`, `/u/[handle]` (profile + run dashboard + y
   `worldView()` in `lib/data/service.ts`.
 - Concept-plan note: on floor 2 the storage, changing booth and toilet wall off the event corner; the
   changing booth is walk-through for now. Owner to check the real layout.
+
+## Events (Fase 5)
+
+- Templates in `config/events.json` ([KEPUTUSAN] defaults): Sunday Long Run (≥10 km from Higround, XP ×2),
+  Monthly Virtual Challenge (50 km/month, anywhere), Run + Brew (QR at the counter, +50 XP), Yoga Saturday
+  (Class Mode or QR, +40 XP). `lib/events` holds the pure rules; `lib/data/events-service.ts` the flows.
+- Check-in: a run that starts in the window within 200 m (auto), the counter QR (HMAC token rotating every
+  60 s, the previous code still accepted; secret `EVENT_QR_SECRET`), or Class Mode during a yoga event.
+- XP: join bonus once, plus run XP × (multiplier − 1) on qualifying runs; every payout has its own key.
+  Finishing an event earns its event badge (shown on the profile).
+- Pages: `/events`, `/events/[id]` (staff see the QR for the counter screen), `/checkin?e=&t=` (scan target;
+  the check-in is a button/POST), and "Buat event" on `/admin`.
+
+## Modes: demo vs Supabase
+
+- `lib/data/index.ts` `mode()`: **supabase** when `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and
+  `DATABASE_URL` are set, else **demo**. Owner setup steps: `SUPABASE_SETUP.md`.
+- Supabase mode: login with Supabase Auth (magic link + Google, `@supabase/ssr`, `middleware.ts` refreshes the
+  session) → `/onboarding` creates the profile (role from `ADMIN_EMAILS` / `INSTRUCTOR_EMAILS`). Data goes
+  through `SqlStore` (`lib/data/sql-store.ts`) over node-postgres (`lib/data/pg.ts`); the server connects as
+  a role that bypasses RLS, and `service.ts` enforces every rule. `?sslmode=disable` in DATABASE_URL for a
+  local Postgres.
+- Intervals.icu tokens are stored in Supabase Vault (`vault.create_secret`); `integrations` keeps only the id.
+  Routes: `/api/intervals/connect` (state + PKCE cookies) → `/api/intervals/callback` (12-week backfill),
+  `/api/intervals/webhook` (shared secret), `/api/cron/sync` (Bearer `CRON_SECRET`, daily via `vercel.json`).
+  Disconnect deletes the token, the runs and the XP they earned; "Hapus akun" deletes everything.
+- Tests: `lib/data/service.suite.ts` runs the same service tests on the memory store, on `SqlStore` + PGlite
+  (`sql-store.test.ts`), and on a real PostgreSQL through node-postgres when `PG_TEST_URL` is set
+  (`sql-store.pg.test.ts`, e.g. `PG_TEST_URL=postgres://postgres@127.0.0.1:5432/postgres npm test`).
 
 ## Rules of the road
 

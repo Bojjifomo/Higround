@@ -29,11 +29,19 @@ function rng(seed: string) {
 }
 
 const DAY = 86_400_000;
+
+/** Short stable tag from the whole user id, so activity ids never collide between members. */
+function idTag(userId: string): string {
+  let h = 2166136261;
+  for (let i = 0; i < userId.length; i++) h = Math.imul(h ^ userId.charCodeAt(i), 16777619);
+  return (h >>> 0).toString(36);
+}
 const wibDate = (ms: number) => new Date(ms + 7 * 3600_000).toISOString().slice(0, 10);
 
 /** Raw Intervals-shaped activities for one athlete over the 84 days before `now`. */
 export function mockRawActivities(userId: string, now: number): Record<string, unknown>[] {
   const r = rng(userId);
+  const tag = idTag(userId);
   const out: Record<string, unknown>[] = [];
   const pace = 300 + Math.floor(r() * 120);                     // 5:00–7:00 /km
   const device = ["Garmin Forerunner 265", "COROS PACE 3", "Polar Pacer Pro", "Suunto Race"][Math.floor(r() * 4)];
@@ -50,7 +58,7 @@ export function mockRawActivities(userId: string, now: number): Record<string, u
     const p = pace + (longRun ? 20 : 0) + Math.floor(r() * 20);
     const startIso = new Date(`${day}T${longRun ? "05:30" : "06:10"}:00+07:00`).toISOString();
     if (Date.parse(startIso) + km * p * 1000 > now) continue;
-    const id = `i${userId.slice(0, 6)}-${++n}`;
+    const id = `i${tag}-${++n}`;
     out.push({
       id, type: "Run", name: longRun ? "Sunday Long Run @Higround" : "Easy Run",
       start_date: startIso,
@@ -67,12 +75,12 @@ export function mockRawActivities(userId: string, now: number): Record<string, u
     out.push({ start_date_local: `${wibDate(ms)}T19:00:00`, start_date: new Date(`${wibDate(ms)}T19:00:00+07:00`).toISOString(),
                source, device_name: device, ...a });
   };
-  extra(20, { id: `i${userId.slice(0, 6)}-tm`, type: "VirtualRun", name: "Treadmill", distance: 6000, moving_time: 6 * pace,
+  extra(20, { id: `i${tag}-tm`, type: "VirtualRun", name: "Treadmill", distance: 6000, moving_time: 6 * pace,
               total_elevation_gain: 0, max_speed: 3.2 });
-  extra(15, { id: `i${userId.slice(0, 6)}-ride`, type: "Ride", name: "Gowes pagi", distance: 30000, moving_time: 4000 });
-  extra(9, { id: `i${userId.slice(0, 6)}-strava`, type: "Run", source: "STRAVA",
+  extra(15, { id: `i${tag}-ride`, type: "Ride", name: "Gowes pagi", distance: 30000, moving_time: 4000 });
+  extra(9, { id: `i${tag}-strava`, type: "Run", source: "STRAVA",
              _note: "STRAVA activities are not available via the API" });
-  extra(4, { id: `i${userId.slice(0, 6)}-sus`, type: "Run", name: "Lari (kayaknya naik motor)", distance: 21000,
+  extra(4, { id: `i${tag}-sus`, type: "Run", name: "Lari (kayaknya naik motor)", distance: 21000,
              moving_time: 21 * 140, max_speed: 12.5, start_latlng: [HG.lat, HG.lng] });
   return out;
 }

@@ -2,12 +2,13 @@
  * Demo club used while Supabase is not configured: made-up members, their runs from the mock Intervals.icu
  * provider, a few Yoga Quest claims, and all XP synced through the real rules. Nothing here is real data.
  */
+import { fromTemplate } from "../events";
 import { createMockProvider, mockRawActivities } from "../providers/intervals.mock";
 import { defaultConfig as yoga, type Side, type Stars } from "../yoga";
-import { MemoryStore, type Avatar, type Member, type Role } from "./store";
+import type { Avatar, Role, Store } from "./store";
 import { syncAll, toStored } from "./service";
 
-const PEOPLE: [string, string, Role, boolean][] = [
+export const PEOPLE: [string, string, Role, boolean][] = [
   ["owner", "Demo Owner", "admin", true],
   ["sari", "Sari (Instruktur)", "instructor", true],
   ["rina", "Rina Lestari", "member", true],
@@ -37,17 +38,43 @@ const YOGA: Record<string, { levels: number[]; stars: Stars }[]> = {
   owner: [{ levels: [1], stars: 2 }],
 };
 
-export async function seedDemo(store: MemoryStore, now: number): Promise<void> {
+/** Midnight WIB of the day `ms` falls on, plus `hours`. */
+const wibDay = (ms: number, hours: number) => {
+  const d = new Date(ms + 7 * 3_600_000);
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - 7 * 3_600_000 + hours * 3_600_000;
+};
+
+/** Demo events around `now`: last and next Sunday Long Run, this month's virtual challenge, a Run + Brew
+ *  open right now (so the QR check-in can be tried) and next Saturday's yoga class. */
+export async function seedEvents(store: Store, now: number): Promise<void> {
+  const DAYS = 86_400_000;
+  const dow = new Date(now + 7 * 3_600_000).getUTCDay();          // 0 = Sunday (WIB)
+  const lastSun = wibDay(now - (dow === 0 ? 7 : dow) * DAYS, 5);
+  const month = new Date(now + 7 * 3_600_000);
+  await store.addEvent(fromTemplate("slr-last", "sunday_long_run", lastSun));
+  await store.addEvent(fromTemplate("slr-next", "sunday_long_run", lastSun + 7 * DAYS));
+  await store.addEvent(fromTemplate("virtual-month", "monthly_virtual",
+    Date.UTC(month.getUTCFullYear(), month.getUTCMonth(), 1) - 7 * 3_600_000, { name: "Monthly Virtual Challenge" }));
+  await store.addEvent(fromTemplate("brew-now", "run_brew", now - 3_600_000));
+  await store.addEvent(fromTemplate("yoga-sat", "yoga_saturday", wibDay(now + (((6 - dow + 7) % 7) || 7) * DAYS, 7)));
+}
+
+/** Ids for demo members: `demo-<handle>` in memory; a Postgres test passes uuids (profiles.id is a uuid). */
+export type IdFor = (handle: string) => string;
+
+export async function seedDemo(store: Store, now: number, idFor: IdFor = (h) => `demo-${h}`): Promise<void> {
   const provider = createMockProvider({ now: () => now });
-  for (const [i, [handle, name, role, isPublic]] of PEOPLE.entries()) {
-    const id = `demo-${handle}`;
-    const m: Member = { id, handle, displayName: name, avatar: avatarFor(i), isPublic, role, pinnedBadges: [],
-                        waVerifiedAt: null, yogaConsentVersion: YOGA[handle] ? yoga.requires.consent_version : null,
-                        joinedAt: new Date(now - 90 * 86_400_000).toISOString() };
-    store.putMember(m);
+  await seedEvents(store, now);
+  for (const [i, [handle, name, role, isPublic]] of PEOPLE.entries()) {        // everyone first (reviewer FKs)
+    await store.addMember({ id: idFor(handle), handle, displayName: name, avatar: avatarFor(i), isPublic, role, pinnedBadges: [],
+                            waVerifiedAt: null, yogaConsentVersion: YOGA[handle] ? yoga.requires.consent_version : null,
+                            joinedAt: new Date(now - 90 * 86_400_000).toISOString() });
+  }
+  for (const [handle] of PEOPLE) {
+    const id = idFor(handle);
     if (handle !== "sari") {
       const names = new Map(mockRawActivities(id, now).map((r) => [String(r.id), (r.name as string) ?? null]));
-      for (const a of await provider.listActivities("demo", id, "2000-01-01")) store.putActivity(toStored(a, names.get(a.id) ?? null));
+      await store.upsertActivities((await provider.listActivities("demo", id, "2000-01-01")).map((a) => toStored(a, names.get(a.id) ?? null)));
     }
     let t = now - 30 * 86_400_000;
     for (const plan of YOGA[handle] ?? []) {
@@ -56,9 +83,9 @@ export async function seedDemo(store: MemoryStore, now: number): Promise<void> {
           const sides: Side[] = mission.per_side ? ["left", "right"] : ["both"];
           for (const side of sides) {
             t += 3_600_000;
-            await store.addAttempt({ id: `${id}-${mission.key}-${side}`, userId: id, timerId: null, missionKey: mission.key, side,
+            await store.addAttempt({ id: globalThis.crypto.randomUUID(), userId: id, timerId: null, missionKey: mission.key, side,
                                      measuredS: mission.stars_s[plan.stars - 1], stars: plan.stars, mode: "class",
-                                     status: "approved", reviewerId: "demo-sari", reason: null, createdAt: t });
+                                     status: "approved", reviewerId: idFor("sari"), reason: null, createdAt: t });
           }
         }
       }

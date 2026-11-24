@@ -4,6 +4,7 @@
  * rules live in service.ts, never here.
  */
 import type { Activity, LedgerEntry } from "../xp/types";
+import type { Checkin, ClubEvent } from "../events";
 import type { Side, Stars } from "../yoga";
 
 export type Role = "member" | "instructor" | "admin";
@@ -40,6 +41,17 @@ export interface StoredLedgerEntry extends LedgerEntry {
   createdAt: string;
 }
 
+/** A member's Intervals.icu connection. The token lives in Supabase Vault in production. */
+export interface Integration {
+  userId: string;
+  athleteId: string;
+  scopes: string;
+  token: string;
+  connectedAt: number;
+  lastSyncedAt: number | null;
+  syncError: string | null;
+}
+
 export interface YogaTimer {
   id: string;
   userId: string;
@@ -66,15 +78,20 @@ export interface YogaAttempt {
 }
 
 export interface Store {
+  addMember(m: Member): Promise<void>;
+  /** Delete the member and everything of theirs (account deletion, SPEC §11). */
+  deleteMember(id: string): Promise<void>;
   members(): Promise<Member[]>;
   member(id: string): Promise<Member | null>;
   memberByHandle(handle: string): Promise<Member | null>;
   updateMember(id: string, patch: Partial<Member>): Promise<void>;
 
+  /** Insert or refresh runs from the provider. An admin's review decision is never overwritten. */
+  upsertActivities(list: StoredActivity[]): Promise<void>;
   activities(userId: string): Promise<StoredActivity[]>;
-  activity(id: string): Promise<StoredActivity | null>;
+  activity(userId: string, id: string): Promise<StoredActivity | null>;
   pendingActivities(): Promise<StoredActivity[]>;
-  updateActivity(id: string, patch: Partial<StoredActivity>): Promise<void>;
+  updateActivity(userId: string, id: string, patch: Partial<StoredActivity>): Promise<void>;
 
   ledger(userId: string): Promise<StoredLedgerEntry[]>;
   /** Inserts entries whose idempotency key is new; returns how many were written. */
@@ -89,6 +106,22 @@ export interface Store {
   attempt(id: string): Promise<YogaAttempt | null>;
   addAttempt(a: YogaAttempt): Promise<void>;
   updateAttempt(id: string, patch: Partial<YogaAttempt>): Promise<void>;
+
+  saveIntegration(i: { userId: string; athleteId: string; scopes: string; token: string; at: number }): Promise<void>;
+  integration(userId: string): Promise<Integration | null>;
+  integrationByAthlete(athleteId: string): Promise<Integration | null>;
+  integrations(): Promise<Integration[]>;
+  markSynced(userId: string, at: number, error: string | null): Promise<void>;
+  /** Disconnect: forget the token, the runs and the XP they earned (SPEC §3, §11). */
+  removeRunData(userId: string): Promise<void>;
+
+  events(): Promise<ClubEvent[]>;
+  event(id: string): Promise<ClubEvent | null>;
+  addEvent(e: ClubEvent): Promise<void>;
+  checkins(eventId: string): Promise<Checkin[]>;
+  checkinsOf(userId: string): Promise<Checkin[]>;
+  /** False when this member already checked in to this event. */
+  addCheckin(c: Checkin): Promise<boolean>;
 }
 
 /** In-memory store. Lives as long as the server process; the demo seeds it on first use. */
@@ -99,9 +132,28 @@ export class MemoryStore implements Store {
   private keys = new Set<string>();
   private timers = new Map<string, YogaTimer>();
   private atts = new Map<string, YogaAttempt>();
+  private evs = new Map<string, ClubEvent>();
+  private ints = new Map<string, Integration>();
+  private cks: Checkin[] = [];
 
-  putMember(x: Member) { this.m.set(x.id, x); }
-  putActivity(x: StoredActivity) { this.acts.set(`${x.userId}:${x.id}`, x); }
+  async addMember(x: Member) { this.m.set(x.id, x); }
+  async deleteMember(id: string) {
+    await this.removeRunData(id);
+    this.m.delete(id);
+    this.led = this.led.filter((e) => e.userId !== id);
+    this.keys = new Set(this.led.map((e) => e.idempotencyKey));
+    for (const [k, a] of this.atts) if (a.userId === id) this.atts.delete(k);
+    for (const [k, t] of this.timers) if (t.userId === id) this.timers.delete(k);
+    this.cks = this.cks.filter((c) => c.userId !== id);
+  }
+  async upsertActivities(list: StoredActivity[]) {
+    for (const x of list) {
+      const k = `${x.userId}:${x.id}`;
+      const old = this.acts.get(k);
+      const keep = old && (old.reviewStatus === "approved" || old.reviewStatus === "rejected");
+      this.acts.set(k, keep ? { ...x, reviewStatus: old.reviewStatus } : x);
+    }
+  }
 
   async members() { return [...this.m.values()]; }
   async member(id: string) { return this.m.get(id) ?? null; }
@@ -112,11 +164,14 @@ export class MemoryStore implements Store {
   }
 
   async activities(userId: string) { return [...this.acts.values()].filter((a) => a.userId === userId); }
-  async activity(id: string) { return [...this.acts.values()].find((a) => a.id === id) ?? null; }
+  async activity(userId: string, id: string) { return this.acts.get(`${userId}:${id}`) ?? null; }
   async pendingActivities() { return [...this.acts.values()].filter((a) => a.reviewStatus === "pending"); }
-  async updateActivity(id: string, patch: Partial<StoredActivity>) {
-    for (const [k, a] of this.acts) if (a.id === id) this.acts.set(k, { ...a, ...patch });
+  async updateActivity(userId: string, id: string, patch: Partial<StoredActivity>) {
+    const k = `${userId}:${id}`;
+    const cur = this.acts.get(k);
+    if (cur) this.acts.set(k, { ...cur, ...patch });
   }
+
 
   async ledger(userId: string) { return this.led.filter((e) => e.userId === userId); }
   async addLedger(entries: LedgerEntry[], at: number) {
@@ -146,5 +201,34 @@ export class MemoryStore implements Store {
   async updateAttempt(id: string, patch: Partial<YogaAttempt>) {
     const cur = this.atts.get(id);
     if (cur) this.atts.set(id, { ...cur, ...patch });
+  }
+
+  async saveIntegration(i: { userId: string; athleteId: string; scopes: string; token: string; at: number }) {
+    this.ints.set(i.userId, { userId: i.userId, athleteId: i.athleteId, scopes: i.scopes, token: i.token, connectedAt: i.at,
+                              lastSyncedAt: null, syncError: null });
+  }
+  async integration(userId: string) { return this.ints.get(userId) ?? null; }
+  async integrationByAthlete(athleteId: string) { return [...this.ints.values()].find((i) => i.athleteId === athleteId) ?? null; }
+  async integrations() { return [...this.ints.values()]; }
+  async markSynced(userId: string, at: number, error: string | null) {
+    const cur = this.ints.get(userId);
+    if (cur) this.ints.set(userId, { ...cur, lastSyncedAt: error ? cur.lastSyncedAt : at, syncError: error });
+  }
+  async removeRunData(userId: string) {
+    this.ints.delete(userId);
+    for (const k of [...this.acts.keys()]) if (k.startsWith(`${userId}:`)) this.acts.delete(k);
+    this.led = this.led.filter((e) => !(e.userId === userId && ["activity", "week", "event"].includes(e.sourceType)));
+    this.keys = new Set(this.led.map((e) => e.idempotencyKey));
+  }
+
+  async events() { return [...this.evs.values()].sort((a, b) => a.startsAt - b.startsAt); }
+  async event(id: string) { return this.evs.get(id) ?? null; }
+  async addEvent(e: ClubEvent) { this.evs.set(e.id, e); }
+  async checkins(eventId: string) { return this.cks.filter((c) => c.eventId === eventId); }
+  async checkinsOf(userId: string) { return this.cks.filter((c) => c.userId === userId); }
+  async addCheckin(c: Checkin) {
+    if (this.cks.some((x) => x.eventId === c.eventId && x.userId === c.userId)) return false;
+    this.cks.push(c);
+    return true;
   }
 }

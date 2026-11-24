@@ -61,6 +61,7 @@ export function WorldClient({ members, hud, ticker, meHandle }: {
         <span>{phase.name}</span>
         <span className="rounded bg-hg-orange px-2 py-0.5 text-white">Run Club Week {hud.week}</span>
         <span>Komunitas minggu ini: <span className="tabular-nums">{km(hud.communityKmWeek)} km</span></span>
+        {hud.event && <Link href={`/events/${hud.event.id}`} className="rounded bg-hg-violet px-2 py-0.5 text-white">Event: {hud.event.name}{hud.event.multiplier > 1 ? ` · XP ×${hud.event.multiplier}` : ""}</Link>}
         {hud.myXp !== null && <span className="ml-auto rounded bg-hg-yellow px-2 py-0.5">Lv {hud.myLevel} · {hud.myXp.toLocaleString("id-ID")} XP</span>}
       </div>
 
@@ -113,7 +114,7 @@ export function WorldClient({ members, hud, ticker, meHandle }: {
         <Link href={meHandle ? `/u/${meHandle}` : "/login"} className="rounded-md border-2 border-black bg-white py-2">Profil</Link>
         <Link href={meHandle ? `/u/${meHandle}#badge` : "/login"} className="rounded-md border-2 border-black bg-white py-2">Badge</Link>
         <Link href="/yoga" className="rounded-md border-2 border-black bg-white py-2">Yoga Quest</Link>
-        <span className="rounded-md border-2 border-dashed border-neutral-400 py-2 text-neutral-500" title="Fase 5">Event (segera)</span>
+        <Link href="/events" className="rounded-md border-2 border-black bg-white py-2">Event</Link>
         <Link href="/" className="rounded-md border-2 border-black bg-white py-2">Menu</Link>
       </nav>
       <p className="text-xs text-neutral-600">
