@@ -39,7 +39,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         </header>
         {isDemo() && (
           <div className="bg-hg-yellow px-4 py-1.5 text-center text-xs font-bold text-black">
-            Mode demo: data member dan lari di sini palsu. Supabase dan Intervals.icu belum disambungkan.
+            Mode demo: data member dan lari di sini palsu dan hilang saat server restart. Isi env Supabase untuk data asli.
           </div>
         )}
         <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>

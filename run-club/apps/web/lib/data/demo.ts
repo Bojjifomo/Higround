@@ -5,10 +5,10 @@
 import { fromTemplate } from "../events";
 import { createMockProvider, mockRawActivities } from "../providers/intervals.mock";
 import { defaultConfig as yoga, type Side, type Stars } from "../yoga";
-import { MemoryStore, type Avatar, type Member, type Role } from "./store";
+import type { Avatar, Role, Store } from "./store";
 import { syncAll, toStored } from "./service";
 
-const PEOPLE: [string, string, Role, boolean][] = [
+export const PEOPLE: [string, string, Role, boolean][] = [
   ["owner", "Demo Owner", "admin", true],
   ["sari", "Sari (Instruktur)", "instructor", true],
   ["rina", "Rina Lestari", "member", true],
@@ -46,7 +46,7 @@ const wibDay = (ms: number, hours: number) => {
 
 /** Demo events around `now`: last and next Sunday Long Run, this month's virtual challenge, a Run + Brew
  *  open right now (so the QR check-in can be tried) and next Saturday's yoga class. */
-export async function seedEvents(store: MemoryStore, now: number): Promise<void> {
+export async function seedEvents(store: Store, now: number): Promise<void> {
   const DAYS = 86_400_000;
   const dow = new Date(now + 7 * 3_600_000).getUTCDay();          // 0 = Sunday (WIB)
   const lastSun = wibDay(now - (dow === 0 ? 7 : dow) * DAYS, 5);
@@ -59,18 +59,22 @@ export async function seedEvents(store: MemoryStore, now: number): Promise<void>
   await store.addEvent(fromTemplate("yoga-sat", "yoga_saturday", wibDay(now + (((6 - dow + 7) % 7) || 7) * DAYS, 7)));
 }
 
-export async function seedDemo(store: MemoryStore, now: number): Promise<void> {
+/** Ids for demo members: `demo-<handle>` in memory; a Postgres test passes uuids (profiles.id is a uuid). */
+export type IdFor = (handle: string) => string;
+
+export async function seedDemo(store: Store, now: number, idFor: IdFor = (h) => `demo-${h}`): Promise<void> {
   const provider = createMockProvider({ now: () => now });
   await seedEvents(store, now);
-  for (const [i, [handle, name, role, isPublic]] of PEOPLE.entries()) {
-    const id = `demo-${handle}`;
-    const m: Member = { id, handle, displayName: name, avatar: avatarFor(i), isPublic, role, pinnedBadges: [],
-                        waVerifiedAt: null, yogaConsentVersion: YOGA[handle] ? yoga.requires.consent_version : null,
-                        joinedAt: new Date(now - 90 * 86_400_000).toISOString() };
-    store.putMember(m);
+  for (const [i, [handle, name, role, isPublic]] of PEOPLE.entries()) {        // everyone first (reviewer FKs)
+    await store.addMember({ id: idFor(handle), handle, displayName: name, avatar: avatarFor(i), isPublic, role, pinnedBadges: [],
+                            waVerifiedAt: null, yogaConsentVersion: YOGA[handle] ? yoga.requires.consent_version : null,
+                            joinedAt: new Date(now - 90 * 86_400_000).toISOString() });
+  }
+  for (const [handle] of PEOPLE) {
+    const id = idFor(handle);
     if (handle !== "sari") {
       const names = new Map(mockRawActivities(id, now).map((r) => [String(r.id), (r.name as string) ?? null]));
-      for (const a of await provider.listActivities("demo", id, "2000-01-01")) store.putActivity(toStored(a, names.get(a.id) ?? null));
+      await store.upsertActivities((await provider.listActivities("demo", id, "2000-01-01")).map((a) => toStored(a, names.get(a.id) ?? null)));
     }
     let t = now - 30 * 86_400_000;
     for (const plan of YOGA[handle] ?? []) {
@@ -79,9 +83,9 @@ export async function seedDemo(store: MemoryStore, now: number): Promise<void> {
           const sides: Side[] = mission.per_side ? ["left", "right"] : ["both"];
           for (const side of sides) {
             t += 3_600_000;
-            await store.addAttempt({ id: `${id}-${mission.key}-${side}`, userId: id, timerId: null, missionKey: mission.key, side,
+            await store.addAttempt({ id: globalThis.crypto.randomUUID(), userId: id, timerId: null, missionKey: mission.key, side,
                                      measuredS: mission.stars_s[plan.stars - 1], stars: plan.stars, mode: "class",
-                                     status: "approved", reviewerId: "demo-sari", reason: null, createdAt: t });
+                                     status: "approved", reviewerId: idFor("sari"), reason: null, createdAt: t });
           }
         }
       }

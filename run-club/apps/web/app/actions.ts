@@ -9,9 +9,13 @@ import QRCode from "qrcode";
 import { redirect } from "next/navigation";
 import { eventConfig, qrToken, type ClubEvent } from "@/lib/events";
 import {
-  acceptYogaConsent, checkinQr, createEvent, qrSecret, type CheckinResult, claimTimer, classAward, currentMember, DEMO_COOKIE, flags, getStore, isDemo, rejectAttempt,
+  acceptYogaConsent, authUser, checkinQr, createEvent, disconnectIntervals, mode, qrSecret, roleForEmail, siteUrl,
+  syncMember, type CheckinResult, claimTimer, classAward, currentMember, DEMO_COOKIE, flags, getStore, isDemo, rejectAttempt,
   reviewActivity, setWaVerified, startTimer, type ClaimOutcome,
 } from "@/lib/data";
+import { getProvider } from "@/lib/providers";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient as createSupabase } from "@/lib/supabase/server";
 import type { Side, Stars } from "@/lib/yoga";
 
 async function me() {
@@ -36,7 +40,8 @@ export async function loginAs(formData: FormData) {
 }
 
 export async function logout() {
-  (await cookies()).delete(DEMO_COOKIE);
+  if (mode() === "supabase") await (await createSupabase()).auth.signOut();
+  else (await cookies()).delete(DEMO_COOKIE);
   redirect("/");
 }
 
@@ -68,7 +73,7 @@ export async function claimYogaTimer(timerId: string): Promise<ClaimOutcome> {
 export async function review(formData: FormData) {
   const m = await me();
   const decision = formData.get("decision") === "approved" ? "approved" : "rejected";
-  await reviewActivity(await getStore(), m, String(formData.get("id")), decision, Date.now());
+  await reviewActivity(await getStore(), m, String(formData.get("userId")), String(formData.get("id")), decision, Date.now());
   revalidatePath("/admin");
 }
 
@@ -130,9 +135,7 @@ export async function createEventAction(_prev: EventFormState, formData: FormDat
 export async function currentQr(eventId: string): Promise<{ svg: string; url: string; rotateS: number }> {
   const m = await me();
   if (m.role !== "admin" && m.role !== "instructor") throw new Error("khusus staff");
-  const h = await headers();
-  const base = process.env.NEXT_PUBLIC_SITE_URL?.trim() || `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
-  const url = `${base}/checkin?e=${encodeURIComponent(eventId)}&t=${qrToken(qrSecret(), eventId, Date.now())}`;
+  const url = `${await site()}/checkin?e=${encodeURIComponent(eventId)}&t=${qrToken(qrSecret(), eventId, Date.now())}`;
   const svg = await QRCode.toString(url, { type: "svg", margin: 1, errorCorrectionLevel: "M", color: { dark: "#111111", light: "#ffffff" } });
   return { svg, url, rotateS: eventConfig.qr_rotate_seconds };
 }
@@ -143,4 +146,85 @@ export async function checkinAction(_prev: CheckinResult | null, formData: FormD
                               Date.now(), qrSecret());
   revalidatePath("/events");
   return res;
+}
+
+// ── Supabase auth, onboarding, Intervals.icu (mode "supabase") ───────────────
+
+export type FormState = { ok: boolean; message: string } | null;
+
+async function site() {
+  const h = await headers();
+  return siteUrl(h.get("x-forwarded-host") ?? h.get("host"), h.get("x-forwarded-proto"));
+}
+
+export async function sendMagicLink(_prev: FormState, formData: FormData): Promise<FormState> {
+  const email = String(formData.get("email") ?? "").trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { ok: false, message: "Email belum valid." };
+  const next = safeNext(formData.get("next")) ?? "/";
+  const { error } = await (await createSupabase()).auth.signInWithOtp({
+    email, options: { emailRedirectTo: `${await site()}/auth/callback?next=${encodeURIComponent(next)}` },
+  });
+  return error ? { ok: false, message: `Gagal kirim link: ${error.message}` } : { ok: true, message: `Link masuk dikirim ke ${email}. Cek inbox (dan folder spam).` };
+}
+
+export async function signInWithGoogle(formData: FormData) {
+  const next = safeNext(formData.get("next")) ?? "/";
+  const { data, error } = await (await createSupabase()).auth.signInWithOAuth({
+    provider: "google", options: { redirectTo: `${await site()}/auth/callback?next=${encodeURIComponent(next)}` },
+  });
+  if (error || !data.url) redirect("/login?error=google");
+  redirect(data.url);
+}
+
+const AVATAR_SET = {
+  skin: ["#F1C9A5", "#D9A27A", "#B67A55", "#8D5A3B"], hair: ["#1d1d1d", "#4a2f1e", "#7a4a2a"],
+  top: ["#FF5F0E", "#2E3A8C", "#F7D046", "#E0352B", "#4B4FB8"], bottom: ["#222222", "#3b3f58"], shoes: ["#ffffff", "#FF5F0E", "#111111"],
+};
+const pickOne = (xs: string[]) => xs[Math.floor(Math.random() * xs.length)];
+
+export async function createProfile(_prev: FormState, formData: FormData): Promise<FormState> {
+  const u = await authUser();
+  if (!u) redirect("/login");
+  const store = await getStore();
+  if (await store.member(u.id)) redirect("/world");
+  const handle = String(formData.get("handle") ?? "").trim().toLowerCase();
+  const displayName = String(formData.get("displayName") ?? "").trim().replace(/\s+/g, " ");
+  if (!/^[a-z0-9_]{3,24}$/.test(handle)) return { ok: false, message: "Username 3–24 huruf kecil, angka, atau _." };
+  if (displayName.length < 1 || displayName.length > 40) return { ok: false, message: "Nama 1–40 karakter." };
+  if (await store.memberByHandle(handle)) return { ok: false, message: "Username sudah dipakai." };
+  await store.addMember({
+    id: u.id, handle, displayName, isPublic: true, role: roleForEmail(u.email), pinnedBadges: [], waVerifiedAt: null,
+    yogaConsentVersion: null, joinedAt: new Date().toISOString(),
+    avatar: { skin: pickOne(AVATAR_SET.skin), hair: pickOne(AVATAR_SET.hair), top: pickOne(AVATAR_SET.top),
+              bottom: pickOne(AVATAR_SET.bottom), shoes: pickOne(AVATAR_SET.shoes) },
+  });
+  redirect(`/u/${handle}?welcome=1`);
+}
+
+export async function syncNow() {
+  const m = await me();
+  await syncMember(await getStore(), getProvider(), m.id, Date.now());
+  revalidatePath(`/u/${m.handle}`);
+}
+
+export async function disconnectNow() {
+  const m = await me();
+  await disconnectIntervals(await getStore(), getProvider(), m);
+  revalidatePath(`/u/${m.handle}`);
+}
+
+export async function deleteAccount(formData: FormData) {
+  const m = await me();
+  if (String(formData.get("confirm") ?? "") !== m.handle) redirect(`/u/${m.handle}?delete=confirm`);
+  const store = await getStore();
+  await disconnectIntervals(store, getProvider(), m);
+  await store.deleteMember(m.id);
+  if (mode() === "supabase") {
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (key) await createAdminClient().auth.admin.deleteUser(m.id);
+    await (await createSupabase()).auth.signOut();
+  } else {
+    (await cookies()).delete(DEMO_COOKIE);
+  }
+  redirect("/?deleted=1");
 }
