@@ -56,7 +56,7 @@ export default async function Profile({ params }: { params: Promise<{ handle: st
         <>
           <RunSection run={p.run!} />
           <YogaSection p={p} />
-          <Panel title="Badge" aside={<span className="text-xs text-neutral-500">{p.badges.earned.size} dari {p.badges.all.length}</span>}>
+          <Panel id="badge" title="Badge" aside={<span className="text-xs text-neutral-500">{p.badges.earned.size} dari {p.badges.all.length}</span>}>
             <div className="flex flex-wrap gap-2">
               {[...p.badges.all].sort((a, b) => Number(p.badges.earned.has(b.key)) - Number(p.badges.earned.has(a.key)))
                 .map((b) => <BadgeChip key={b.key} badge={b} earned={p.badges.earned.has(b.key)} />)}

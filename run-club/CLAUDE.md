@@ -49,6 +49,24 @@ Pages: `/` (members by XP), `/login`, `/u/[handle]` (profile + run dashboard + y
 `/yoga` (consent, server-timed claims, flow challenge), `/admin` (flagged runs, yoga claims, WhatsApp),
 `/admin/class` (instructor gives stars).
 
+## The world (`/world`, Sesi 3)
+
+- `lib/world/layout.ts` turns `config/world_layout.json` into three 0.5 m grids (street, floor 1, floor 2):
+  furniture blocks the tiles whose centre it covers; mats, gate, stretch areas, door and stairs are walk-on.
+  Portals: front door (street ↔ floor 1) and stairs (floor 1 ↔ floor 2).
+- `lib/world/path.ts`: A* (4 directions) and the 32 × 16 isometric projection. Own A* instead of easystarjs:
+  synchronous, pure, tested; the grids are tiny.
+- `lib/world/agents.ts`: routine picked from real data (ran today → post_run, yoga stars → yoga_session,
+  morning → pre_run, else coffee/chill/family), walk → use (bubble) → … → leave, then respawn. The mascot
+  "Higround" loops forever. Day phase from the WIB hour tints the scene.
+- `game/createWorldGame.ts`: Phaser 3 renderer, loaded only in the browser. Placeholder art drawn in code
+  (iso floor, furniture boxes, back walls, pixel people from `lib/world/sprite.ts`). Rows are flipped so the
+  street is at the front. Integer zoom 1–3×, drag to pan, click a character for its mini card.
+- Who is shown: public members active in the last 7 days (max 25) and you. HUD and ticker come from
+  `worldView()` in `lib/data/service.ts`.
+- Concept-plan note: on floor 2 the storage, changing booth and toilet wall off the event corner; the
+  changing booth is walk-through for now. Owner to check the real layout.
+
 ## Rules of the road
 
 - **Data first, game later** (§2). XP only comes from real activity, yoga, badges and events.

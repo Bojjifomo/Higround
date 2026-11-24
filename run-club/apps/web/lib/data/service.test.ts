@@ -114,3 +114,19 @@ describe("staff", () => {
     expect((await s.member(bima.id))!.waVerifiedAt).not.toBeNull();
   });
 });
+
+describe("world view", () => {
+  it("shows active public members, always you, the HUD and a ticker", async () => {
+    const { worldView } = await import("./service");
+    const w = await worldView(s, gita, NOW);
+    expect(w.members.length).toBeLessThanOrEqual(25);
+    expect(w.members[0]).toMatchObject({ handle: "gita", isMe: true });             // private, but it's you
+    const other = await worldView(s, bima, NOW);
+    expect(other.members.some((m) => m.handle === "gita")).toBe(false);           // private to others
+    expect(other.members.some((m) => m.ranToday)).toBe(true);                      // this morning's runs
+    expect(other.hud.communityKmWeek).toBeGreaterThan(0);
+    expect(other.hud.week).toBe(48);
+    expect(other.ticker.length).toBeGreaterThan(0);
+    expect(other.ticker.join(" ")).not.toMatch(/Gita/);
+  });
+});

@@ -1,11 +1,11 @@
 import type { Badge } from "@/lib/badges";
 
 /** Kairosoft-style panel: cream card, thick orange border (SPEC §5). */
-export function Panel({ title, children, className = "", aside }: {
-  title?: string; children: React.ReactNode; className?: string; aside?: React.ReactNode;
+export function Panel({ title, children, className = "", aside, id }: {
+  title?: string; children: React.ReactNode; className?: string; aside?: React.ReactNode; id?: string;
 }) {
   return (
-    <section className={`rounded-lg border-4 border-hg-orange bg-[#FFFDF7] p-4 shadow-[4px_4px_0_#111] ${className}`}>
+    <section id={id} className={`rounded-lg border-4 border-hg-orange bg-[#FFFDF7] p-4 shadow-[4px_4px_0_#111] ${className}`}>
       {title && (
         <div className="mb-3 flex items-baseline justify-between gap-2">
           <h2 className="font-pixel text-xl leading-none">{title}</h2>

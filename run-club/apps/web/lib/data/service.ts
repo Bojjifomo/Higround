@@ -2,7 +2,7 @@
  * Business rules over a Store: XP sync, badges, Yoga Quest claims, admin review, class mode, and the
  * read models the pages render. Every function takes `now` (ms) so tests control the clock.
  */
-import { dateShort } from "../format";
+import { dateShort, km as fmtKm } from "../format";
 import { badgeXpEntries, catalogue, earnedBadges, unlockedCosmetics, type Badge, type MemberStats } from "../badges";
 import {
   defaultRules as rules, earns, effortsOf, eligibility, isHigroundStart, ledgerFor, levelFor, localDate, weekKey,
@@ -371,3 +371,81 @@ export async function leaderboardLite(store: Store): Promise<{ member: Member; l
 }
 
 export { DAY };
+
+// ── world (SPEC §6) ───────────────────────────────────────────────────────────
+
+export interface WorldMember {
+  id: string; handle: string; name: string; avatar: Member["avatar"]; level: number; title: string;
+  badges: { name: string; icon: string }[]; ranToday: boolean; yogaStars: number; isMe: boolean;
+}
+
+export interface WorldView {
+  members: WorldMember[];
+  hud: { week: number; communityKmWeek: number; myXp: number | null; myLevel: number | null };
+  ticker: string[];
+}
+
+const ISO_WEEK = (iso: string) => {
+  const d = new Date(localDate(iso, rules) + "T00:00:00Z");
+  const day = (d.getUTCDay() + 6) % 7;
+  d.setUTCDate(d.getUTCDate() - day + 3);
+  const firstThu = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
+  return 1 + Math.round(((d.getTime() - firstThu.getTime()) / DAY - 3 + ((firstThu.getUTCDay() + 6) % 7)) / 7);
+};
+
+/** Who is in the world right now (members active in the last 7 days, max 25, you always), the HUD and the ticker. */
+export async function worldView(store: Store, viewer: Member | null, now: number): Promise<WorldView> {
+  const nowIso = new Date(now).toISOString();
+  const today = localDate(nowIso, rules);
+  const thisWeek = weekKey(nowIso, rules);
+  const since = now - 7 * DAY;
+  const everyone = await store.members();
+  type Row = { m: Member; acts: StoredActivity[]; ok: StoredActivity[]; atts: YogaAttempt[]; last: number };
+  const rows: Row[] = [];
+  for (const m of everyone) {
+    const acts = await store.activities(m.id);
+    const ok = acts.filter((a) => earns(a, approvedIds(acts), rules));
+    const atts = (await store.attempts(m.id)).filter((a) => a.status === "approved");
+    const last = Math.max(0, ...ok.map((a) => Date.parse(a.startTime)), ...atts.map((a) => a.createdAt));
+    rows.push({ m, acts, ok, atts, last });
+  }
+  const visible = rows.filter((r) => r.m.isPublic || r.m.id === viewer?.id);
+  const active = visible.filter((r) => r.last >= since || r.m.id === viewer?.id)
+    .sort((a, b) => Number(b.m.id === viewer?.id) - Number(a.m.id === viewer?.id) || b.last - a.last).slice(0, 25);
+
+  const members: WorldMember[] = [];
+  for (const r of active) {
+    const lvl = await levelOf(store, r.m.id);
+    const earned = earnedBadges(await memberStats(store, r.m.id));
+    const pinned = (r.m.pinnedBadges.length ? earned.filter((b) => r.m.pinnedBadges.includes(b.key)) : earned.slice(-3)).slice(0, 3);
+    const stars = progress(await yogaBests(store, r.m.id)).totalStars;
+    members.push({ id: r.m.id, handle: r.m.handle, name: r.m.displayName, avatar: r.m.avatar, level: lvl.level, title: lvl.title,
+                   badges: pinned.map((b) => ({ name: b.name, icon: b.icon })), yogaStars: stars, isMe: r.m.id === viewer?.id,
+                   ranToday: r.ok.some((a) => localDate(a.startTime, rules) === today) });
+  }
+
+  const communityKmWeek = rows.reduce((s, r) => s + r.ok.filter((a) => weekKey(a.startTime, rules) === thisWeek)
+    .reduce((x, a) => x + a.distanceM, 0), 0) / 1000;
+
+  // Ticker: runs and yoga claims of the last 36 hours, public members only, newest first.
+  const missions = new Map(yoga.levels.flatMap((l) => l.missions).map((m) => [m.key, m.name]));
+  const events: { at: number; text: string }[] = [];
+  for (const r of visible) {
+    const first = r.m.displayName.split(" ")[0];
+    const ledger = await store.ledger(r.m.id);
+    for (const a of r.ok.filter((x) => Date.parse(x.startTime) >= now - 36 * 3_600_000)) {
+      const xp = ledger.filter((e) => e.sourceType === "activity" && e.sourceId === a.id).reduce((s, e) => s + e.amount, 0);
+      events.push({ at: Date.parse(a.startTime),
+                    text: `${first} baru lari ${fmtKm(a.distanceM / 1000)} km${a.isHigroundStart ? " dari Higround" : ""}! +${xp} XP` });
+    }
+    for (const a of r.atts.filter((x) => x.createdAt >= now - 36 * 3_600_000 && x.missionKey !== FLOW_KEY)) {
+      events.push({ at: a.createdAt, text: `${first} dapat ${a.stars}★ ${missions.get(a.missionKey) ?? a.missionKey}` });
+    }
+  }
+  const me = viewer ? await levelOf(store, viewer.id) : null;
+  return {
+    members,
+    hud: { week: ISO_WEEK(nowIso), communityKmWeek, myXp: me?.totalXp ?? null, myLevel: me?.level ?? null },
+    ticker: events.sort((a, b) => b.at - a.at).slice(0, 12).map((e) => e.text),
+  };
+}

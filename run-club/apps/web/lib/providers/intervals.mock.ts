@@ -39,7 +39,7 @@ export function mockRawActivities(userId: string, now: number): Record<string, u
   const device = ["Garmin Forerunner 265", "COROS PACE 3", "Polar Pacer Pro", "Suunto Race"][Math.floor(r() * 4)];
   const source = device.startsWith("Garmin") ? "GARMIN_CONNECT" : device.split(" ")[0].toUpperCase();
   let n = 0;
-  for (let back = 84; back >= 1; back--) {
+  for (let back = 84; back >= 0; back--) {                    // back = 0: this morning's run, once it has happened
     const ms = now - back * DAY;
     const day = wibDate(ms);
     const dow = new Date(day + "T00:00:00Z").getUTCDay();       // 0 = Sunday
@@ -48,10 +48,12 @@ export function mockRawActivities(userId: string, now: number): Record<string, u
     const km = longRun ? 12 + r() * 9 : 4 + r() * 5;
     const atHg = longRun || r() < 0.15;
     const p = pace + (longRun ? 20 : 0) + Math.floor(r() * 20);
+    const startIso = new Date(`${day}T${longRun ? "05:30" : "06:10"}:00+07:00`).toISOString();
+    if (Date.parse(startIso) + km * p * 1000 > now) continue;
     const id = `i${userId.slice(0, 6)}-${++n}`;
     out.push({
       id, type: "Run", name: longRun ? "Sunday Long Run @Higround" : "Easy Run",
-      start_date: new Date(`${day}T${longRun ? "05:30" : "06:10"}:00+07:00`).toISOString(),
+      start_date: startIso,
       start_date_local: `${day}T${longRun ? "05:30" : "06:10"}:00`,
       distance: Math.round(km * 1000), moving_time: Math.round(km * p), elapsed_time: Math.round(km * p * 1.05),
       total_elevation_gain: Math.round(km * (2 + r() * 4)), max_speed: (1000 / p) * 1.35,                     // m/s, a little above average pace

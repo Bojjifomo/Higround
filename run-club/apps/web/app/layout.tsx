@@ -23,6 +23,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
             <Link href="/" className="font-pixel text-2xl leading-none tracking-wide">HIGROUND <span className="text-hg-yellow">RUN CLUB</span></Link>
             <nav className="ml-auto flex flex-wrap items-center gap-1 text-sm font-bold">
+              <Link className="rounded px-2 py-1 hover:bg-black/15" href="/world">Dunia</Link>
               {me && <Link className="rounded px-2 py-1 hover:bg-black/15" href={`/u/${me.handle}`}>Profil</Link>}
               {me && <Link className="rounded px-2 py-1 hover:bg-black/15" href="/yoga">Yoga Quest</Link>}
               {me?.role === "admin" && <Link className="rounded px-2 py-1 hover:bg-black/15" href="/admin">Admin</Link>}
