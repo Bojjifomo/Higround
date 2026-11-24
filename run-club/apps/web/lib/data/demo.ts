@@ -2,6 +2,7 @@
  * Demo club used while Supabase is not configured: made-up members, their runs from the mock Intervals.icu
  * provider, a few Yoga Quest claims, and all XP synced through the real rules. Nothing here is real data.
  */
+import { fromTemplate } from "../events";
 import { createMockProvider, mockRawActivities } from "../providers/intervals.mock";
 import { defaultConfig as yoga, type Side, type Stars } from "../yoga";
 import { MemoryStore, type Avatar, type Member, type Role } from "./store";
@@ -37,8 +38,30 @@ const YOGA: Record<string, { levels: number[]; stars: Stars }[]> = {
   owner: [{ levels: [1], stars: 2 }],
 };
 
+/** Midnight WIB of the day `ms` falls on, plus `hours`. */
+const wibDay = (ms: number, hours: number) => {
+  const d = new Date(ms + 7 * 3_600_000);
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - 7 * 3_600_000 + hours * 3_600_000;
+};
+
+/** Demo events around `now`: last and next Sunday Long Run, this month's virtual challenge, a Run + Brew
+ *  open right now (so the QR check-in can be tried) and next Saturday's yoga class. */
+export async function seedEvents(store: MemoryStore, now: number): Promise<void> {
+  const DAYS = 86_400_000;
+  const dow = new Date(now + 7 * 3_600_000).getUTCDay();          // 0 = Sunday (WIB)
+  const lastSun = wibDay(now - (dow === 0 ? 7 : dow) * DAYS, 5);
+  const month = new Date(now + 7 * 3_600_000);
+  await store.addEvent(fromTemplate("slr-last", "sunday_long_run", lastSun));
+  await store.addEvent(fromTemplate("slr-next", "sunday_long_run", lastSun + 7 * DAYS));
+  await store.addEvent(fromTemplate("virtual-month", "monthly_virtual",
+    Date.UTC(month.getUTCFullYear(), month.getUTCMonth(), 1) - 7 * 3_600_000, { name: "Monthly Virtual Challenge" }));
+  await store.addEvent(fromTemplate("brew-now", "run_brew", now - 3_600_000));
+  await store.addEvent(fromTemplate("yoga-sat", "yoga_saturday", wibDay(now + (((6 - dow + 7) % 7) || 7) * DAYS, 7)));
+}
+
 export async function seedDemo(store: MemoryStore, now: number): Promise<void> {
   const provider = createMockProvider({ now: () => now });
+  await seedEvents(store, now);
   for (const [i, [handle, name, role, isPublic]] of PEOPLE.entries()) {
     const id = `demo-${handle}`;
     const m: Member = { id, handle, displayName: name, avatar: avatarFor(i), isPublic, role, pinnedBadges: [],

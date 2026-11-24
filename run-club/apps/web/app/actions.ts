@@ -4,10 +4,12 @@
  * the client never sends a duration, stars for itself, or XP.
  */
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import QRCode from "qrcode";
 import { redirect } from "next/navigation";
+import { eventConfig, qrToken, type ClubEvent } from "@/lib/events";
 import {
-  acceptYogaConsent, claimTimer, classAward, currentMember, DEMO_COOKIE, flags, getStore, isDemo, rejectAttempt,
+  acceptYogaConsent, checkinQr, createEvent, qrSecret, type CheckinResult, claimTimer, classAward, currentMember, DEMO_COOKIE, flags, getStore, isDemo, rejectAttempt,
   reviewActivity, setWaVerified, startTimer, type ClaimOutcome,
 } from "@/lib/data";
 import type { Side, Stars } from "@/lib/yoga";
@@ -18,13 +20,19 @@ async function me() {
   return m;
 }
 
+/** Only same-site paths: "/checkin?…" yes, "//evil.com" or "https://…" no. */
+function safeNext(v: FormDataEntryValue | null): string | null {
+  const s = typeof v === "string" ? v : "";
+  return s.startsWith("/") && !s.startsWith("//") && !s.startsWith("/\\") ? s : null;
+}
+
 export async function loginAs(formData: FormData) {
   if (!isDemo()) throw new Error("demo login only");
   const store = await getStore();
   const m = await store.member(String(formData.get("id") ?? ""));
   if (!m) redirect("/login");
   (await cookies()).set(DEMO_COOKIE, m.id, { httpOnly: true, sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 30 });
-  redirect(`/u/${m.handle}`);
+  redirect(safeNext(formData.get("next")) ?? `/u/${m.handle}`);
 }
 
 export async function logout() {
@@ -93,4 +101,46 @@ export async function awardClass(_prev: ClassAwardState, formData: FormData): Pr
   const who = await store.member(userId);
   revalidatePath("/admin/class");
   return { ok: true, message: `${stars}★ untuk ${who?.displayName ?? "member"} tercatat.` };
+}
+
+// ── events (SPEC §10) ─────────────────────────────────────────────────────────
+
+export type EventFormState = { ok: boolean; message: string } | null;
+
+export async function createEventAction(_prev: EventFormState, formData: FormData): Promise<EventFormState> {
+  const m = await me();
+  const template = String(formData.get("template") ?? "");
+  const local = String(formData.get("startsAt") ?? "");                     // "2026-11-29T05:00" in WIB
+  const startsAt = Date.parse(`${local}:00+07:00`);
+  const over: Partial<ClubEvent> = {};
+  const name = String(formData.get("name") ?? "").trim();
+  if (name) over.name = name.slice(0, 80);
+  const mult = Number(formData.get("multiplier"));
+  if (mult >= 1 && mult <= 5) over.multiplier = mult;
+  try {
+    const e = await createEvent(await getStore(), m, template, startsAt, over);
+    revalidatePath("/events");
+    return { ok: true, message: `Event "${e.name}" dibuat.` };
+  } catch (err) {
+    return { ok: false, message: err instanceof Error ? err.message : "Gagal" };
+  }
+}
+
+/** The QR the counter screen shows: a check-in URL with the current rotating token, as SVG. */
+export async function currentQr(eventId: string): Promise<{ svg: string; url: string; rotateS: number }> {
+  const m = await me();
+  if (m.role !== "admin" && m.role !== "instructor") throw new Error("khusus staff");
+  const h = await headers();
+  const base = process.env.NEXT_PUBLIC_SITE_URL?.trim() || `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
+  const url = `${base}/checkin?e=${encodeURIComponent(eventId)}&t=${qrToken(qrSecret(), eventId, Date.now())}`;
+  const svg = await QRCode.toString(url, { type: "svg", margin: 1, errorCorrectionLevel: "M", color: { dark: "#111111", light: "#ffffff" } });
+  return { svg, url, rotateS: eventConfig.qr_rotate_seconds };
+}
+
+export async function checkinAction(_prev: CheckinResult | null, formData: FormData): Promise<CheckinResult | null> {
+  const m = await me();
+  const res = await checkinQr(await getStore(), m, String(formData.get("e") ?? ""), String(formData.get("t") ?? ""),
+                              Date.now(), qrSecret());
+  revalidatePath("/events");
+  return res;
 }

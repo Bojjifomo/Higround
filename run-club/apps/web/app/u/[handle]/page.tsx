@@ -61,6 +61,12 @@ export default async function Profile({ params }: { params: Promise<{ handle: st
               {[...p.badges.all].sort((a, b) => Number(p.badges.earned.has(b.key)) - Number(p.badges.earned.has(a.key)))
                 .map((b) => <BadgeChip key={b.key} badge={b} earned={p.badges.earned.has(b.key)} />)}
             </div>
+            {p.eventBadges.length > 0 && (
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                <span className="font-bold">Badge event:</span>
+                {p.eventBadges.map((b) => <span key={b.key} className="rounded-md border-2 border-hg-violet bg-white px-2 py-1 font-bold">🎟️ {b.name}</span>)}
+              </div>
+            )}
             {p.cosmetics.length > 0 && <p className="mt-3 text-sm">Kosmetik terbuka: <b>{p.cosmetics.join(", ")}</b></p>}
           </Panel>
           <Panel title="Riwayat XP">

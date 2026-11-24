@@ -4,6 +4,8 @@ import { currentMember, getStore } from "@/lib/data";
 import { dateLong, km, pace } from "@/lib/format";
 import { defaultConfig as yoga } from "@/lib/yoga";
 import { rejectClaim, review, verifyWa } from "../actions";
+import { eventConfig } from "@/lib/events";
+import { EventForm } from "./EventForm";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +27,7 @@ export default async function Admin() {
   return (
     <div className="space-y-5">
       <h1 className="font-pixel text-4xl leading-none">Admin</h1>
+      <EventForm templates={eventConfig.templates} />
 
       <Panel title={`Aktivitas di-flag (${pending.length})`}>
         <p className="mb-2 text-sm text-neutral-600">Kena aturan anti-cheat. XP-nya ditahan sampai disetujui.</p>

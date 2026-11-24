@@ -7,7 +7,8 @@ export const dynamic = "force-dynamic";
 
 const ROLE = { admin: "Admin", instructor: "Instruktur", member: "Member" } as const;
 
-export default async function Login() {
+export default async function Login({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  const { next = "" } = await searchParams;
   if (!isDemo()) {
     return <Panel title="Masuk">Login Google / email magic link menyusul bersama Supabase Auth (roadmap Fase 1).</Panel>;
   }
@@ -21,6 +22,7 @@ export default async function Login() {
         {members.map((m) => (
           <form key={m.id} action={loginAs}>
             <input type="hidden" name="id" value={m.id} />
+            <input type="hidden" name="next" value={next} />
             <button className="flex w-full items-center gap-3 rounded-md border-2 border-black bg-white px-3 py-2 text-left hover:bg-hg-cream">
               <Avatar avatar={m.avatar} size={28} label="" />
               <span className="min-w-0">

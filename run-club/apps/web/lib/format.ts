@@ -28,7 +28,7 @@ export const PB_LABEL = { "5k": "5K", "10k": "10K", half: "Half Marathon", full:
 
 export const RULE_LABEL: Record<string, string> = {
   distance: "Jarak", elevation: "Elevasi", higround_start: "Start dari Higround", consistency: "Konsistensi mingguan",
-  streak: "Streak", yoga_stars: "Yoga Quest", yoga_reversal: "Yoga Quest (dibatalkan)", yoga_flow: "Flow Challenge",
+  streak: "Streak", event_join: "Bonus event", event_multiplier: "Multiplier event", yoga_stars: "Yoga Quest", yoga_reversal: "Yoga Quest (dibatalkan)", yoga_flow: "Flow Challenge",
 };
 export function ruleLabel(key: string): string {
   if (RULE_LABEL[key]) return RULE_LABEL[key];

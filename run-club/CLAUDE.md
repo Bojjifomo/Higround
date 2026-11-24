@@ -67,6 +67,18 @@ Pages: `/` (members by XP), `/login`, `/u/[handle]` (profile + run dashboard + y
 - Concept-plan note: on floor 2 the storage, changing booth and toilet wall off the event corner; the
   changing booth is walk-through for now. Owner to check the real layout.
 
+## Events (Fase 5)
+
+- Templates in `config/events.json` ([KEPUTUSAN] defaults): Sunday Long Run (≥10 km from Higround, XP ×2),
+  Monthly Virtual Challenge (50 km/month, anywhere), Run + Brew (QR at the counter, +50 XP), Yoga Saturday
+  (Class Mode or QR, +40 XP). `lib/events` holds the pure rules; `lib/data/events-service.ts` the flows.
+- Check-in: a run that starts in the window within 200 m (auto), the counter QR (HMAC token rotating every
+  60 s, the previous code still accepted; secret `EVENT_QR_SECRET`), or Class Mode during a yoga event.
+- XP: join bonus once, plus run XP × (multiplier − 1) on qualifying runs; every payout has its own key.
+  Finishing an event earns its event badge (shown on the profile).
+- Pages: `/events`, `/events/[id]` (staff see the QR for the counter screen), `/checkin?e=&t=` (scan target;
+  the check-in is a button/POST), and "Buat event" on `/admin`.
+
 ## Rules of the road
 
 - **Data first, game later** (§2). XP only comes from real activity, yoga, badges and events.

@@ -4,6 +4,7 @@
  * rules live in service.ts, never here.
  */
 import type { Activity, LedgerEntry } from "../xp/types";
+import type { Checkin, ClubEvent } from "../events";
 import type { Side, Stars } from "../yoga";
 
 export type Role = "member" | "instructor" | "admin";
@@ -89,6 +90,14 @@ export interface Store {
   attempt(id: string): Promise<YogaAttempt | null>;
   addAttempt(a: YogaAttempt): Promise<void>;
   updateAttempt(id: string, patch: Partial<YogaAttempt>): Promise<void>;
+
+  events(): Promise<ClubEvent[]>;
+  event(id: string): Promise<ClubEvent | null>;
+  addEvent(e: ClubEvent): Promise<void>;
+  checkins(eventId: string): Promise<Checkin[]>;
+  checkinsOf(userId: string): Promise<Checkin[]>;
+  /** False when this member already checked in to this event. */
+  addCheckin(c: Checkin): Promise<boolean>;
 }
 
 /** In-memory store. Lives as long as the server process; the demo seeds it on first use. */
@@ -99,6 +108,8 @@ export class MemoryStore implements Store {
   private keys = new Set<string>();
   private timers = new Map<string, YogaTimer>();
   private atts = new Map<string, YogaAttempt>();
+  private evs = new Map<string, ClubEvent>();
+  private cks: Checkin[] = [];
 
   putMember(x: Member) { this.m.set(x.id, x); }
   putActivity(x: StoredActivity) { this.acts.set(`${x.userId}:${x.id}`, x); }
@@ -146,5 +157,16 @@ export class MemoryStore implements Store {
   async updateAttempt(id: string, patch: Partial<YogaAttempt>) {
     const cur = this.atts.get(id);
     if (cur) this.atts.set(id, { ...cur, ...patch });
+  }
+
+  async events() { return [...this.evs.values()].sort((a, b) => a.startsAt - b.startsAt); }
+  async event(id: string) { return this.evs.get(id) ?? null; }
+  async addEvent(e: ClubEvent) { this.evs.set(e.id, e); }
+  async checkins(eventId: string) { return this.cks.filter((c) => c.eventId === eventId); }
+  async checkinsOf(userId: string) { return this.cks.filter((c) => c.userId === userId); }
+  async addCheckin(c: Checkin) {
+    if (this.cks.some((x) => x.eventId === c.eventId && x.userId === c.userId)) return false;
+    this.cks.push(c);
+    return true;
   }
 }

@@ -130,3 +130,40 @@ describe("world view", () => {
     expect(other.ticker.join(" ")).not.toMatch(/Gita/);
   });
 });
+
+describe("events", () => {
+  it("checks in Sunday long runners from their runs and pays the ×2 bonus", async () => {
+    const { eventsView, syncAll } = await import("./index-test-shim");
+    const slr = (await s.checkins("slr-last"));
+    expect(slr.length).toBeGreaterThan(0);
+    expect(slr.every((c) => c.method === "activity")).toBe(true);
+    const who = slr[0].userId;
+    const bonus = (await s.ledger(who)).filter((e) => e.ruleKey === "event_multiplier");
+    expect(bonus.length).toBe(1);
+    expect(bonus[0].amount).toBeGreaterThan(50);
+    const before = await xp((await s.member(who))!);
+    await syncAll(s, who, NOW);
+    expect(await xp((await s.member(who))!)).toBe(before);                         // idempotent
+    const rows = await eventsView(s, bima, NOW);
+    expect(rows[0].status).toBe("open");                                           // open events first
+  });
+  it("QR check-in: valid code once, expired code refused, wrong method refused", async () => {
+    const { checkinQr } = await import("./index-test-shim");
+    const { qrToken } = await import("../events");
+    const tok = qrToken("sec", "brew-now", NOW);
+    const before = await xp(bima);
+    expect(await checkinQr(s, bima, "brew-now", tok, NOW, "sec")).toMatchObject({ ok: true, already: false });
+    expect(await xp(bima)).toBe(before + 50);
+    expect(await checkinQr(s, bima, "brew-now", tok, NOW + 30_000, "sec")).toMatchObject({ ok: true, already: true });
+    expect(await xp(bima)).toBe(before + 50);
+    expect(await checkinQr(s, rina, "brew-now", tok, NOW + 5 * 60_000, "sec")).toMatchObject({ ok: false });
+    expect(await checkinQr(s, rina, "virtual-month", qrToken("sec", "virtual-month", NOW), NOW, "sec")).toMatchObject({ ok: false });
+    expect(await checkinQr(s, rina, "slr-next", qrToken("sec", "slr-next", NOW), NOW, "sec")).toMatchObject({ ok: false, error: "Check-in belum dibuka." });
+  });
+  it("only admins create events", async () => {
+    const { createEvent, EventError } = await import("./index-test-shim");
+    await expect(createEvent(s, sari, "run_brew", NOW)).rejects.toBeInstanceOf(EventError);
+    const e = await createEvent(s, owner, "run_brew", NOW);
+    expect((await s.event(e.id))!.name).toBe("Run + Brew");
+  });
+});

@@ -6,6 +6,7 @@ import { MemoryStore, type Member, type Store } from "./store";
 
 export * from "./store";
 export * from "./service";
+export * from "./events-service";
 
 export const DEMO_COOKIE = "hg_demo_uid";
 
@@ -32,6 +33,16 @@ export async function currentMember(): Promise<Member | null> {
   const id = (await cookies()).get(DEMO_COOKIE)?.value;
   if (!id) return null;
   return (await getStore()).member(id);
+}
+
+const g2 = globalThis as unknown as { __hgQr?: string };
+
+/** Secret for the rotating event QR codes. Set EVENT_QR_SECRET in production; the demo makes one per run. */
+export function qrSecret(): string {
+  const env = process.env.EVENT_QR_SECRET?.trim();
+  if (env) return env;
+  g2.__hgQr ??= globalThis.crypto.randomUUID();
+  return g2.__hgQr;
 }
 
 export function flags() {
