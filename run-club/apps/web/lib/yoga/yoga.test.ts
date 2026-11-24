@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   checkClaim, checkFlow, defaultConfig as C, findMission, missionStars, progress, starsForSeconds,
-  xpForStars, yogaBadges, yogaXpEntries, type ClaimInput, type SideBests, type Stars,
+  xpForStars, yogaBadges, reconcileYogaXp, type ClaimInput, type SideBests, type Stars,
 } from "./index";
 
 const m = (key: string) => findMission(key)!.mission;
@@ -52,13 +52,13 @@ describe("XP", () => {
   it("pays xp_per_mission × star ratio", () => {
     expect([1, 2, 3].map((s) => xpForStars(t("crow"), s as Stars))).toEqual([40, 80, 120]);
   });
-  it("raising stars pays only the difference, once per star level", () => {
-    const up = yogaXpEntries("u1", "crow", 1, 3);
-    expect(up.map((e) => e.amount)).toEqual([40, 40]);
-    expect(up.reduce((s, e) => s + e.amount, 0)).toBe(xpForStars(t("crow"), 3) - xpForStars(t("crow"), 1));
-    expect(up.map((e) => e.idempotencyKey)).toEqual(["yoga:crow:2:u1", "yoga:crow:3:u1"]);
-    expect(yogaXpEntries("u1", "crow", 2, 2)).toEqual([]);
-    expect(yogaXpEntries("u1", "crow", 3, 1)).toEqual([]);
+  it("reconciles: raising stars pays the difference, a rejection takes it back, re-earning pays again", () => {
+    expect(reconcileYogaXp("u1", "crow", 1, 0, 0)).toMatchObject({ amount: 40, idempotencyKey: "yoga:crow:u1:1" });
+    expect(reconcileYogaXp("u1", "crow", 3, 40, 1)).toMatchObject({ amount: 80, ruleKey: "yoga_stars", idempotencyKey: "yoga:crow:u1:2" });
+    expect(reconcileYogaXp("u1", "crow", 3, 120, 2)).toBeNull();                     // nothing owed: idempotent
+    expect(reconcileYogaXp("u1", "crow", 1, 120, 2)).toMatchObject({ amount: -80, ruleKey: "yoga_reversal" });
+    expect(reconcileYogaXp("u1", "crow", 2, 40, 3)).toMatchObject({ amount: 40, idempotencyKey: "yoga:crow:u1:4" });
+    expect(reconcileYogaXp("u1", "nope", 2, 0, 0)).toBeNull();
   });
 });
 

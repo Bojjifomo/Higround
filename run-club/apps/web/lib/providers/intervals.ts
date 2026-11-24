@@ -20,7 +20,7 @@
 import { timingSafeEqual } from "node:crypto";
 import type { Activity } from "../xp/types";
 import {
-  ProviderAuthError, ProviderError, type ActivityProvider, type TokenResult, type WebhookEvent,
+  ProviderAuthError, ProviderError, type ActivityProvider, type TokenResult,
 } from "./types";
 
 const AUTHORIZE_URL = "https://intervals.icu/oauth/authorize";
