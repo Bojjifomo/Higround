@@ -1,0 +1,338 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1210" height="1140" font-family="DejaVu Sans, sans-serif">
+<rect width="1210" height="1140" fill="#ffffff"/>
+<text x="40" y="26" font-size="20" font-weight="bold" fill="#FF5F0E">HIGROUND — Denah konsep game (ruko 5 × 18 m, 2 lantai)</text>
+<text x="40" y="44" font-size="11" fill="#555">Tampak atas · 1 kotak grid = 0,5 m = 1 tile · jalan di atas, dinding belakang di bawah · sumber data: config/world_layout.json</text>
+<rect x="40" y="100" width="200" height="88.0" fill="#6f6d6a" fill-opacity="0.55" stroke="#8a8378" stroke-dasharray="4 3"/>
+<text x="44" y="113" font-size="9" fill="#5b544a" font-weight="bold">Jalan</text>
+<rect x="40" y="188.0" width="200" height="152.0" fill="#b9b4ab" fill-opacity="0.55" stroke="#8a8378" stroke-dasharray="4 3"/>
+<text x="44" y="201.0" font-size="9" fill="#5b544a" font-weight="bold">Trotoar + parkir motor</text>
+<rect x="144.0" y="196.0" width="88.0" height="20.0" rx="2" fill="#FF5F0E" stroke="#333" stroke-width="2"/>
+<circle cx="188.0" cy="206.0" r="8" fill="#fff" stroke="#000"/>
+<text x="188.0" y="209.5" font-size="9" text-anchor="middle" font-weight="bold">1</text>
+<rect x="152.0" y="224.0" width="72.0" height="40.0" rx="2" fill="#ffd2b8" stroke="#333" stroke-width="2"/>
+<circle cx="188.0" cy="244.0" r="8" fill="#fff" stroke="#000"/>
+<text x="188.0" y="247.5" font-size="9" text-anchor="middle" font-weight="bold">2</text>
+<rect x="116.0" y="288.0" width="20.0" height="12.0" rx="2" fill="#2b2b2b" stroke="#333" stroke-width="2"/>
+<circle cx="126.0" cy="294.0" r="8" fill="#fff" stroke="#000"/>
+<text x="126.0" y="297.5" font-size="9" text-anchor="middle" font-weight="bold">3</text>
+<rect x="44.0" y="292.0" width="20.0" height="20.0" rx="2" fill="#7fb8e0" stroke="#333" stroke-width="2"/>
+<circle cx="54.0" cy="302.0" r="8" fill="#fff" stroke="#000"/>
+<text x="54.0" y="305.5" font-size="9" text-anchor="middle" font-weight="bold">4</text>
+<rect x="44.0" y="196.0" width="88.0" height="56.0" rx="2" fill="#4a4a4a" stroke="#333" stroke-width="1"/>
+<circle cx="88.0" cy="224.0" r="8" fill="#fff" stroke="#000"/>
+<text x="88.0" y="227.5" font-size="9" text-anchor="middle" font-weight="bold">5</text>
+<rect x="96.0" y="304.0" width="12.0" height="12.0" rx="2" fill="#FF5F0E" stroke="#333" stroke-width="1"/>
+<circle cx="102.0" cy="310.0" r="8" fill="#fff" stroke="#000"/>
+<text x="102.0" y="313.5" font-size="9" text-anchor="middle" font-weight="bold">6</text>
+<rect x="200.0" y="284.0" width="40.0" height="52.0" rx="2" fill="#4f8a4b" stroke="#333" stroke-width="1"/>
+<circle cx="220.0" cy="310.0" r="8" fill="#fff" stroke="#000"/>
+<text x="220.0" y="313.5" font-size="9" text-anchor="middle" font-weight="bold">7</text>
+<text x="40" y="70" font-size="16" font-weight="bold" fill="#000">LANTAI 1 — Coffee &amp; Burger  (+ teras / Start Gate di atas)</text>
+<rect x="40" y="340" width="200" height="720" fill="#F3E9D2" stroke="#000" stroke-width="3"/>
+<line x1="60.0" y1="340" x2="60.0" y2="1060" stroke="#000" stroke-opacity="0.05"/>
+<line x1="80.0" y1="340" x2="80.0" y2="1060" stroke="#000" stroke-opacity="0.05"/>
+<line x1="100.0" y1="340" x2="100.0" y2="1060" stroke="#000" stroke-opacity="0.05"/>
+<line x1="120.0" y1="340" x2="120.0" y2="1060" stroke="#000" stroke-opacity="0.05"/>
+<line x1="140.0" y1="340" x2="140.0" y2="1060" stroke="#000" stroke-opacity="0.05"/>
+<line x1="160.0" y1="340" x2="160.0" y2="1060" stroke="#000" stroke-opacity="0.05"/>
+<line x1="180.0" y1="340" x2="180.0" y2="1060" stroke="#000" stroke-opacity="0.05"/>
+<line x1="200.0" y1="340" x2="200.0" y2="1060" stroke="#000" stroke-opacity="0.05"/>
+<line x1="220.0" y1="340" x2="220.0" y2="1060" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="360.0" x2="240" y2="360.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="380.0" x2="240" y2="380.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="400.0" x2="240" y2="400.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="420.0" x2="240" y2="420.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="440.0" x2="240" y2="440.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="460.0" x2="240" y2="460.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="480.0" x2="240" y2="480.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="500.0" x2="240" y2="500.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="520.0" x2="240" y2="520.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="540.0" x2="240" y2="540.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="560.0" x2="240" y2="560.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="580.0" x2="240" y2="580.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="600.0" x2="240" y2="600.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="620.0" x2="240" y2="620.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="640.0" x2="240" y2="640.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="660.0" x2="240" y2="660.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="680.0" x2="240" y2="680.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="700.0" x2="240" y2="700.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="720.0" x2="240" y2="720.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="740.0" x2="240" y2="740.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="760.0" x2="240" y2="760.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="780.0" x2="240" y2="780.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="800.0" x2="240" y2="800.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="820.0" x2="240" y2="820.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="840.0" x2="240" y2="840.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="860.0" x2="240" y2="860.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="880.0" x2="240" y2="880.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="900.0" x2="240" y2="900.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="920.0" x2="240" y2="920.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="940.0" x2="240" y2="940.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="960.0" x2="240" y2="960.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="980.0" x2="240" y2="980.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="1000.0" x2="240" y2="1000.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="1020.0" x2="240" y2="1020.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="40" y1="1040.0" x2="240" y2="1040.0" stroke="#000" stroke-opacity="0.05"/>
+<rect x="120.0" y="360.0" width="120.0" height="128.0" fill="#e8e2d6" fill-opacity="0.55" stroke="#8a8378" stroke-dasharray="4 3"/>
+<text x="124.0" y="373.0" font-size="9" fill="#5b544a" font-weight="bold">Area makan depan</text>
+<rect x="144.0" y="628.0" width="96.0" height="160.0" fill="#e8e2d6" fill-opacity="0.55" stroke="#8a8378" stroke-dasharray="4 3"/>
+<text x="148.0" y="641.0" font-size="9" fill="#5b544a" font-weight="bold">Area makan tengah</text>
+<rect x="40.0" y="940.0" width="88.0" height="120.0" fill="#d7d2c8" fill-opacity="0.55" stroke="#8a8378" stroke-dasharray="4 3"/>
+<text x="44.0" y="953.0" font-size="9" fill="#5b544a" font-weight="bold">Dapur burger</text>
+<rect x="136.0" y="948.0" width="104.0" height="112.0" fill="#fbf6e9" fill-opacity="0.55" stroke="#8a8378" stroke-dasharray="4 3"/>
+<text x="140.0" y="961.0" font-size="9" fill="#5b544a" font-weight="bold">Light well / skylight</text>
+<rect x="44.0" y="334.0" width="52.0" height="12.0" rx="2" fill="#9fd3e6" stroke="#333" stroke-width="1"/>
+<circle cx="70.0" cy="340.0" r="8" fill="#fff" stroke="#000"/>
+<text x="70.0" y="343.5" font-size="9" text-anchor="middle" font-weight="bold">8</text>
+<rect x="40.0" y="772.0" width="44.0" height="160.0" rx="2" fill="#9b9893" stroke="#333" stroke-width="1"/>
+<circle cx="62.0" cy="852.0" r="8" fill="#fff" stroke="#000"/>
+<text x="62.0" y="855.5" font-size="9" text-anchor="middle" font-weight="bold">9</text>
+<rect x="90.0" y="840.0" width="44.0" height="92.0" rx="2" fill="#cfd8dc" stroke="#333" stroke-width="1"/>
+<circle cx="112.0" cy="886.0" r="8" fill="#fff" stroke="#000"/>
+<text x="112.0" y="889.5" font-size="9" text-anchor="middle" font-weight="bold">10</text>
+<rect x="132.0" y="376.0" width="32.0" height="32.0" rx="2" fill="#2b2b2b" stroke="#333" stroke-width="2"/>
+<circle cx="148.0" cy="392.0" r="8" fill="#fff" stroke="#000"/>
+<text x="148.0" y="395.5" font-size="9" text-anchor="middle" font-weight="bold">11</text>
+<rect x="192.0" y="376.0" width="32.0" height="32.0" rx="2" fill="#2b2b2b" stroke="#333" stroke-width="2"/>
+<circle cx="208.0" cy="392.0" r="8" fill="#fff" stroke="#000"/>
+<text x="208.0" y="395.5" font-size="9" text-anchor="middle" font-weight="bold">12</text>
+<rect x="192.0" y="436.0" width="32.0" height="32.0" rx="2" fill="#2b2b2b" stroke="#333" stroke-width="2"/>
+<circle cx="208.0" cy="452.0" r="8" fill="#fff" stroke="#000"/>
+<text x="208.0" y="455.5" font-size="9" text-anchor="middle" font-weight="bold">13</text>
+<rect x="132.0" y="496.0" width="24.0" height="20.0" rx="2" fill="#dfe7ea" stroke="#333" stroke-width="2"/>
+<circle cx="144.0" cy="506.0" r="8" fill="#fff" stroke="#000"/>
+<text x="144.0" y="509.5" font-size="9" text-anchor="middle" font-weight="bold">14</text>
+<rect x="188.0" y="508.0" width="52.0" height="96.0" rx="2" fill="#F7D046" stroke="#333" stroke-width="2"/>
+<circle cx="214.0" cy="556.0" r="8" fill="#fff" stroke="#000"/>
+<text x="214.0" y="559.5" font-size="9" text-anchor="middle" font-weight="bold">15</text>
+<rect x="60.0" y="500.0" width="64.0" height="140.0" rx="2" fill="#ffffff" stroke="#2E3A8C" stroke-width="2"/>
+<circle cx="92.0" cy="570.0" r="8" fill="#fff" stroke="#000"/>
+<text x="92.0" y="573.5" font-size="9" text-anchor="middle" font-weight="bold">16</text>
+<rect x="60.0" y="640.0" width="76.0" height="120.0" rx="10" fill="#ffffff" stroke="#333" stroke-width="2"/>
+<circle cx="98.0" cy="700.0" r="8" fill="#fff" stroke="#000"/>
+<text x="98.0" y="703.5" font-size="9" text-anchor="middle" font-weight="bold">17</text>
+<rect x="40.0" y="648.0" width="18.0" height="96.0" rx="2" fill="#4B4FB8" stroke="#333" stroke-width="2"/>
+<circle cx="49.0" cy="696.0" r="8" fill="#fff" stroke="#000"/>
+<text x="49.0" y="699.5" font-size="9" text-anchor="middle" font-weight="bold">18</text>
+<rect x="156.0" y="644.0" width="32.0" height="32.0" rx="2" fill="#2b2b2b" stroke="#333" stroke-width="2"/>
+<circle cx="172.0" cy="660.0" r="8" fill="#fff" stroke="#000"/>
+<text x="172.0" y="663.5" font-size="9" text-anchor="middle" font-weight="bold">19</text>
+<rect x="156.0" y="716.0" width="32.0" height="32.0" rx="2" fill="#2b2b2b" stroke="#333" stroke-width="2"/>
+<circle cx="172.0" cy="732.0" r="8" fill="#fff" stroke="#000"/>
+<text x="172.0" y="735.5" font-size="9" text-anchor="middle" font-weight="bold">20</text>
+<rect x="200.0" y="672.0" width="32.0" height="56.0" rx="2" fill="#2b2b2b" stroke="#333" stroke-width="2"/>
+<circle cx="216.0" cy="700.0" r="8" fill="#fff" stroke="#000"/>
+<text x="216.0" y="703.5" font-size="9" text-anchor="middle" font-weight="bold">21</text>
+<rect x="172.0" y="804.0" width="68.0" height="76.0" rx="2" fill="#E0352B" stroke="#333" stroke-width="2"/>
+<circle cx="206.0" cy="842.0" r="8" fill="#fff" stroke="#000"/>
+<text x="206.0" y="845.5" font-size="9" text-anchor="middle" font-weight="bold">22</text>
+<rect x="184.0" y="888.0" width="56.0" height="64.0" rx="2" fill="#B07A4A" stroke="#333" stroke-width="2"/>
+<circle cx="212.0" cy="920.0" r="8" fill="#fff" stroke="#000"/>
+<text x="212.0" y="923.5" font-size="9" text-anchor="middle" font-weight="bold">23</text>
+<rect x="156.0" y="964.0" width="64.0" height="76.0" rx="2" fill="#B07A4A" stroke="#333" stroke-width="2"/>
+<circle cx="188.0" cy="1002.0" r="8" fill="#fff" stroke="#000"/>
+<text x="188.0" y="1005.5" font-size="9" text-anchor="middle" font-weight="bold">24</text>
+<rect x="98.0" y="334.0" width="12.0" height="12.0" rx="2" fill="#B07A4A" stroke="#333" stroke-width="1"/>
+<circle cx="104.0" cy="340.0" r="8" fill="#fff" stroke="#000"/>
+<text x="104.0" y="343.5" font-size="9" text-anchor="middle" font-weight="bold">25</text>
+<rect x="216.0" y="344.0" width="20.0" height="20.0" rx="2" fill="#4f8a4b" stroke="#333" stroke-width="1"/>
+<circle cx="226.0" cy="354.0" r="8" fill="#fff" stroke="#000"/>
+<text x="226.0" y="357.5" font-size="9" text-anchor="middle" font-weight="bold">26</text>
+<rect x="40.0" y="744.0" width="18.0" height="24.0" rx="2" fill="#c9ced1" stroke="#333" stroke-width="1"/>
+<circle cx="49.0" cy="756.0" r="8" fill="#fff" stroke="#000"/>
+<text x="49.0" y="759.5" font-size="9" text-anchor="middle" font-weight="bold">27</text>
+<rect x="140.0" y="1040.0" width="96.0" height="18.0" rx="2" fill="#4f8a4b" stroke="#333" stroke-width="1"/>
+<circle cx="188.0" cy="1049.0" r="8" fill="#fff" stroke="#000"/>
+<text x="188.0" y="1052.5" font-size="9" text-anchor="middle" font-weight="bold">28</text>
+<rect x="112.0" y="334.0" width="116.0" height="12.0" rx="2" fill="#2c3e50" stroke="#333" stroke-width="1"/>
+<circle cx="170.0" cy="340.0" r="8" fill="#fff" stroke="#000"/>
+<text x="170.0" y="343.5" font-size="9" text-anchor="middle" font-weight="bold">29</text>
+<rect x="132.0" y="490.0" width="24.0" height="4.0" rx="2" fill="#f4efe4" stroke="#333" stroke-width="1"/>
+<circle cx="144.0" cy="492.0" r="8" fill="#fff" stroke="#000"/>
+<text x="144.0" y="495.5" font-size="9" text-anchor="middle" font-weight="bold">30</text>
+<rect x="40.0" y="492.0" width="6.0" height="156.0" rx="2" fill="#B07A4A" stroke="#333" stroke-width="1"/>
+<circle cx="43.0" cy="570.0" r="8" fill="#fff" stroke="#000"/>
+<text x="43.0" y="573.5" font-size="9" text-anchor="middle" font-weight="bold">31</text>
+<rect x="234.0" y="636.0" width="6.0" height="104.0" rx="2" fill="#FF5F0E" stroke="#333" stroke-width="1"/>
+<circle cx="237.0" cy="688.0" r="8" fill="#fff" stroke="#000"/>
+<text x="237.0" y="691.5" font-size="9" text-anchor="middle" font-weight="bold">32</text>
+<rect x="234.0" y="744.0" width="6.0" height="40.0" rx="2" fill="#F7D046" stroke="#333" stroke-width="1"/>
+<circle cx="237.0" cy="764.0" r="8" fill="#fff" stroke="#000"/>
+<text x="237.0" y="767.5" font-size="9" text-anchor="middle" font-weight="bold">33</text>
+<rect x="176.0" y="1056.0" width="24.0" height="4.0" rx="2" fill="#c7d3da" stroke="#333" stroke-width="1"/>
+<circle cx="188.0" cy="1058.0" r="8" fill="#fff" stroke="#000"/>
+<text x="188.0" y="1061.5" font-size="9" text-anchor="middle" font-weight="bold">34</text>
+<text x="640" y="70" font-size="16" font-weight="bold" fill="#000">LANTAI 2 — Studio Room + Run Club Lounge (Sports Hub)</text>
+<rect x="640" y="340" width="200" height="720" fill="#F3E9D2" stroke="#000" stroke-width="3"/>
+<line x1="660.0" y1="340" x2="660.0" y2="1060" stroke="#000" stroke-opacity="0.05"/>
+<line x1="680.0" y1="340" x2="680.0" y2="1060" stroke="#000" stroke-opacity="0.05"/>
+<line x1="700.0" y1="340" x2="700.0" y2="1060" stroke="#000" stroke-opacity="0.05"/>
+<line x1="720.0" y1="340" x2="720.0" y2="1060" stroke="#000" stroke-opacity="0.05"/>
+<line x1="740.0" y1="340" x2="740.0" y2="1060" stroke="#000" stroke-opacity="0.05"/>
+<line x1="760.0" y1="340" x2="760.0" y2="1060" stroke="#000" stroke-opacity="0.05"/>
+<line x1="780.0" y1="340" x2="780.0" y2="1060" stroke="#000" stroke-opacity="0.05"/>
+<line x1="800.0" y1="340" x2="800.0" y2="1060" stroke="#000" stroke-opacity="0.05"/>
+<line x1="820.0" y1="340" x2="820.0" y2="1060" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="360.0" x2="840" y2="360.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="380.0" x2="840" y2="380.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="400.0" x2="840" y2="400.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="420.0" x2="840" y2="420.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="440.0" x2="840" y2="440.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="460.0" x2="840" y2="460.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="480.0" x2="840" y2="480.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="500.0" x2="840" y2="500.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="520.0" x2="840" y2="520.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="540.0" x2="840" y2="540.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="560.0" x2="840" y2="560.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="580.0" x2="840" y2="580.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="600.0" x2="840" y2="600.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="620.0" x2="840" y2="620.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="640.0" x2="840" y2="640.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="660.0" x2="840" y2="660.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="680.0" x2="840" y2="680.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="700.0" x2="840" y2="700.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="720.0" x2="840" y2="720.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="740.0" x2="840" y2="740.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="760.0" x2="840" y2="760.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="780.0" x2="840" y2="780.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="800.0" x2="840" y2="800.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="820.0" x2="840" y2="820.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="840.0" x2="840" y2="840.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="860.0" x2="840" y2="860.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="880.0" x2="840" y2="880.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="900.0" x2="840" y2="900.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="920.0" x2="840" y2="920.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="940.0" x2="840" y2="940.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="960.0" x2="840" y2="960.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="980.0" x2="840" y2="980.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="1000.0" x2="840" y2="1000.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="1020.0" x2="840" y2="1020.0" stroke="#000" stroke-opacity="0.05"/>
+<line x1="640" y1="1040.0" x2="840" y2="1040.0" stroke="#000" stroke-opacity="0.05"/>
+<rect x="664.0" y="296.0" width="152.0" height="44.0" fill="#d9d4ca" fill-opacity="0.55" stroke="#8a8378" stroke-dasharray="4 3"/>
+<text x="668.0" y="309.0" font-size="9" fill="#5b544a" font-weight="bold">Balkon besi</text>
+<rect x="640.0" y="340.0" width="200.0" height="360.0" fill="#efe6d0" fill-opacity="0.55" stroke="#8a8378" stroke-dasharray="4 3"/>
+<text x="644.0" y="353.0" font-size="9" fill="#5b544a" font-weight="bold">STUDIO ROOM</text>
+<rect x="692.0" y="708.0" width="148.0" height="224.0" fill="#ffe6d6" fill-opacity="0.55" stroke="#8a8378" stroke-dasharray="4 3"/>
+<text x="696.0" y="721.0" font-size="9" fill="#5b544a" font-weight="bold">RUN CLUB LOUNGE</text>
+<rect x="640.0" y="772.0" width="44.0" height="160.0" rx="2" fill="#9b9893" stroke="#333" stroke-width="1"/>
+<circle cx="662.0" cy="852.0" r="8" fill="#fff" stroke="#000"/>
+<text x="662.0" y="855.5" font-size="9" text-anchor="middle" font-weight="bold">1</text>
+<rect x="744.0" y="948.0" width="48.0" height="64.0" rx="2" fill="#cfd8dc" stroke="#333" stroke-width="1"/>
+<circle cx="768.0" cy="980.0" r="8" fill="#fff" stroke="#000"/>
+<text x="768.0" y="983.5" font-size="9" text-anchor="middle" font-weight="bold">2</text>
+<rect x="796.0" y="948.0" width="44.0" height="64.0" rx="2" fill="#cfd8dc" stroke="#333" stroke-width="1"/>
+<circle cx="818.0" cy="980.0" r="8" fill="#fff" stroke="#000"/>
+<text x="818.0" y="983.5" font-size="9" text-anchor="middle" font-weight="bold">3</text>
+<rect x="640.0" y="940.0" width="96.0" height="120.0" rx="2" fill="#d7d2c8" stroke="#333" stroke-width="1"/>
+<circle cx="688.0" cy="1000.0" r="8" fill="#fff" stroke="#000"/>
+<text x="688.0" y="1003.5" font-size="9" text-anchor="middle" font-weight="bold">4</text>
+<rect x="704.0" y="348.0" width="72.0" height="18.0" rx="2" fill="#f4efe4" stroke="#333" stroke-width="2"/>
+<circle cx="740.0" cy="357.0" r="8" fill="#fff" stroke="#000"/>
+<text x="740.0" y="360.5" font-size="9" text-anchor="middle" font-weight="bold">5</text>
+<rect x="640.0" y="380.0" width="8.0" height="120.0" rx="2" fill="#B07A4A" stroke="#333" stroke-width="2"/>
+<circle cx="644.0" cy="440.0" r="8" fill="#fff" stroke="#000"/>
+<text x="644.0" y="443.5" font-size="9" text-anchor="middle" font-weight="bold">6</text>
+<rect x="672.0" y="388.0" width="144.0" height="200.0" rx="2" fill="#ffd2b8" stroke="#333" stroke-width="2"/>
+<circle cx="744.0" cy="488.0" r="8" fill="#fff" stroke="#000"/>
+<text x="744.0" y="491.5" font-size="9" text-anchor="middle" font-weight="bold">7</text>
+<rect x="640.0" y="596.0" width="24.0" height="88.0" rx="2" fill="#ffffff" stroke="#333" stroke-width="2"/>
+<circle cx="652.0" cy="640.0" r="8" fill="#fff" stroke="#000"/>
+<text x="652.0" y="643.5" font-size="9" text-anchor="middle" font-weight="bold">8</text>
+<rect x="832.0" y="580.0" width="8.0" height="104.0" rx="2" fill="#FF5F0E" stroke="#333" stroke-width="2"/>
+<circle cx="836.0" cy="632.0" r="8" fill="#fff" stroke="#000"/>
+<text x="836.0" y="635.5" font-size="9" text-anchor="middle" font-weight="bold">9</text>
+<rect x="816.0" y="716.0" width="24.0" height="88.0" rx="2" fill="#B07A4A" stroke="#333" stroke-width="2"/>
+<circle cx="828.0" cy="760.0" r="8" fill="#fff" stroke="#000"/>
+<text x="828.0" y="763.5" font-size="9" text-anchor="middle" font-weight="bold">10</text>
+<rect x="696.0" y="700.0" width="104.0" height="10.0" rx="2" fill="#2E3A8C" stroke="#333" stroke-width="2"/>
+<circle cx="748.0" cy="705.0" r="8" fill="#fff" stroke="#000"/>
+<text x="748.0" y="708.5" font-size="9" text-anchor="middle" font-weight="bold">11</text>
+<rect x="704.0" y="748.0" width="96.0" height="80.0" rx="2" fill="#ffd2b8" stroke="#333" stroke-width="2"/>
+<circle cx="752.0" cy="788.0" r="8" fill="#fff" stroke="#000"/>
+<text x="752.0" y="791.5" font-size="9" text-anchor="middle" font-weight="bold">12</text>
+<rect x="696.0" y="860.0" width="28.0" height="24.0" rx="2" fill="#7fb8e0" stroke="#333" stroke-width="2"/>
+<circle cx="710.0" cy="872.0" r="8" fill="#fff" stroke="#000"/>
+<text x="710.0" y="875.5" font-size="9" text-anchor="middle" font-weight="bold">13</text>
+<rect x="736.0" y="876.0" width="88.0" height="20.0" rx="2" fill="#B07A4A" stroke="#333" stroke-width="2"/>
+<circle cx="780.0" cy="886.0" r="8" fill="#fff" stroke="#000"/>
+<text x="780.0" y="889.5" font-size="9" text-anchor="middle" font-weight="bold">14</text>
+<rect x="744.0" y="1016.0" width="96.0" height="40.0" rx="2" fill="#FF5F0E" stroke="#333" stroke-width="2"/>
+<circle cx="792.0" cy="1036.0" r="8" fill="#fff" stroke="#000"/>
+<text x="792.0" y="1039.5" font-size="9" text-anchor="middle" font-weight="bold">15</text>
+<rect x="820.0" y="364.0" width="18.0" height="64.0" rx="2" fill="#B07A4A" stroke="#333" stroke-width="1"/>
+<circle cx="829.0" cy="396.0" r="8" fill="#fff" stroke="#000"/>
+<text x="829.0" y="399.5" font-size="9" text-anchor="middle" font-weight="bold">16</text>
+<rect x="816.0" y="808.0" width="24.0" height="40.0" rx="2" fill="#2b2b2b" stroke="#333" stroke-width="1"/>
+<circle cx="828.0" cy="828.0" r="8" fill="#fff" stroke="#000"/>
+<text x="828.0" y="831.5" font-size="9" text-anchor="middle" font-weight="bold">17</text>
+<rect x="700.0" y="336.0" width="80.0" height="8.0" rx="2" fill="#9fd3e6" stroke="#333" stroke-width="1"/>
+<circle cx="740.0" cy="340.0" r="8" fill="#fff" stroke="#000"/>
+<text x="740.0" y="343.5" font-size="9" text-anchor="middle" font-weight="bold">18</text>
+<rect x="834.0" y="436.0" width="6.0" height="120.0" rx="2" fill="#c7d3da" stroke="#333" stroke-width="1"/>
+<circle cx="837.0" cy="496.0" r="8" fill="#fff" stroke="#000"/>
+<text x="837.0" y="499.5" font-size="9" text-anchor="middle" font-weight="bold">19</text>
+<rect x="640.0" y="512.0" width="4.0" height="72.0" rx="2" fill="#F7D046" stroke="#333" stroke-width="1"/>
+<circle cx="642.0" cy="548.0" r="8" fill="#fff" stroke="#000"/>
+<text x="642.0" y="551.5" font-size="9" text-anchor="middle" font-weight="bold">20</text>
+<rect x="692.0" y="930.0" width="148.0" height="8.0" rx="2" fill="#F7D046" stroke="#333" stroke-width="1"/>
+<circle cx="766.0" cy="934.0" r="8" fill="#fff" stroke="#000"/>
+<text x="766.0" y="937.5" font-size="9" text-anchor="middle" font-weight="bold">21</text>
+<text x="254" y="110" font-size="11" font-weight="bold">Teras &amp; jalan (nomor di area atas)</text>
+<text x="254" y="124.0" font-size="9.2" fill="#222">1. START GATE Higround Run Club</text>
+<text x="254" y="136.5" font-size="9.2" fill="#222">2. Spot stretching</text>
+<text x="254" y="149.0" font-size="9.2" fill="#222">3. Sandwich board event/menu</text>
+<text x="254" y="161.5" font-size="9.2" fill="#222">4. Galon air + gelas (Run Club)</text>
+<text x="254" y="174.0" font-size="9.2" fill="#222">5. Motor parkir + helm</text>
+<text x="254" y="186.5" font-size="9.2" fill="#222">6. Cone oranye + rantai</text>
+<text x="254" y="199.0" font-size="9.2" fill="#222">7. Tanaman pot besar (calathea, palem)</text>
+<text x="254" y="444.0" font-size="11" font-weight="bold">Lantai 1</text>
+<text x="254" y="458.0" font-size="9.2" fill="#222">8. Pintu kaca</text>
+<text x="254" y="470.5" font-size="9.2" fill="#222">9. Tangga ke Lantai 2</text>
+<text x="254" y="483.0" font-size="9.2" fill="#222">10. Toilet</text>
+<text x="254" y="495.5" font-size="9.2" fill="#222">11. Meja hitam + 2 kursi putih</text>
+<text x="254" y="508.0" font-size="9.2" fill="#222">12. Meja hitam + 2 kursi putih</text>
+<text x="254" y="520.5" font-size="9.2" fill="#222">13. Meja hitam + 2 kursi putih</text>
+<text x="254" y="533.0" font-size="9.2" fill="#222">14. Chiller minuman botol</text>
+<text x="254" y="545.5" font-size="9.2" fill="#222">15. Kios HIGROUND COFFEE | POPSICLE GELATO</text>
+<text x="254" y="558.0" font-size="9.2" fill="#222">16. Counter ORDER HERE! (POS, tip jar, toples cookies, 2 grinder)</text>
+<text x="254" y="570.5" font-size="9.2" fill="#222">17. Bar melengkung bawah tangga (espresso merah, maneki-neko, gumb</text>
+<text x="254" y="583.0" font-size="9.2" fill="#222">18. 2 kulkas wrap maskot Higround (biru)</text>
+<text x="254" y="595.5" font-size="9.2" fill="#222">19. Meja hitam + 2 kursi</text>
+<text x="254" y="608.0" font-size="9.2" fill="#222">20. Meja hitam + 2 kursi</text>
+<text x="254" y="620.5" font-size="9.2" fill="#222">21. Meja hitam + 4 kursi</text>
+<text x="254" y="633.0" font-size="9.2" fill="#222">22. KIDS CORNER (lemari mesh merah, buku mewarnai, ring basket min</text>
+<text x="254" y="645.5" font-size="9.2" fill="#222">23. Rak buku ledge (buku menghadap depan, label oranye) + kotak pu</text>
+<text x="254" y="658.0" font-size="9.2" fill="#222">24. Meja kayu jati panjang + 6 kursi</text>
+<text x="254" y="670.5" font-size="9.2" fill="#222">25. Pilar kayu</text>
+<text x="254" y="683.0" font-size="9.2" fill="#222">26. Monstera dekat jendela</text>
+<text x="254" y="695.5" font-size="9.2" fill="#222">27. Sink stainless + rak</text>
+<text x="254" y="708.0" font-size="9.2" fill="#222">28. Bangku kayu dengan tanaman (aglonema)</text>
+<text x="254" y="720.5" font-size="9.2" fill="#222">29. Jendela lengkung COFFEE &amp; BURGER (+ ilustrasi rusa)</text>
+<text x="254" y="733.0" font-size="9.2" fill="#222">30. Poster GUEST CHECK (wajah-wajah pelanggan)</text>
+<text x="254" y="745.5" font-size="9.2" fill="#222">31. Dinding wood slat</text>
+<text x="254" y="758.0" font-size="9.2" fill="#222">32. Banner kain maskot oranye 'ONE BITE SAYS IT ALL' + AC</text>
+<text x="254" y="770.5" font-size="9.2" fill="#222">33. Pigura poster Run Club (pengganti poster padel)</text>
+<text x="254" y="783.0" font-size="9.2" fill="#222">34. Cermin bulat di dinding belakang</text>
+<text x="854" y="348.0" font-size="11" font-weight="bold">Lantai 2</text>
+<text x="854" y="362.0" font-size="9.2" fill="#222">1. Ujung tangga dari Lantai 1</text>
+<text x="854" y="374.5" font-size="9.2" fill="#222">2. Bilik ganti</text>
+<text x="854" y="387.0" font-size="9.2" fill="#222">3. Toilet</text>
+<text x="854" y="399.5" font-size="9.2" fill="#222">4. Gudang (stok + perlengkapan event)</text>
+<text x="854" y="412.0" font-size="9.2" fill="#222">5. Rak vinyl + speaker di bawah jendela</text>
+<text x="854" y="424.5" font-size="9.2" fill="#222">6. Yoga wall (untuk Headstand di tembok)</text>
+<text x="854" y="437.0" font-size="9.2" fill="#222">7. Area 6 mat yoga (mode yoga) / 3 meja putih (mode dine)</text>
+<text x="854" y="449.5" font-size="9.2" fill="#222">8. Meja tempel dinding + lampu meja (kiri &amp; kanan)</text>
+<text x="854" y="462.0" font-size="9.2" fill="#222">9. Papan YOGA QUEST (grid 28 pose, bintang member)</text>
+<text x="854" y="474.5" font-size="9.2" fill="#222">10. Loker / cubby tas member</text>
+<text x="854" y="487.0" font-size="9.2" fill="#222">11. Papan RUN CLUB WEEK (km komunitas, top mileage, event)</text>
+<text x="854" y="499.5" font-size="9.2" fill="#222">12. Matras stretching + foam roller</text>
+<text x="854" y="512.0" font-size="9.2" fill="#222">13. Hydration station (air + elektrolit)</text>
+<text x="854" y="524.5" font-size="9.2" fill="#222">14. Bangku panjang ganti sepatu</text>
+<text x="854" y="537.0" font-size="9.2" fill="#222">15. Pojok event (backdrop foto, gantungan medali finisher)</text>
+<text x="854" y="549.5" font-size="9.2" fill="#222">16. Rak props: blok, strap, bolster</text>
+<text x="854" y="562.0" font-size="9.2" fill="#222">17. Rak sepatu lari</text>
+<text x="854" y="574.5" font-size="9.2" fill="#222">18. Jendela depan besar (pohon di luar)</text>
+<text x="854" y="587.0" font-size="9.2" fill="#222">19. Cermin panjang</text>
+<text x="854" y="599.5" font-size="9.2" fill="#222">20. Dinding poster ilustrasi</text>
+<text x="854" y="612.0" font-size="9.2" fill="#222">21. Dinding medali &amp; bib race member + piala maskot</text>
+</svg>

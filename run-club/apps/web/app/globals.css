@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* SPEC §5: cream panels, black ink, Higround orange. One light theme until the game UI lands. */
+:root {
+  --background: #f3e9d2;
+  --foreground: #111111;
+  color-scheme: light;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+}
