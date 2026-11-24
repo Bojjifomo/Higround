@@ -6,6 +6,7 @@ payload.json holds {"clear": [...ranges], "write": [{"range": ..., "values": [[.
 Claude writes it to the sheet with the Google Sheets connector (see README.md, step 4).
 """
 import calendar
+import csv
 import datetime as dt
 import json
 import sys
@@ -39,9 +40,12 @@ def main(month):
     if (src / "manual.json").exists():
         items += hgfin.manual_items(json.loads((src / "manual.json").read_text()))
     history = []
-    if (src / "form_v2.json").exists():
-        history = hgfin.parse_form_v2(json.loads((src / "form_v2.json").read_text()))
-        items += history
+    form_csv, form_json = src / "form_v2.csv", src / "form_v2.json"
+    if form_csv.exists():  # Google Sheets > File > Download > CSV of tab 'Form Responses 2'
+        history = hgfin.parse_form_v2(list(csv.reader(open(form_csv, encoding="utf-8-sig"))))
+    elif form_json.exists():
+        history = hgfin.parse_form_v2(json.loads(form_json.read_text()))
+    items += history
     hgfin.reconcile(items, bca, year, mon)
     rows = [i for i in items if hgfin.in_month(i, year, mon)]
     for i in rows:

@@ -32,7 +32,8 @@ Laporan: Google Sheet (ID: `data/ids.json` → `laporan_sheet`) (tab Laba Rugi, 
 1. Simpan input ke `data/YYYY-MM/` (folder ini di-gitignore, jangan di-commit):
    - `bca.csv` = CSV mutasi BCA
    - `luna.pdf` = PDF Ringkasan Penjualan LunaPOS
-   - `form_v2.json` = hasil `get_values` `'Form Responses 2'!A:AI` (seluruh histori, header ikut), ditulis apa adanya sebagai JSON array
+   - `form_v2.csv` = tab `Form Responses 2` di-download sebagai CSV (Google Sheets: File > Download > CSV), atau `form_v2.json` = hasil `get_values` `'Form Responses 2'!A:AI` (seluruh histori, header ikut)
+   - `manual.json` (opsional) = baris transaksi yang sudah dikategorikan manual; dipakai untuk November 2026 (sebelum form v2)
 2. Bon cash: lihat folder Invoice Offline. Foto hanya dibaca kalau belanja cash itu **tidak** ada di form (cara bayar "Kas kecil"); hasilnya ditambahkan ke `manual.json` (format 11 kolom tab Transaksi).
 3. Jalankan:
    ```bash
