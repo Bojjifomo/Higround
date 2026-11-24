@@ -1,0 +1,45 @@
+{
+  "_note": "Semua angka [KEPUTUSAN] default, lihat SPEC.md §7. Rule engine membaca file ini, jangan hardcode.",
+  "timezone": "Asia/Jakarta",
+  "counted_types": ["Run", "TrailRun", "VirtualRun"],
+  "ignored_sources": ["STRAVA"],
+  "distance": { "xp_per_km": 10, "granularity_km": 0.1 },
+  "elevation": { "xp_per_10m": 1, "types": ["Run", "TrailRun"] },
+  "long_run": [
+    { "min_km": 42.2, "xp": 300 },
+    { "min_km": 21.1, "xp": 100 },
+    { "min_km": 10, "xp": 30 }
+  ],
+  "weekly_mileage_tiers": [
+    { "km": 10, "xp": 50 }, { "km": 20, "xp": 100 }, { "km": 30, "xp": 150 },
+    { "km": 50, "xp": 250 }, { "km": 80, "xp": 400 }
+  ],
+  "consistency": { "min_run_days_per_week": 3, "xp": 40 },
+  "streak": { "xp_per_week_in_streak": 10, "max_xp": 100 },
+  "higround_start": {
+    "lat": -6.1692868660954705,
+    "lng": 106.97518796135917,
+    "radius_m": 200,
+    "distance_xp_multiplier": 1.5,
+    "flat_xp": 25,
+    "max_per_day": 1,
+    "excluded_types": ["VirtualRun"]
+  },
+  "personal_best": { "5k": 50, "10k": 75, "half": 150, "full": 300 },
+  "anti_cheat": {
+    "flag_if_avg_pace_faster_than_s_per_km": 180,
+    "flag_if_max_speed_kmh_over": 25,
+    "flag_if_distance_km_over": 100,
+    "require_device_source": true
+  },
+  "level_curve": { "formula": "40 * (n - 1)^2", "max_level": 50 },
+  "titles": [
+    { "from": 1, "title": "Rookie" },
+    { "from": 5, "title": "Jogger" },
+    { "from": 10, "title": "Pacer" },
+    { "from": 20, "title": "Strider" },
+    { "from": 30, "title": "Road Warrior" },
+    { "from": 40, "title": "Ultra" },
+    { "from": 50, "title": "Higround Legend" }
+  ]
+}

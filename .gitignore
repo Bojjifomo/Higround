@@ -2,3 +2,9 @@ __pycache__/
 *.pyc
 # data keuangan dan ID dokumen, jangan di-commit
 finance/data/
+
+# run-club
+run-club/assets/vendor/
+run-club/**/node_modules/
+run-club/**/.next/
+run-club/**/.env*.local

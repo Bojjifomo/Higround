@@ -1,0 +1,449 @@
+{
+  "source": "reference/Yoga_Quest_Level_Misi.pdf",
+  "stars": {
+    "1": 0.5,
+    "2": 1.0,
+    "3": 1.5,
+    "rounding": "half-up to whole seconds (matches PDF, e.g. 45s*1.5=67.5 -> 68)"
+  },
+  "unlock_rule": {
+    "min_ratio_missions_at_2_stars": 0.8
+  },
+  "xp_by_star_ratio": {
+    "1": 0.5,
+    "2": 1.0,
+    "3": 1.5,
+    "note": "[KEPUTUSAN] XP misi = xp_per_mission x rasio bintang terbaik; upgrade bintang membayar selisihnya"
+  },
+  "safety_note": "Pose inversi dan backbend (safety_form_first) mengutamakan bentuk yang benar daripada durasi; member wajib mencentang form_cues sebelum timer mulai.",
+  "requires": {
+    "consent_version": 1,
+    "wa_group": {
+      "feature_flag": "YOGA_WA_GATE",
+      "default": false,
+      "env_url": "WA_GROUP_URL"
+    }
+  },
+  "levels": [
+    {
+      "level": 1,
+      "name": "Fondasi",
+      "xp_per_mission": 10,
+      "unlock_needs_missions_at_2_stars": 4,
+      "missions": [
+        {
+          "key": "mountain",
+          "name": "Mountain Pose (Tadasana)",
+          "target_s": 30,
+          "per_side": false,
+          "safety_form_first": false,
+          "stars_s": [
+            15,
+            30,
+            45
+          ]
+        },
+        {
+          "key": "child",
+          "name": "Child's Pose (Balasana)",
+          "target_s": 45,
+          "per_side": false,
+          "safety_form_first": false,
+          "stars_s": [
+            23,
+            45,
+            68
+          ]
+        },
+        {
+          "key": "cat_cow",
+          "name": "Cat-Cow",
+          "target_s": 40,
+          "per_side": false,
+          "safety_form_first": false,
+          "stars_s": [
+            20,
+            40,
+            60
+          ],
+          "note": "gerak terus (continuous movement), bukan tahan statis"
+        },
+        {
+          "key": "downward_dog",
+          "name": "Downward Dog",
+          "target_s": 20,
+          "per_side": false,
+          "safety_form_first": false,
+          "stars_s": [
+            10,
+            20,
+            30
+          ]
+        },
+        {
+          "key": "baby_cobra",
+          "name": "Baby Cobra",
+          "target_s": 15,
+          "per_side": false,
+          "safety_form_first": false,
+          "stars_s": [
+            8,
+            15,
+            23
+          ]
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "name": "Dasar",
+      "xp_per_mission": 20,
+      "unlock_needs_missions_at_2_stars": 5,
+      "missions": [
+        {
+          "key": "warrior_1",
+          "name": "Warrior I",
+          "target_s": 25,
+          "per_side": true,
+          "safety_form_first": false,
+          "stars_s": [
+            13,
+            25,
+            38
+          ]
+        },
+        {
+          "key": "warrior_2",
+          "name": "Warrior II",
+          "target_s": 25,
+          "per_side": true,
+          "safety_form_first": false,
+          "stars_s": [
+            13,
+            25,
+            38
+          ]
+        },
+        {
+          "key": "triangle",
+          "name": "Triangle (Trikonasana)",
+          "target_s": 25,
+          "per_side": true,
+          "safety_form_first": false,
+          "stars_s": [
+            13,
+            25,
+            38
+          ]
+        },
+        {
+          "key": "tree",
+          "name": "Tree Pose (Vrksasana)",
+          "target_s": 30,
+          "per_side": true,
+          "safety_form_first": false,
+          "stars_s": [
+            15,
+            30,
+            45
+          ]
+        },
+        {
+          "key": "bridge",
+          "name": "Bridge Pose",
+          "target_s": 20,
+          "per_side": false,
+          "safety_form_first": false,
+          "stars_s": [
+            10,
+            20,
+            30
+          ]
+        },
+        {
+          "key": "low_lunge",
+          "name": "Low Lunge",
+          "target_s": 25,
+          "per_side": true,
+          "safety_form_first": false,
+          "stars_s": [
+            13,
+            25,
+            38
+          ]
+        }
+      ]
+    },
+    {
+      "level": 3,
+      "name": "Intermediate",
+      "xp_per_mission": 40,
+      "unlock_needs_missions_at_2_stars": 6,
+      "missions": [
+        {
+          "key": "warrior_3",
+          "name": "Warrior III",
+          "target_s": 20,
+          "per_side": true,
+          "safety_form_first": false,
+          "stars_s": [
+            10,
+            20,
+            30
+          ]
+        },
+        {
+          "key": "half_moon",
+          "name": "Half Moon (Ardha Chandrasana)",
+          "target_s": 20,
+          "per_side": true,
+          "safety_form_first": false,
+          "stars_s": [
+            10,
+            20,
+            30
+          ]
+        },
+        {
+          "key": "chair_twist",
+          "name": "Chair + Twist",
+          "target_s": 30,
+          "per_side": false,
+          "safety_form_first": false,
+          "stars_s": [
+            15,
+            30,
+            45
+          ]
+        },
+        {
+          "key": "pigeon",
+          "name": "Pigeon Pose",
+          "target_s": 60,
+          "per_side": true,
+          "safety_form_first": false,
+          "stars_s": [
+            30,
+            60,
+            90
+          ]
+        },
+        {
+          "key": "plank",
+          "name": "Plank",
+          "target_s": 45,
+          "per_side": false,
+          "safety_form_first": false,
+          "stars_s": [
+            23,
+            45,
+            68
+          ]
+        },
+        {
+          "key": "chaturanga",
+          "name": "Chaturanga",
+          "target_s": 10,
+          "per_side": false,
+          "safety_form_first": false,
+          "stars_s": [
+            5,
+            10,
+            15
+          ]
+        },
+        {
+          "key": "boat",
+          "name": "Boat Pose (Navasana)",
+          "target_s": 25,
+          "per_side": false,
+          "safety_form_first": false,
+          "stars_s": [
+            13,
+            25,
+            38
+          ]
+        }
+      ]
+    },
+    {
+      "level": 4,
+      "name": "Advanced",
+      "xp_per_mission": 80,
+      "unlock_needs_missions_at_2_stars": 4,
+      "missions": [
+        {
+          "key": "crow",
+          "name": "Crow Pose (Bakasana)",
+          "target_s": 15,
+          "per_side": false,
+          "safety_form_first": false,
+          "stars_s": [
+            8,
+            15,
+            23
+          ]
+        },
+        {
+          "key": "side_crow",
+          "name": "Side Crow",
+          "target_s": 10,
+          "per_side": true,
+          "safety_form_first": false,
+          "stars_s": [
+            5,
+            10,
+            15
+          ]
+        },
+        {
+          "key": "wheel",
+          "name": "Wheel (Urdhva Dhanurasana)",
+          "target_s": 15,
+          "per_side": false,
+          "safety_form_first": true,
+          "stars_s": [
+            8,
+            15,
+            23
+          ],
+          "form_cues": [
+            "Pemanasan backbend dulu (Bridge, Cobra) sebelum naik.",
+            "Kaki selebar pinggul, lutut sejajar jari kaki dan tidak melebar ke samping.",
+            "Telapak di samping telinga, jari menghadap bahu; turun pelan dengan dagu ke dada."
+          ]
+        },
+        {
+          "key": "headstand_wall",
+          "name": "Headstand di tembok (Sirsasana)",
+          "target_s": 60,
+          "per_side": false,
+          "safety_form_first": true,
+          "stars_s": [
+            30,
+            60,
+            90
+          ],
+          "form_cues": [
+            "Siku selebar bahu dan jari terkunci; beban ditahan lengan bawah, bukan kepala atau leher.",
+            "Punggung 5-10 cm dari tembok; naik pelan pakai core, tanpa melompat.",
+            "Turun segera kalau pusing atau leher nyeri; lewati misi ini kalau punya cedera leher atau tekanan darah tinggi."
+          ]
+        },
+        {
+          "key": "king_pigeon",
+          "name": "King Pigeon",
+          "target_s": 20,
+          "per_side": true,
+          "safety_form_first": false,
+          "stars_s": [
+            10,
+            20,
+            30
+          ]
+        }
+      ]
+    },
+    {
+      "level": 5,
+      "name": "Expert",
+      "xp_per_mission": 160,
+      "unlock_needs_missions_at_2_stars": null,
+      "missions": [
+        {
+          "key": "handstand",
+          "name": "Handstand bebas",
+          "target_s": 20,
+          "per_side": false,
+          "safety_form_first": true,
+          "stars_s": [
+            10,
+            20,
+            30
+          ],
+          "form_cues": [
+            "Kuasai dulu handstand di tembok dan cara keluar yang aman (jatuh menyamping/cartwheel).",
+            "Bahu aktif mendorong lantai, jari menekan untuk menjaga keseimbangan.",
+            "Area kosong di atas matras, jauh dari meja dan kursi."
+          ]
+        },
+        {
+          "key": "forearm_stand",
+          "name": "Forearm Stand (Pincha Mayurasana)",
+          "target_s": 20,
+          "per_side": false,
+          "safety_form_first": true,
+          "stars_s": [
+            10,
+            20,
+            30
+          ],
+          "form_cues": [
+            "Siku tidak boleh lebih lebar dari bahu (pakai block atau strap kalau perlu).",
+            "Bahu tepat di atas siku, lengan bawah mendorong lantai.",
+            "Latih di tembok dulu dan turun pelan satu kaki per satu kaki."
+          ]
+        },
+        {
+          "key": "firefly",
+          "name": "Firefly (Tittibhasana)",
+          "target_s": 15,
+          "per_side": false,
+          "safety_form_first": false,
+          "stars_s": [
+            8,
+            15,
+            23
+          ]
+        },
+        {
+          "key": "eight_angle",
+          "name": "Eight-Angle Pose",
+          "target_s": 15,
+          "per_side": true,
+          "safety_form_first": false,
+          "stars_s": [
+            8,
+            15,
+            23
+          ]
+        },
+        {
+          "key": "scorpion",
+          "name": "Scorpion",
+          "target_s": 10,
+          "per_side": false,
+          "safety_form_first": true,
+          "stars_s": [
+            5,
+            10,
+            15
+          ],
+          "form_cues": [
+            "Hanya setelah Forearm Stand stabil minimal 20 detik.",
+            "Lengkungkan punggung atas; jangan memaksa lengkung di pinggang bawah.",
+            "Lakukan dekat tembok atau didampingi; berhenti kalau punggung bawah terasa nyeri."
+          ]
+        }
+      ]
+    }
+  ],
+  "bonus_missions": [
+    {
+      "key": "flow_warrior_triangle",
+      "name": "Flow Challenge: Warrior I → Warrior II → Triangle tanpa jeda",
+      "total_s": 75,
+      "requires_level": 2,
+      "xp": 60,
+      "xp_note": "[KEPUTUSAN] belum ada di PDF"
+    }
+  ],
+  "claim": {
+    "mode": "honor_system",
+    "server_timed": true,
+    "cooldown_minutes_per_mission": 10,
+    "max_claims_per_day": 10,
+    "per_side_star": "min(left,right)",
+    "label": "Self-reported"
+  }
+}
