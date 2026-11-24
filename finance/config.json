@@ -1,0 +1,64 @@
+{
+  "outlet": "Higround Harapan Indah",
+  "sewa_per_tahun": 75000000,
+  "komisi_platform_online": 0.20,
+  "cadangan_thr_per_bulan": 0.0833333333,
+  "batas_review_rp": 500000,
+  "umur_aset_default_tahun": 4,
+  "toleransi_biaya_transfer_rp": 7500,
+  "jendela_cocok_hari": [-3, 10],
+
+  "kategori_form": {
+    "Bahan makanan": "COGS - Bahan Makanan",
+    "Bahan minuman": "COGS - Bahan Minuman",
+    "Packaging": "COGS - Packaging",
+    "Utilities": "Utilities",
+    "Maintenance": "Maintenance & Perbaikan",
+    "Perlengkapan": "Perlengkapan Operasional",
+    "Marketing": "Marketing & Branding",
+    "Event": "Event & Komunitas",
+    "Lain-lain": "Lain-lain"
+  },
+  "jenis_aset": {
+    "Beli alat": "Aset (disusutkan)",
+    "Furnitur": "Aset (disusutkan)",
+    "Renovasi": "Aset (disusutkan)",
+    "Bayar cicilan": "Cicilan / Utang",
+    "Deposit": "Cicilan / Utang",
+    "Lainnya": "Belum dikategorikan"
+  },
+
+  "bca_masuk": [
+    ["HOQR", "Setoran QRIS"],
+    ["KARTU KREDIT", "Setoran kartu kredit"],
+    ["HOTGH", "Setoran EDC debit"],
+    ["AIRPAY", "Setoran ShopeePay/ShopeeFood"],
+    ["VISIONET", "Setoran OVO/Visionet (GrabFood?)"],
+    ["DOMPET ANAK BANGSA", "Setoran GoFood"],
+    ["GOPAY", "Setoran GoFood"],
+    ["GOTO ", "Setoran GoFood"],
+    ["YOGA", "Pendapatan kelas yoga"]
+  ],
+  "nominal_tiket_yoga": [75000],
+
+  "bca_keluar_tanpa_form": [
+    ["BIAYA ADM", "Biaya Bank"],
+    ["BIAYA TXN", "Biaya Bank"],
+    ["PLN", "Utilities"],
+    ["PDAM", "Utilities"],
+    ["TIRTA", "Utilities"],
+    ["INDIHOME", "Utilities"],
+    ["TELKOM", "Utilities"],
+    ["BIZNET", "Utilities"],
+    ["FIRST MEDIA", "Utilities"],
+    ["MYREPUBLIC", "Utilities"],
+    ["ICONNET", "Utilities"]
+  ],
+
+  "kategori": [
+    "COGS - Bahan Makanan", "COGS - Bahan Minuman", "COGS - Packaging",
+    "Gaji & Tunjangan", "Utilities", "Maintenance & Perbaikan", "Perlengkapan Operasional",
+    "Marketing & Branding", "Event & Komunitas", "Biaya Bank", "Lain-lain",
+    "Aset (disusutkan)", "Cicilan / Utang", "Beban Bulan Lain", "Belum dikategorikan"
+  ]
+}

@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+# data keuangan dan ID dokumen, jangan di-commit
+finance/data/
