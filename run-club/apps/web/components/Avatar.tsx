@@ -1,38 +1,11 @@
 import type { Avatar as AvatarSpec } from "@/lib/data/store";
+import { PERSON, personPalette } from "@/lib/world/sprite";
 
-/**
- * Placeholder pixel avatar (16 × 20 grid) drawn from the paper-doll colours, until the real sprites from
- * SPEC §12 arrive. Rendered as crisp SVG rects, scaled by `size`.
- */
-const ROWS = [
-  "......hhhh......",
-  ".....hhhhhh.....",
-  "....hhssssh.....",
-  "....hsskssk.....",
-  "....hssssss.....",
-  ".....ssmms......",
-  "......ss........",
-  "....tttttttt....",
-  "...tttttttttt...",
-  "...sttttttttS...",
-  "...sttttttttS...",
-  "....tttttttt....",
-  "....bbbbbbbb....",
-  "....bbbbbbbb....",
-  "....bbb..bbb....",
-  "....bbb..bbb....",
-  "....bbb..bbb....",
-  "....ss....ss....",
-  "...fff....fff...",
-  "...fff....fff...",
-];
-
+/** Placeholder pixel avatar from the paper-doll colours (same pattern as the world sprites). */
 export function Avatar({ avatar, size = 64, label }: { avatar: AvatarSpec; size?: number; label: string }) {
-  const color: Record<string, string> = {
-    h: avatar.hair, s: avatar.skin, S: avatar.skin, k: "#1b1b1b", m: "#9a4a3a", t: avatar.top, b: avatar.bottom, f: avatar.shoes,
-  };
+  const color = personPalette(avatar);
   const rects: React.ReactNode[] = [];
-  ROWS.forEach((row, y) =>
+  PERSON.forEach((row, y) =>
     [...row].forEach((ch, x) => {
       if (color[ch]) rects.push(<rect key={`${x}-${y}`} x={x} y={y} width={1.02} height={1.02} fill={color[ch]} />);
     }));
