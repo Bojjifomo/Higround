@@ -90,6 +90,12 @@ describe("anti-cheat & eligibility", () => {
     expect(activityXp(run({ maxSpeedKmh: 31 }), ctx)).toEqual([]);
     expect(eligibility(run({ movingTimeS: 5 * 180 })).flagged).toBe(false);     // exactly 3:00 is fine
   });
+  it("pays a flagged run once an admin approves it", () => {
+    const sus = run({ maxSpeedKmh: 31, distanceM: 10000, movingTimeS: 3300 });
+    expect(activityXp(sus, { ...ctx, approved: true }).length).toBeGreaterThan(0);
+    expect(ledgerFor("u1", [sus], "2026-11-01")).toEqual([]);
+    expect(ledgerFor("u1", [sus], "2026-11-01", undefined, new Set([sus.id]))).not.toEqual([]);
+  });
 });
 
 describe("personal bests", () => {

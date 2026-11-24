@@ -1,47 +1,50 @@
-import { getProvider } from "@/lib/providers";
-import { supabaseConfigured } from "@/lib/supabase/env";
-import { defaultRules, levelFor, xpForLevel } from "@/lib/xp";
-import { defaultConfig as yoga } from "@/lib/yoga";
+import Link from "next/link";
+import { Avatar } from "@/components/Avatar";
+import { Panel } from "@/components/ui";
+import { currentMember, getStore, leaderboardLite } from "@/lib/data";
 
-// Fase 0–2 placeholder: shows the app is wired to the shared rules. Real pages come in session 2.
 export const dynamic = "force-dynamic";
 
-export default function Home() {
-  const provider = getProvider().name;
-  const missions = yoga.levels.flatMap((l) => l.missions).length;
-  const titles = defaultRules.titles.map((t) => ({ ...t, xp: xpForLevel(t.from) }));
+export default async function Home() {
+  const me = await currentMember();
+  const rows = await leaderboardLite(await getStore());
   return (
-    <main className="mx-auto max-w-2xl px-4 py-10 font-[family-name:var(--font-geist-sans)]">
-      <p className="text-sm font-bold uppercase tracking-widest text-hg-orange">Higround Harapan Indah</p>
-      <h1 className="mt-2 text-4xl font-black">HIGROUND RUN CLUB</h1>
-      <p className="mt-3 text-neutral-700">
-        Fondasi Fase 0–2: aturan XP, Yoga Quest, database, dan provider Intervals.icu. Halaman profil, Yoga Quest,
-        dan admin menyusul di sesi berikutnya.
-      </p>
-
-      <section className="mt-8 rounded-lg border-4 border-hg-orange bg-white p-5">
-        <h2 className="text-lg font-bold">Status</h2>
-        <ul className="mt-2 space-y-1 text-sm">
-          <li>Provider aktivitas: <b>{provider === "intervals" ? "Intervals.icu" : "Mock (kredensial belum diisi)"}</b></li>
-          <li>Supabase: <b>{supabaseConfigured() ? "tersambung" : "belum disetel"}</b></li>
-          <li>Yoga Quest: <b>{yoga.levels.length} tahap, {missions} misi</b></li>
-          <li>Contoh: 3.240 XP = <b>Lv {levelFor(3240).level} · {levelFor(3240).title}</b></li>
-        </ul>
-      </section>
-
-      <section className="mt-6">
-        <h2 className="text-lg font-bold">Title per level</h2>
-        <table className="mt-2 w-full text-sm">
-          <thead><tr className="text-left text-neutral-500"><th>Level</th><th>Title</th><th className="text-right">XP total</th></tr></thead>
-          <tbody>
-            {titles.map((t) => (
-              <tr key={t.from} className="border-t border-hg-cream">
-                <td>{t.from}</td><td>{t.title}</td><td className="text-right tabular-nums">{t.xp.toLocaleString("id-ID")}</td>
-              </tr>
+    <div className="space-y-6">
+      <section className="grid items-center gap-6 md:grid-cols-[1.4fr_1fr]">
+        <div>
+          <p className="text-sm font-bold uppercase tracking-widest text-hg-orange">Higround Harapan Indah</p>
+          <h1 className="mt-2 font-pixel text-5xl leading-none">Lari, yoga, naik level.</h1>
+          <p className="mt-3 max-w-prose text-neutral-700">
+            Sambungkan jam lu lewat Intervals.icu. Tiap lari dan tiap misi Yoga Quest jadi XP, dan start dari Higround
+            dapat bonus. Dunia pixel Higround menyusul.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {me ? (
+              <>
+                <Link href={`/u/${me.handle}`} className="rounded-md border-2 border-black bg-hg-orange px-4 py-2 font-bold text-white shadow-[3px_3px_0_#111]">Profil gue</Link>
+                <Link href="/yoga" className="rounded-md border-2 border-black bg-white px-4 py-2 font-bold">Yoga Quest</Link>
+              </>
+            ) : (
+              <Link href="/login" className="rounded-md border-2 border-black bg-hg-orange px-4 py-2 font-bold text-white shadow-[3px_3px_0_#111]">Masuk</Link>
+            )}
+          </div>
+        </div>
+        <Panel title="Member">
+          <ol className="divide-y divide-[#EFE6D3]">
+            {rows.map(({ member, level }, i) => (
+              <li key={member.id}>
+                <Link href={`/u/${member.handle}`} className="flex items-center gap-3 py-2 hover:bg-hg-cream/50">
+                  <span className="w-5 text-right font-pixel text-lg text-neutral-500">{i + 1}</span>
+                  <Avatar avatar={member.avatar} size={28} label="" />
+                  <span className="min-w-0 flex-1 truncate font-bold">{member.displayName}</span>
+                  <span className="whitespace-nowrap text-xs">Lv {level.level} · {level.title}</span>
+                </Link>
+              </li>
             ))}
-          </tbody>
-        </table>
+          </ol>
+          <p className="mt-2 text-xs text-neutral-500">Urut berdasarkan XP. Profil privat tidak ditampilkan.</p>
+        </Panel>
       </section>
-    </main>
+    </div>
   );
 }

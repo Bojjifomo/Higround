@@ -79,20 +79,20 @@ export function xpForStars(tahap: Tahap, stars: Stars, cfg: YogaConfig = default
 }
 
 /**
- * Ledger entries when a mission's stars rise from `before` to `after`: one entry per star level
- * newly reached, so raising the stars pays only the difference and nothing is paid twice.
+ * Reconcile one mission's yoga XP: what the member should hold for their best stars, minus what the
+ * ledger already paid for that mission. Raising stars pays only the difference; an admin rejecting a
+ * claim lowers the best stars and produces a negative entry; earning it back pays again.
+ * `entriesSoFar` (the number of yoga entries already written for this mission) makes each key unique
+ * and the whole thing idempotent: run it twice on the same state and the second run writes nothing.
  */
-export function yogaXpEntries(userId: string, missionKey: string, before: Stars, after: Stars,
-                              cfg: YogaConfig = defaultConfig): LedgerEntry[] {
+export function reconcileYogaXp(userId: string, missionKey: string, bestStars: Stars, paidSoFar: number,
+                                entriesSoFar: number, cfg: YogaConfig = defaultConfig): LedgerEntry | null {
   const found = findMission(missionKey, cfg);
-  if (!found || after <= before) return [];
-  const out: LedgerEntry[] = [];
-  for (let s = before + 1; s <= after; s++) {
-    const amount = xpForStars(found.tahap, s as Stars, cfg) - xpForStars(found.tahap, (s - 1) as Stars, cfg);
-    out.push({ userId, amount, ruleKey: `yoga_${s}star`, sourceType: "yoga", sourceId: missionKey,
-               idempotencyKey: `yoga:${missionKey}:${s}:${userId}` });
-  }
-  return out;
+  if (!found) return null;
+  const delta = xpForStars(found.tahap, bestStars, cfg) - paidSoFar;
+  if (delta === 0) return null;
+  return { userId, amount: delta, ruleKey: delta > 0 ? "yoga_stars" : "yoga_reversal", sourceType: "yoga",
+           sourceId: missionKey, idempotencyKey: `yoga:${missionKey}:${userId}:${entriesSoFar + 1}` };
 }
 
 // ── progress, unlocks, badges ─────────────────────────────────────────────────

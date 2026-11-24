@@ -100,12 +100,20 @@ export interface ActivityContext {
   higroundBonusesToday: number;
   /** Best times (s) before this activity. A PB pays only when it beats an existing best. */
   previousBests: Partial<Record<PbKey, number>>;
+  /** An admin reviewed this flagged activity and approved it: it earns XP like any other. */
+  approved?: boolean;
+}
+
+/** Counted and either clean or approved by an admin. */
+export function earns(a: Activity, approvedIds: ReadonlySet<string> = new Set(), rules: XpRules = defaultRules): boolean {
+  const e = eligibility(a, rules);
+  return e.counted && (!e.flagged || approvedIds.has(a.id));
 }
 
 /** XP entries for one activity. Flagged or uncounted activities earn nothing yet. */
 export function activityXp(a: Activity, ctx: ActivityContext, rules: XpRules = defaultRules): LedgerEntry[] {
   const el = eligibility(a, rules);
-  if (!el.counted || el.flagged) return [];
+  if (!el.counted || (el.flagged && !ctx.approved)) return [];
   const out: LedgerEntry[] = [];
   const add = (ruleKey: string, amount: number) => {
     if (amount > 0) {
@@ -145,11 +153,8 @@ export function activityXp(a: Activity, ctx: ActivityContext, rules: XpRules = d
  * at least one counted run, this week included (see streakWeeks()).
  */
 export function weeklyXp(userId: string, week: string, weekActivities: Activity[], streak: number,
-                         rules: XpRules = defaultRules): LedgerEntry[] {
-  const counted = weekActivities.filter((a) => {
-    const e = eligibility(a, rules);
-    return e.counted && !e.flagged;
-  });
+                         rules: XpRules = defaultRules, approvedIds: ReadonlySet<string> = new Set()): LedgerEntry[] {
+  const counted = weekActivities.filter((a) => earns(a, approvedIds, rules));
   const out: LedgerEntry[] = [];
   const add = (ruleKey: string, amount: number) => {
     if (amount > 0) {
@@ -168,11 +173,9 @@ export function weeklyXp(userId: string, week: string, weekActivities: Activity[
 }
 
 /** Consecutive weeks ending at `week` (inclusive) that contain a counted run. */
-export function streakWeeks(week: string, activities: Activity[], rules: XpRules = defaultRules): number {
-  const weeks = new Set(activities.filter((a) => {
-    const e = eligibility(a, rules);
-    return e.counted && !e.flagged;
-  }).map((a) => weekKey(a.startTime, rules)));
+export function streakWeeks(week: string, activities: Activity[], rules: XpRules = defaultRules,
+                            approvedIds: ReadonlySet<string> = new Set()): number {
+  const weeks = new Set(activities.filter((a) => earns(a, approvedIds, rules)).map((a) => weekKey(a.startTime, rules)));
   let n = 0;
   for (let w = week; weeks.has(w); w = addDays(w, -7)) n++;
   return n;
@@ -186,7 +189,7 @@ export function streakWeeks(week: string, activities: Activity[], rules: XpRules
  * `completedWeeksBefore` limits weekly bonuses to weeks that have ended (the Monday job).
  */
 export function ledgerFor(userId: string, activities: Activity[], completedWeeksBefore: string,
-                          rules: XpRules = defaultRules): LedgerEntry[] {
+                          rules: XpRules = defaultRules, approvedIds: ReadonlySet<string> = new Set()): LedgerEntry[] {
   const mine = activities.filter((a) => a.userId === userId)
     .sort((x, y) => Date.parse(x.startTime) - Date.parse(y.startTime));
   const out: LedgerEntry[] = [];
@@ -194,11 +197,11 @@ export function ledgerFor(userId: string, activities: Activity[], completedWeeks
   const higroundByDay = new Map<string, number>();
   for (const a of mine) {
     const day = localDate(a.startTime, rules);
-    const entries = activityXp(a, { higroundBonusesToday: higroundByDay.get(day) ?? 0, previousBests: { ...bests } }, rules);
+    const entries = activityXp(a, { higroundBonusesToday: higroundByDay.get(day) ?? 0, previousBests: { ...bests },
+                                    approved: approvedIds.has(a.id) }, rules);
     out.push(...entries);
     if (entries.some((e) => e.ruleKey === "higround_start")) higroundByDay.set(day, (higroundByDay.get(day) ?? 0) + 1);
-    const el = eligibility(a, rules);
-    if (el.counted && !el.flagged) {
+    if (earns(a, approvedIds, rules)) {
       for (const [k, s] of Object.entries(effortsOf(a)) as [PbKey, number][]) {
         if (bests[k] == null || s < bests[k]!) bests[k] = s;
       }
@@ -208,7 +211,7 @@ export function ledgerFor(userId: string, activities: Activity[], completedWeeks
   for (const w of weeks) {
     if (w >= completedWeeksBefore) continue;
     const inWeek = mine.filter((a) => weekKey(a.startTime, rules) === w);
-    out.push(...weeklyXp(userId, w, inWeek, streakWeeks(w, mine, rules), rules));
+    out.push(...weeklyXp(userId, w, inWeek, streakWeeks(w, mine, rules, approvedIds), rules, approvedIds));
   }
   return out;
 }

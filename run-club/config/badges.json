@@ -1,0 +1,513 @@
+{
+  "_note": "[KEPUTUSAN] default badge list and XP rewards (SPEC §8.3, §9). Event badges are created per event.",
+  "cosmetics": [
+    {
+      "key": "shirt_runclub_orange",
+      "slot": "top",
+      "name": "Kaos Run Club oranye",
+      "unlock": {
+        "level": 10
+      }
+    },
+    {
+      "key": "hat_mascot",
+      "slot": "headwear",
+      "name": "Topi maskot",
+      "unlock": {
+        "badge": "local_legend"
+      }
+    }
+  ],
+  "badges": [
+    {
+      "key": "first_run",
+      "name": "First Run",
+      "category": "running",
+      "rarity": "common",
+      "xp_reward": 20,
+      "icon": "shoe",
+      "criteria": {
+        "kind": "run_count",
+        "min": 1
+      },
+      "description": "",
+      "unlock_cosmetic": "Lari pertama yang tercatat"
+    },
+    {
+      "key": "total_50k",
+      "name": "50 km",
+      "category": "running",
+      "rarity": "common",
+      "xp_reward": 50,
+      "icon": "road",
+      "criteria": {
+        "kind": "total_km",
+        "min": 50
+      },
+      "description": "",
+      "unlock_cosmetic": "Total 50 km lari"
+    },
+    {
+      "key": "total_100k",
+      "name": "100 km",
+      "category": "running",
+      "rarity": "rare",
+      "xp_reward": 100,
+      "icon": "road",
+      "criteria": {
+        "kind": "total_km",
+        "min": 100
+      },
+      "description": "",
+      "unlock_cosmetic": "Total 100 km lari"
+    },
+    {
+      "key": "total_500k",
+      "name": "500 km",
+      "category": "running",
+      "rarity": "epic",
+      "xp_reward": 300,
+      "icon": "road",
+      "criteria": {
+        "kind": "total_km",
+        "min": 500
+      },
+      "description": "",
+      "unlock_cosmetic": "Total 500 km lari"
+    },
+    {
+      "key": "total_1000k",
+      "name": "1.000 km",
+      "category": "running",
+      "rarity": "legendary",
+      "xp_reward": 500,
+      "icon": "road",
+      "criteria": {
+        "kind": "total_km",
+        "min": 1000
+      },
+      "description": "",
+      "unlock_cosmetic": "Total 1000 km lari"
+    },
+    {
+      "key": "first_10k",
+      "name": "First 10K",
+      "category": "distance",
+      "rarity": "common",
+      "xp_reward": 50,
+      "icon": "medal",
+      "criteria": {
+        "kind": "single_run_km",
+        "min": 10
+      },
+      "description": "",
+      "unlock_cosmetic": "Sekali lari minimal 10 km"
+    },
+    {
+      "key": "half_marathon",
+      "name": "Half Marathon",
+      "category": "distance",
+      "rarity": "rare",
+      "xp_reward": 100,
+      "icon": "medal",
+      "criteria": {
+        "kind": "single_run_km",
+        "min": 21.1
+      },
+      "description": "",
+      "unlock_cosmetic": "Sekali lari minimal 21.1 km"
+    },
+    {
+      "key": "marathon",
+      "name": "Marathon",
+      "category": "distance",
+      "rarity": "epic",
+      "xp_reward": 200,
+      "icon": "medal",
+      "criteria": {
+        "kind": "single_run_km",
+        "min": 42.2
+      },
+      "description": "",
+      "unlock_cosmetic": "Sekali lari minimal 42.2 km"
+    },
+    {
+      "key": "ultra",
+      "name": "Ultra",
+      "category": "distance",
+      "rarity": "legendary",
+      "xp_reward": 300,
+      "icon": "medal",
+      "criteria": {
+        "kind": "single_run_km",
+        "min": 50
+      },
+      "description": "",
+      "unlock_cosmetic": "Sekali lari minimal 50 km"
+    },
+    {
+      "key": "home_base",
+      "name": "Home Base",
+      "category": "higround",
+      "rarity": "common",
+      "xp_reward": 50,
+      "icon": "pin",
+      "criteria": {
+        "kind": "higround_starts",
+        "min": 5
+      },
+      "description": null,
+      "unlock_cosmetic": "5× start lari dari Higround"
+    },
+    {
+      "key": "regular",
+      "name": "Regular",
+      "category": "higround",
+      "rarity": "rare",
+      "xp_reward": 150,
+      "icon": "pin",
+      "criteria": {
+        "kind": "higround_starts",
+        "min": 25
+      },
+      "description": null,
+      "unlock_cosmetic": "25× start lari dari Higround"
+    },
+    {
+      "key": "local_legend",
+      "name": "Local Legend",
+      "category": "higround",
+      "rarity": "legendary",
+      "xp_reward": 400,
+      "icon": "pin",
+      "criteria": {
+        "kind": "higround_starts",
+        "min": 100
+      },
+      "description": "hat_mascot",
+      "unlock_cosmetic": "100× start lari dari Higround"
+    },
+    {
+      "key": "streak_4w",
+      "name": "4 Week Streak",
+      "category": "streak",
+      "rarity": "common",
+      "xp_reward": 50,
+      "icon": "flame",
+      "criteria": {
+        "kind": "streak_weeks",
+        "min": 4
+      },
+      "description": "",
+      "unlock_cosmetic": "4 minggu berturut-turut ada lari"
+    },
+    {
+      "key": "streak_12w",
+      "name": "12 Week Streak",
+      "category": "streak",
+      "rarity": "rare",
+      "xp_reward": 150,
+      "icon": "flame",
+      "criteria": {
+        "kind": "streak_weeks",
+        "min": 12
+      },
+      "description": "",
+      "unlock_cosmetic": "12 minggu berturut-turut ada lari"
+    },
+    {
+      "key": "yoga_clear_1",
+      "name": "Fondasi Clear",
+      "category": "yoga",
+      "rarity": "common",
+      "xp_reward": 20,
+      "icon": "lotus",
+      "criteria": {
+        "kind": "yoga",
+        "key": "yoga_clear_1"
+      },
+      "description": "",
+      "unlock_cosmetic": "Tahap 1 selesai (80% misi ≥2★)"
+    },
+    {
+      "key": "yoga_clear_2",
+      "name": "Dasar Clear",
+      "category": "yoga",
+      "rarity": "common",
+      "xp_reward": 40,
+      "icon": "lotus",
+      "criteria": {
+        "kind": "yoga",
+        "key": "yoga_clear_2"
+      },
+      "description": "",
+      "unlock_cosmetic": "Tahap 2 selesai (80% misi ≥2★)"
+    },
+    {
+      "key": "yoga_clear_3",
+      "name": "Intermediate Clear",
+      "category": "yoga",
+      "rarity": "rare",
+      "xp_reward": 60,
+      "icon": "lotus",
+      "criteria": {
+        "kind": "yoga",
+        "key": "yoga_clear_3"
+      },
+      "description": "",
+      "unlock_cosmetic": "Tahap 3 selesai (80% misi ≥2★)"
+    },
+    {
+      "key": "yoga_clear_4",
+      "name": "Advanced Clear",
+      "category": "yoga",
+      "rarity": "epic",
+      "xp_reward": 80,
+      "icon": "lotus",
+      "criteria": {
+        "kind": "yoga",
+        "key": "yoga_clear_4"
+      },
+      "description": "",
+      "unlock_cosmetic": "Tahap 4 selesai (80% misi ≥2★)"
+    },
+    {
+      "key": "yoga_clear_5",
+      "name": "Expert Clear",
+      "category": "yoga",
+      "rarity": "legendary",
+      "xp_reward": 100,
+      "icon": "lotus",
+      "criteria": {
+        "kind": "yoga",
+        "key": "yoga_clear_5"
+      },
+      "description": "",
+      "unlock_cosmetic": "Tahap 5 selesai (80% misi ≥2★)"
+    },
+    {
+      "key": "yoga_perfect_1",
+      "name": "Perfect Fondasi",
+      "category": "yoga",
+      "rarity": "epic",
+      "xp_reward": 50,
+      "icon": "star",
+      "criteria": {
+        "kind": "yoga",
+        "key": "yoga_perfect_1"
+      },
+      "description": "",
+      "unlock_cosmetic": "Semua misi Tahap 1 3★"
+    },
+    {
+      "key": "yoga_perfect_2",
+      "name": "Perfect Dasar",
+      "category": "yoga",
+      "rarity": "epic",
+      "xp_reward": 100,
+      "icon": "star",
+      "criteria": {
+        "kind": "yoga",
+        "key": "yoga_perfect_2"
+      },
+      "description": "",
+      "unlock_cosmetic": "Semua misi Tahap 2 3★"
+    },
+    {
+      "key": "yoga_perfect_3",
+      "name": "Perfect Intermediate",
+      "category": "yoga",
+      "rarity": "epic",
+      "xp_reward": 150,
+      "icon": "star",
+      "criteria": {
+        "kind": "yoga",
+        "key": "yoga_perfect_3"
+      },
+      "description": "",
+      "unlock_cosmetic": "Semua misi Tahap 3 3★"
+    },
+    {
+      "key": "yoga_perfect_4",
+      "name": "Perfect Advanced",
+      "category": "yoga",
+      "rarity": "legendary",
+      "xp_reward": 200,
+      "icon": "star",
+      "criteria": {
+        "kind": "yoga",
+        "key": "yoga_perfect_4"
+      },
+      "description": "",
+      "unlock_cosmetic": "Semua misi Tahap 4 3★"
+    },
+    {
+      "key": "yoga_perfect_5",
+      "name": "Perfect Expert",
+      "category": "yoga",
+      "rarity": "legendary",
+      "xp_reward": 250,
+      "icon": "star",
+      "criteria": {
+        "kind": "yoga",
+        "key": "yoga_perfect_5"
+      },
+      "description": "",
+      "unlock_cosmetic": "Semua misi Tahap 5 3★"
+    },
+    {
+      "key": "yoga_flow_master",
+      "name": "Flow Master",
+      "category": "yoga",
+      "rarity": "rare",
+      "xp_reward": 30,
+      "icon": "wave",
+      "criteria": {
+        "kind": "yoga",
+        "key": "yoga_flow_master"
+      },
+      "description": "",
+      "unlock_cosmetic": "Selesaikan Flow Challenge"
+    },
+    {
+      "key": "yoga_pose_crow",
+      "name": "Crow Pose",
+      "category": "yoga",
+      "rarity": "epic",
+      "xp_reward": 40,
+      "icon": "pose",
+      "criteria": {
+        "kind": "yoga",
+        "key": "yoga_pose_crow"
+      },
+      "description": "",
+      "unlock_cosmetic": "Crow Pose (Bakasana) ≥2★"
+    },
+    {
+      "key": "yoga_pose_side_crow",
+      "name": "Side Crow",
+      "category": "yoga",
+      "rarity": "epic",
+      "xp_reward": 40,
+      "icon": "pose",
+      "criteria": {
+        "kind": "yoga",
+        "key": "yoga_pose_side_crow"
+      },
+      "description": "",
+      "unlock_cosmetic": "Side Crow ≥2★"
+    },
+    {
+      "key": "yoga_pose_wheel",
+      "name": "Wheel",
+      "category": "yoga",
+      "rarity": "epic",
+      "xp_reward": 40,
+      "icon": "pose",
+      "criteria": {
+        "kind": "yoga",
+        "key": "yoga_pose_wheel"
+      },
+      "description": "",
+      "unlock_cosmetic": "Wheel (Urdhva Dhanurasana) ≥2★"
+    },
+    {
+      "key": "yoga_pose_headstand_wall",
+      "name": "Headstand di tembok",
+      "category": "yoga",
+      "rarity": "epic",
+      "xp_reward": 40,
+      "icon": "pose",
+      "criteria": {
+        "kind": "yoga",
+        "key": "yoga_pose_headstand_wall"
+      },
+      "description": "",
+      "unlock_cosmetic": "Headstand di tembok (Sirsasana) ≥2★"
+    },
+    {
+      "key": "yoga_pose_king_pigeon",
+      "name": "King Pigeon",
+      "category": "yoga",
+      "rarity": "epic",
+      "xp_reward": 40,
+      "icon": "pose",
+      "criteria": {
+        "kind": "yoga",
+        "key": "yoga_pose_king_pigeon"
+      },
+      "description": "",
+      "unlock_cosmetic": "King Pigeon ≥2★"
+    },
+    {
+      "key": "yoga_pose_handstand",
+      "name": "Handstand bebas",
+      "category": "yoga",
+      "rarity": "legendary",
+      "xp_reward": 80,
+      "icon": "pose",
+      "criteria": {
+        "kind": "yoga",
+        "key": "yoga_pose_handstand"
+      },
+      "description": "",
+      "unlock_cosmetic": "Handstand bebas ≥2★"
+    },
+    {
+      "key": "yoga_pose_forearm_stand",
+      "name": "Forearm Stand",
+      "category": "yoga",
+      "rarity": "legendary",
+      "xp_reward": 80,
+      "icon": "pose",
+      "criteria": {
+        "kind": "yoga",
+        "key": "yoga_pose_forearm_stand"
+      },
+      "description": "",
+      "unlock_cosmetic": "Forearm Stand (Pincha Mayurasana) ≥2★"
+    },
+    {
+      "key": "yoga_pose_firefly",
+      "name": "Firefly",
+      "category": "yoga",
+      "rarity": "legendary",
+      "xp_reward": 80,
+      "icon": "pose",
+      "criteria": {
+        "kind": "yoga",
+        "key": "yoga_pose_firefly"
+      },
+      "description": "",
+      "unlock_cosmetic": "Firefly (Tittibhasana) ≥2★"
+    },
+    {
+      "key": "yoga_pose_eight_angle",
+      "name": "Eight-Angle Pose",
+      "category": "yoga",
+      "rarity": "legendary",
+      "xp_reward": 80,
+      "icon": "pose",
+      "criteria": {
+        "kind": "yoga",
+        "key": "yoga_pose_eight_angle"
+      },
+      "description": "",
+      "unlock_cosmetic": "Eight-Angle Pose ≥2★"
+    },
+    {
+      "key": "yoga_pose_scorpion",
+      "name": "Scorpion",
+      "category": "yoga",
+      "rarity": "legendary",
+      "xp_reward": 80,
+      "icon": "pose",
+      "criteria": {
+        "kind": "yoga",
+        "key": "yoga_pose_scorpion"
+      },
+      "description": "",
+      "unlock_cosmetic": "Scorpion ≥2★"
+    }
+  ]
+}
