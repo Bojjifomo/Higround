@@ -1,12 +1,14 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
 import { Panel } from "@/components/ui";
-import { currentMember, getStore, leaderboardLite } from "@/lib/data";
+import { authUser, currentMember, getStore, leaderboardLite } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const me = await currentMember();
+  if (!me && (await authUser())) redirect("/onboarding");   // signed in with Google / email but no profile yet
   const rows = await leaderboardLite(await getStore());
   return (
     <div className="space-y-6">
