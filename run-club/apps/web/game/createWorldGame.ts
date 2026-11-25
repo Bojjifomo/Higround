@@ -1,13 +1,15 @@
 /**
- * Phaser 3 isometric renderer for the Higround world (SPEC §6.3, §12.4).
- * Loaded only in the browser via dynamic import.
+ * Phaser 3 Isometric Diorama Renderer for Higround Run Club (v2).
+ * Inspired by Kairosoft, WorkAdventure/Gather.town, Pikmin Bloom, Zombies Run!, NIKELAND & Pokémon GO.
  *
- * Renders:
- * - CC0 PtDesigns isometric pixel floor tiles & Cozy Shops furniture props
- * - Custom Higround pixel landmarks (Start Gate 0 KM, ORDER HERE! counter, Gelato Kiosk, Mascot Fridges, etc.)
- * - Animated multi-frame paper-doll characters (idle, walk, run, sit, stretch, yoga)
- * - Animated 4-pose Higround mascot, coffee steam particles, warm night lamps, pop-in Kairosoft bubbles,
- *   and dynamic Studio Room mode (Yoga morning vs Dine-in afternoon/evening).
+ * Features:
+ * - Warm time-of-day diorama backdrop + 3D cutaway slab base + green neighborhood border (no empty void)
+ * - 66 photo-accurate shaded CC0 + Higround sprites (zero grey placeholder boxes)
+ * - 28x36 multi-frame chibi animations (idle blink, walk, run, coffee-sip sit, stretch, yoga)
+ * - Clickable interactive POIs (Start Gate, ORDER HERE!, Gelato Kiosk, Yoga Board, Leaderboard, Sandwich Board)
+ * - Pikmin-style glowing runner footstep trails for members who ran today
+ * - Zombies Run! visual ruko upgrades unlocked by community mileage (string lights, mascot balloon, gold trophy)
+ * - WorkAdventure/Gather live cheer reaction + jump-to-member camera pan
  */
 import * as Phaser from "phaser";
 import { dayPhase, seeded, spawnAgent, tick, wibHour, type Agent, type Rng } from "@/lib/world/agents";
@@ -30,46 +32,51 @@ export interface GameMember {
   level: number;
 }
 
+export interface WorldUpgrades {
+  stringLights: boolean;
+  mascotBalloon: boolean;
+  goldTrophy: boolean;
+}
+
 export interface WorldGame {
   setScene(key: SceneKey): void;
   setZoom(z: number): void;
   setStudioMode(mode: StudioModeOverride): void;
   focusMe(): SceneKey | null;
+  focusMember(memberId: string): SceneKey | null;
+  cheerMember(memberId: string): void;
   destroy(): void;
 }
 
 export interface GameOptions {
   members: GameMember[];
   initialScene: SceneKey;
+  upgrades: WorldUpgrades;
+  hasActiveEvent: boolean;
   onSelect(memberId: string | null): void;
+  onSelectPoi?(poiKey: string): void;
   onSceneCount?(counts: Record<SceneKey, number>): void;
   onStudioModeResolved?(mode: "yoga" | "dine"): void;
 }
 
 const MASCOT_ID = "__mascot__";
-const FLOOR_FALLBACK: Record<SceneKey, [number, number]> = {
-  street: [0xb9b4ab, 0xaea89e],
-  floor1: [0xa9a6a0, 0x9f9c96],
-  floor2: [0xe9dfc8, 0xe1d6bd],
-};
-const KIND_H: Record<string, number> = { poi: 12, deco: 9, struct: 30, wall_art: 24 };
 const FLAT = new Set(["yoga_mats", "stretch_zone", "stretch_spot", "event_corner"]);
+const INTERACTIVE_POIS = new Set([
+  "start_gate", "order_counter", "gelato_kiosk", "sandwich_board", "yoga_quest_board", "leaderboard_board", "medal_wall", "kids_corner",
+]);
 
-const hex = (c: string | undefined, fallback: number) => {
-  if (!c || c === "none" || !c.startsWith("#")) return fallback;
-  return parseInt(c.slice(1, 7), 16);
-};
-const shade = (c: number, f: number) => {
-  const r = Math.min(255, Math.round(((c >> 16) & 255) * f));
-  const g = Math.min(255, Math.round(((c >> 8) & 255) * f));
-  const b = Math.min(255, Math.round((c & 255) * f));
-  return (r << 16) | (g << 8) | b;
+const DIORAMA_BG: Record<string, number> = {
+  pagi: 0xd6e8d5,
+  siang: 0xcfe4ce,
+  sore: 0xebd1b0,
+  subuh: 0x3b385a,
+  malam: 0x262b46,
 };
 
 function isYogaHoursWib(nowMs: number): boolean {
   const wib = new Date(nowMs + 7 * 3_600_000);
   const hour = wib.getUTCHours();
-  const dow = wib.getUTCDay(); // 0 Sun, 6 Sat
+  const dow = wib.getUTCDay();
   const endHour = dow === 0 || dow === 6 ? 11 : 10;
   return hour >= 6 && hour < endHour;
 }
@@ -92,7 +99,8 @@ function fpsForPose(p: AnimPose): number {
   if (p === "run") return 10;
   if (p === "walk") return 6.5;
   if (p === "stretch" || p === "yoga") return 2.4;
-  return 2.0;
+  if (p === "sit") return 1.5;
+  return 1.8;
 }
 
 interface SteamPuff {
@@ -104,12 +112,20 @@ interface SteamPuff {
   drift: number;
 }
 
+interface TrailDot {
+  dot: Phaser.GameObjects.Arc;
+  age: number;
+  life: number;
+}
+
 class WorldScene extends Phaser.Scene {
   world!: World;
   current: SceneKey = "street";
   studioOverride: StudioModeOverride = "auto";
   statics: Phaser.GameObjects.GameObject[] = [];
   steam: SteamPuff[] = [];
+  trails: TrailDot[] = [];
+  trailCooldown = new Map<string, number>();
   lampGlows: Phaser.GameObjects.Arc[] = [];
   agents: Agent[] = [];
   sprites = new Map<string, Phaser.GameObjects.Container>();
@@ -122,7 +138,6 @@ class WorldScene extends Phaser.Scene {
   dragging = false;
   dragStart = { x: 0, y: 0, sx: 0, sy: 0 };
   lastCounts = "";
-  elapsed = 0;
 
   constructor(private opts: GameOptions) {
     super("world");
@@ -155,7 +170,12 @@ class WorldScene extends Phaser.Scene {
     this.spawn(MASCOT_ID, hour, true);
 
     this.hoverLabel = this.add.text(0, 0, "", {
-      fontFamily: "monospace", fontSize: "10px", color: "#FFFDF7", backgroundColor: "#1B1716", padding: { x: 4, y: 2 },
+      fontFamily: "monospace",
+      fontSize: "10px",
+      fontStyle: "bold",
+      color: "#FFF8EA",
+      backgroundColor: "#241917",
+      padding: { x: 5, y: 3 },
     }).setDepth(1e6).setVisible(false).setResolution(2);
 
     this.overlay = this.add.rectangle(0, 0, 10, 10, 0xffffff, 0).setOrigin(0).setScrollFactor(0).setDepth(2e6);
@@ -182,12 +202,21 @@ class WorldScene extends Phaser.Scene {
     });
     this.input.on("pointerup", (_p: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]) => {
       if (this.dragging) return;
-      const hit = over.find((o) => o.getData("memberId"));
-      this.opts.onSelect(hit ? (hit.getData("memberId") as string) : null);
+      const memberHit = over.find((o) => o.getData("memberId"));
+      if (memberHit) {
+        this.opts.onSelect(memberHit.getData("memberId") as string);
+        return;
+      }
+      const poiHit = over.find((o) => o.getData("poiKey"));
+      if (poiHit) {
+        this.opts.onSelect(null);
+        this.opts.onSelectPoi?.(poiHit.getData("poiKey") as string);
+        return;
+      }
+      this.opts.onSelect(null);
     });
   }
 
-  /** Bake crisp multi-frame textures for every member's paper-doll avatar across all 6 poses. */
   makeCharacterTextures() {
     const paint = (key: string, rows: string[], pal: Record<string, string>) => {
       if (this.textures.exists(key)) return;
@@ -208,14 +237,12 @@ class WorldScene extends Phaser.Scene {
     const poses: AnimPose[] = ["idle", "walk", "run", "sit", "stretch", "yoga"];
     for (const m of this.opts.members) {
       for (const pose of poses) {
-        const count = ANIM_FRAMES[pose];
-        for (let f = 0; f < count; f++) {
+        for (let f = 0; f < ANIM_FRAMES[pose]; f++) {
           const spr = renderAvatarPixels(m.avatar, pose, f);
           paint(`p-${m.id}-${pose}-${f}`, spr.rows, spr.palette);
         }
       }
     }
-    // Fallback procedural mascot if PNG textures didn't load
     paint(`p-${MASCOT_ID}-fallback`, MASCOT, MASCOT_PALETTE);
   }
 
@@ -255,25 +282,27 @@ class WorldScene extends Phaser.Scene {
     const img = this.add.image(0, 0, initialTex).setOrigin(0.5, 0.96);
     if (isMascot && this.textures.exists("spr-mascot_idle")) {
       img.setScale(0.95);
+    } else if (!isMascot) {
+      img.setScale(0.86); // crisp 28x36 scaled nicely to ~24x31 on 32x16 tiles
     }
 
-    const shadow = this.add.ellipse(0, 0, isMascot ? 18 : 14, 5, 0x1a1412, 0.28);
-    const labelText = isMascot ? "★ Higround" : (m?.name.split(" ")[0] ?? "");
-    const name = this.add.text(0, isMascot ? -34 : -28, labelText, {
+    const shadow = this.add.ellipse(0, 0, isMascot ? 18 : 15, 6, 0x1a1412, 0.28);
+    const labelText = isMascot ? "★ Higround" : `${m?.name.split(" ")[0] ?? ""}${m?.ranToday ? " 🔥" : ""}`;
+    const name = this.add.text(0, isMascot ? -36 : -33, labelText, {
       fontFamily: "monospace",
       fontSize: "8px",
       fontStyle: m?.isMe || isMascot ? "bold" : "normal",
-      color: isMascot ? "#FFFDF7" : "#111111",
-      backgroundColor: isMascot ? "#E0352B" : m?.isMe ? "#F7D046" : "#FFFDF7dd",
+      color: isMascot ? "#FFF8EA" : "#241917",
+      backgroundColor: isMascot ? "#E0352B" : m?.isMe ? "#F7D046" : "#FFF8EAee",
       padding: { x: 3, y: 1 },
     }).setOrigin(0.5, 1).setResolution(3);
 
-    const bubble = this.add.text(0, isMascot ? -47 : -41, "", {
+    const bubble = this.add.text(0, isMascot ? -49 : -46, "", {
       fontFamily: "monospace",
       fontSize: "9px",
       fontStyle: "bold",
-      color: "#1B1716",
-      backgroundColor: "#FFFDF7",
+      color: "#241917",
+      backgroundColor: "#FFF8EA",
       padding: { x: 4, y: 2 },
       stroke: "#FF5F0E",
       strokeThickness: 1,
@@ -281,19 +310,22 @@ class WorldScene extends Phaser.Scene {
 
     const parts: Phaser.GameObjects.GameObject[] = [shadow, img, name, bubble];
     if (m?.isMe) {
-      // Tiny bouncing orange pointer triangle above user's own character
-      const marker = this.add.triangle(0, -40, 0, 0, 6, 0, 3, 4, 0xff5f0e).setOrigin(0.5);
+      const marker = this.add.triangle(0, -45, 0, 0, 6, 0, 3, 4, 0xff5f0e).setOrigin(0.5);
       parts.push(marker);
-      this.tweens.add({ targets: marker, y: -44, duration: 520, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+      this.tweens.add({ targets: marker, y: -49, duration: 500, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
     }
     if ((m?.level ?? 0) >= 20) {
-      const aura = this.add.ellipse(0, -11, 24, 28, 0xf7d046, 0.22);
+      const aura = this.add.ellipse(0, -13, 24, 30, 0xf7d046, 0.22);
       parts.unshift(aura);
       this.tweens.add({ targets: aura, alpha: 0.38, scaleX: 1.08, duration: 900, yoyo: true, repeat: -1 });
     }
 
     c = this.add.container(0, 0, parts);
-    c.setSize(22, 30).setInteractive(new Phaser.Geom.Rectangle(-11, -28, 22, 30), Phaser.Geom.Rectangle.Contains);
+    c.setSize(24, 34).setInteractive(
+      new Phaser.Geom.Rectangle(-12, -32, 24, 34),
+      Phaser.Geom.Rectangle.Contains,
+    );
+    if (c.input) c.input.cursor = isMascot ? "default" : "pointer";
     c.setData("memberId", isMascot ? null : a.memberId)
       .setData("bubble", bubble)
       .setData("img", img)
@@ -310,46 +342,41 @@ class WorldScene extends Phaser.Scene {
   private tileTextureFor(g: SceneGrid, x: number, y: number): string | null {
     const metresY = g.originY + (y + 0.5) * this.world.tileM;
     if (this.current === "street") {
-      if (metresY < -3.8) {
-        return x % 3 === 1 && y === 2 ? "spr-tile_road_dashed" : "spr-tile_asphalt";
-      }
+      if (metresY < -3.8) return x % 3 === 1 && y === 2 ? "spr-tile_road_dashed" : "spr-tile_asphalt";
       return "spr-tile_sidewalk";
     }
     if (this.current === "floor1") {
+      // Photo 07: Bright sunlit skylight courtyard at the back right (y >= 15m, x >= 2.2m)
+      if (metresY >= 15.0 && x >= 4) return "spr-tile_skylight";
       return (x + y) % 2 === 0 ? "spr-tile_concrete_1" : "spr-tile_concrete_2";
     }
-    // floor2: studio room front (y < 9m) = warm timber; run club lounge back = cozy lounge tile
-    if (metresY >= 9.0 && metresY <= 15.0) return "spr-tile_lounge";
+    // Photo 11: Sleek darker polished concrete in Studio Room; warm timber in Run Club Lounge
+    if (metresY >= 9.0 && metresY <= 15.0 && x >= 2) return "spr-tile_lounge";
     return (x + y) % 2 === 0 ? "spr-tile_studio_1" : "spr-tile_studio_2";
   }
 
   drawScene() {
     for (const o of this.statics) o.destroy();
+    for (const t of this.trails) t.dot.destroy();
     this.statics = [];
     this.steam = [];
+    this.trails = [];
     this.lampGlows = [];
 
     const g = this.world.scenes[this.current];
     const studioMode = this.resolvedStudioMode();
     if (this.current === "floor2") this.opts.onStudioModeResolved?.(studioMode);
 
-    // ── 1. Textured Isometric Floor Tiles ─────────────────────────────────────
-    const gfx = this.addStatic(this.add.graphics().setDepth(-1000));
-    const [c1, c2] = FLOOR_FALLBACK[this.current];
+    // ── 0. Cozy Diorama Surroundings + 3D Architectural Base Slab ─────────────
+    this.drawDioramaPlatform(g);
+
+    // ── 1. Photo-Accurate Textured Isometric Floor Tiles ──────────────────────
     for (let y = 0; y < g.rows; y++) {
       for (let x = 0; x < g.cols; x++) {
         const { sx, sy } = this.project(g, x, y);
         const texKey = this.tileTextureFor(g, x, y);
         if (texKey && this.textures.exists(texKey)) {
           this.addStatic(this.add.image(sx, sy, texKey).setOrigin(0.5, 0.5).setDepth(-1000));
-        } else {
-          gfx.fillStyle((x + y) % 2 ? c1 : c2, 1);
-          gfx.fillPoints([
-            { x: sx, y: sy - ISO_H / 2 },
-            { x: sx + ISO_W / 2, y: sy },
-            { x: sx, y: sy + ISO_H / 2 },
-            { x: sx - ISO_W / 2, y: sy },
-          ], true);
         }
       }
     }
@@ -367,39 +394,35 @@ class WorldScene extends Phaser.Scene {
       return { A, B, C, D, cx: (A.sx + C.sx) / 2, cy: (A.sy + C.sy) / 2 };
     };
 
-    // Subtle zone floor tints & Higround orange track guide line (SPEC §6.2)
-    const zoneGfx = this.addStatic(this.add.graphics().setDepth(-995));
-    for (const o of g.objects.filter((o) => o.kind === "zone")) {
-      const { A, B, C, D } = rect(o);
-      zoneGfx.fillStyle(hex(o.color, 0xcccccc), o.key === "skylight_area" ? 0.25 : 0.16);
-      zoneGfx.fillPoints([{ x: A.sx, y: A.sy }, { x: B.sx, y: B.sy }, { x: C.sx, y: C.sy }, { x: D.sx, y: D.sy }], true);
-    }
-
+    // Subtle Run Club orange track guide line on Floor 1 (stairs -> front door)
     if (this.current === "floor1") {
-      // Signature thin orange Run Club track guide line from stairs to front door
+      const guide = this.addStatic(this.add.graphics().setDepth(-994));
       const pStart = this.project(g, 2.5, 22);
       const pMid = this.project(g, 2.5, 4);
       const pDoor = this.project(g, 1.5, 1);
-      zoneGfx.lineStyle(2, 0xff5f0e, 0.55);
-      zoneGfx.lineBetween(pStart.sx, pStart.sy, pMid.sx, pMid.sy);
-      zoneGfx.lineBetween(pMid.sx, pMid.sy, pDoor.sx, pDoor.sy);
+      guide.lineStyle(2, 0xff5f0e, 0.65);
+      guide.lineBetween(pStart.sx, pStart.sy, pMid.sx, pMid.sy);
+      guide.lineBetween(pMid.sx, pMid.sy, pDoor.sx, pDoor.sy);
     }
 
-    // ── 2. Cutaway Back Walls & Architecture ──────────────────────────────────
+    // ── 2. Cutaway Walls & Storefront Architecture (Photos 01, 02, 03, 11) ────
     if (this.current !== "street") {
       this.drawWalls(g);
     } else {
       this.drawStreetFacade(g);
     }
 
-    // ── 3. Objects, Landmarks, CC0 Props & Dynamic Floor 2 Studio Mode ────────
+    // ── 3. Shaded Objects, Landmarks & Clickable Interactive POIs ─────────────
     const solids = g.objects
       .filter((o) => o.kind !== "zone" && !o.overhead)
       .map((o) => ({ o, r: rect(o) }))
       .sort((a, b) => a.r.C.sy - b.r.C.sy);
 
     for (const { o, r } of solids) {
-      // Dynamic Floor 2 Studio Room: 6 Yoga Mats (morning) vs 3 Cafe Tables (dine-in)
+      if (o.key === "round_mirror") continue; // already integrated into plant_bench!
+      if (o.key === "f1_door" || o.key === "arch_window" || o.key === "wood_pillar" || o.key === "wood_slat_wall" || o.key === "front_window_f2") {
+        continue; // rendered cleanly as part of architectural cutaway walls!
+      }
       if (o.key === "yoga_mats") {
         this.drawStudioArea(g, o, studioMode);
         continue;
@@ -408,37 +431,67 @@ class WorldScene extends Phaser.Scene {
         this.drawStretchArea(o, r);
         continue;
       }
+      if (o.key === "stairs" || o.key === "stairs_top") {
+        this.drawStairs(r);
+        continue;
+      }
 
       const entry = spriteEntry(o.key);
       const texKey = `spr-${o.key}`;
       if (entry && this.textures.exists(texKey)) {
         const isCutawayRightWall = o.kind === "wall_art" && o.x >= 4.5;
-        const px = isCutawayRightWall ? r.cx - 6 : r.cx;
-        const py = isCutawayRightWall ? r.C.sy - 10 : r.C.sy;
+        const px = isCutawayRightWall ? r.cx - 8 : r.cx;
+        const py = isCutawayRightWall ? r.C.sy - 12 : r.C.sy;
         const img = this.addStatic(
           this.add.image(px, py, texKey)
             .setOrigin(entry.anchorX, entry.anchorY)
             .setDepth(FLAT.has(o.key) ? -500 : r.C.sy),
         );
-        // Scale gently so multi-tile footprints feel cohesive with 32x16 tiles
         const footW = Math.hypot(r.B.sx - r.D.sx, (r.B.sy - r.D.sy) * 0.4);
         if (o.key === "order_counter" || o.key === "curved_bar") {
           img.setScale(Math.max(0.95, Math.min(1.25, footW / Math.max(img.width, 1))));
         } else if (o.key === "start_gate") {
-          img.setScale(1.05);
+          img.setScale(1.06);
         }
-        // Ambient coffee steam puffs on coffee bar & order counter!
+
+        // Make key landmarks clickable POIs (Pokémon GO PokéStop style!)
+        if (INTERACTIVE_POIS.has(o.key)) {
+          img.setInteractive({ useHandCursor: true }).setData("poiKey", o.key);
+          img.on("pointerover", () => img.setTint(0xfff2d6));
+          img.on("pointerout", () => img.clearTint());
+          // Tiny floating golden interactive sparkle pin
+          const pin = this.addStatic(
+            this.add.circle(px, py - img.displayHeight * 0.88, 2.5, 0xf7d046, 0.92).setDepth(r.C.sy + 20),
+          );
+          this.tweens.add({ targets: pin, y: pin.y - 3, alpha: 0.45, duration: 750, yoyo: true, repeat: -1 });
+        }
+
         if (o.key === "curved_bar" || o.key === "order_counter") {
-          this.spawnSteamSource(r.cx, r.C.sy - 34, r.C.sy + 10);
+          this.spawnSteamSource(px, py - 36, r.C.sy + 10);
         }
         continue;
       }
 
-      // Refined architectural fallback for stairs, doors, walls, booths
-      this.drawFallbackBox(o, r);
+      // Event corner photo backdrop on floor 2
+      if (o.key === "event_corner") {
+        const bg = this.addStatic(this.add.graphics().setDepth(-492));
+        bg.fillStyle(0xff5f0e, 0.22);
+        bg.fillPoints([{ x: r.A.sx, y: r.A.sy }, { x: r.B.sx, y: r.B.sy }, { x: r.C.sx, y: r.C.sy }, { x: r.D.sx, y: r.D.sy }], true);
+        bg.lineStyle(1, 0xff5f0e, 0.7);
+        bg.strokePoints([{ x: r.A.sx, y: r.A.sy }, { x: r.B.sx, y: r.B.sy }, { x: r.C.sx, y: r.C.sy }, { x: r.D.sx, y: r.D.sy }], true);
+      }
     }
 
-    // ── 4. Warm Night Lamps (visible during sore / malam / subuh WIB) ─────────
+    // Kitchen station sprite on Floor 1 back-left (replaces plain grey zone!)
+    if (this.current === "floor1" && this.textures.exists("spr-kitchen")) {
+      const kPos = this.project(g, 2.2, 33.2);
+      this.addStatic(this.add.image(kPos.sx, kPos.sy + 4, "spr-kitchen").setOrigin(0.5, 0.85).setDepth(kPos.sy));
+    }
+
+    // ── 4. Zombies, Run! Club Upgrade Props & NIKELAND Live Event Glow ────────
+    this.drawClubUpgrades(g);
+
+    // ── 5. Warm Night Lamps ───────────────────────────────────────────────────
     this.setupNightLamps(g);
 
     this.cameras.main.removeBounds();
@@ -449,11 +502,75 @@ class WorldScene extends Phaser.Scene {
     this.applyDayPhase();
   }
 
+  /** Tactile 3D cutaway slab + cozy garden lawn edge around the street diorama (no empty dark void!). */
+  private drawDioramaPlatform(g: SceneGrid) {
+    const slab = this.addStatic(this.add.graphics().setDepth(-1010));
+    const A = this.corner(g, 0, 0);
+    const B = this.corner(g, g.cols, 0);
+    const C = this.corner(g, g.cols, g.rows);
+    const D = this.corner(g, 0, g.rows);
+    const depthH = 14;
+
+    // Soft drop shadow beneath floating diorama slab
+    slab.fillStyle(0x1f1917, 0.18);
+    slab.fillPoints([
+      { x: A.sx, y: A.sy + depthH + 6 }, { x: B.sx, y: B.sy + depthH + 6 },
+      { x: C.sx, y: C.sy + depthH + 6 }, { x: D.sx, y: D.sy + depthH + 6 },
+    ], true);
+
+    // 3D front-left and front-right concrete foundation faces
+    slab.fillStyle(0x7c746b, 1);
+    slab.fillPoints([{ x: D.sx, y: D.sy }, { x: C.sx, y: C.sy }, { x: C.sx, y: C.sy + depthH }, { x: D.sx, y: D.sy + depthH }], true);
+    slab.fillStyle(0x5e574f, 1);
+    slab.fillPoints([{ x: C.sx, y: C.sy }, { x: B.sx, y: B.sy }, { x: B.sx, y: B.sy + depthH }, { x: C.sx, y: C.sy + depthH }], true);
+    slab.lineStyle(2, 0x2b1d17, 0.85);
+    slab.strokePoints([{ x: D.sx, y: D.sy }, { x: C.sx, y: C.sy }, { x: B.sx, y: B.sy }], false);
+
+    // On street scene: add lush cozy grass tiles & trees flanking left/right sides of the ruko!
+    if (this.current === "street" && this.textures.exists("spr-tile_grass")) {
+      for (let y = 0; y < g.rows; y++) {
+        for (const gx of [-2, -1, g.cols, g.cols + 1]) {
+          const { sx, sy } = this.project(g, gx, y);
+          this.addStatic(this.add.image(sx, sy, "spr-tile_grass").setOrigin(0.5, 0.5).setDepth(-1005));
+        }
+      }
+      if (this.textures.exists("spr-tree_exterior")) {
+        for (const [tx, ty] of [[-1.3, 1.5], [-1.3, 8.5], [g.cols + 0.6, 2.0], [g.cols + 0.6, 9.0]]) {
+          const { sx, sy } = this.project(g, tx, ty);
+          this.addStatic(this.add.image(sx, sy + 4, "spr-tree_exterior").setOrigin(0.5, 0.88).setDepth(sy - 5));
+        }
+      }
+    }
+  }
+
+  private drawStairs(
+    r: { A: { sx: number; sy: number }; B: { sx: number; sy: number }; C: { sx: number; sy: number }; D: { sx: number; sy: number } },
+  ) {
+    const g = this.addStatic(this.add.graphics().setDepth(-495));
+    const { A, B, C, D } = r;
+    const h = 6;
+    g.fillStyle(0x9a9186, 1);
+    g.fillPoints([{ x: D.sx, y: D.sy - h }, { x: C.sx, y: C.sy - h }, { x: C.sx, y: C.sy }, { x: D.sx, y: D.sy }], true);
+    g.fillStyle(0xb5aba0, 1);
+    g.fillPoints([{ x: A.sx, y: A.sy - h }, { x: B.sx, y: B.sy - h }, { x: C.sx, y: C.sy - h }, { x: D.sx, y: D.sy - h }], true);
+    g.lineStyle(1, 0x3b2f2a, 0.75);
+    for (let i = 1; i <= 7; i++) {
+      const f = i / 8;
+      g.lineBetween(
+        A.sx + (D.sx - A.sx) * f, A.sy - h + (D.sy - A.sy) * f,
+        B.sx + (C.sx - B.sx) * f, B.sy - h + (C.sy - B.sy) * f,
+      );
+    }
+    // Warm wood handrail
+    g.lineStyle(2, 0xb07a4a, 1);
+    g.lineBetween(B.sx, B.sy - h - 8, C.sx, C.sy - h - 8);
+  }
+
   private drawStudioArea(g: SceneGrid, o: WorldObject, mode: "yoga" | "dine") {
     const t = this.world.tileM;
     const cols = mode === "yoga" ? 2 : 1;
     const rows = 3;
-    const tex = mode === "yoga" ? "spr-yoga_mat_single" : "spr-table_set";
+    const tex = mode === "yoga" ? "spr-yoga_mat_single" : "spr-studio_table_set";
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         const mx = o.x + (o.w / (cols + 1)) * (c + 1);
@@ -474,7 +591,7 @@ class WorldScene extends Phaser.Scene {
 
   private drawStretchArea(
     o: WorldObject,
-    r: { A: { sx: number; sy: number }; B: { sx: number; sy: number }; C: { sx: number; sy: number }; D: { sx: number; sy: number }; cx: number; cy: number },
+    r: { cx: number; cy: number },
   ) {
     if (this.textures.exists("spr-stretch_mat")) {
       const count = o.key === "stretch_zone" ? 2 : 1;
@@ -482,81 +599,42 @@ class WorldScene extends Phaser.Scene {
         const off = count === 2 ? (i === 0 ? -16 : 16) : 0;
         this.addStatic(this.add.image(r.cx + off, r.cy + off * 0.35, "spr-stretch_mat").setOrigin(0.5, 0.5).setDepth(-490));
       }
-      return;
     }
-    this.drawFallbackBox(o, r);
-  }
-
-  private drawFallbackBox(
-    o: WorldObject,
-    r: { A: { sx: number; sy: number }; B: { sx: number; sy: number }; C: { sx: number; sy: number }; D: { sx: number; sy: number } },
-  ) {
-    const box = this.addStatic(this.add.graphics());
-    const flat = FLAT.has(o.key);
-    const isStairs = o.key.includes("stairs");
-    const isDoor = o.key.includes("door");
-    const h = flat ? 2 : isStairs || isDoor ? 8 : KIND_H[o.kind] ?? 12;
-    const top = hex(o.color, o.kind === "struct" ? 0xd8d2c4 : 0x8a6a4a);
-    const { A, B, C, D } = r;
-
-    box.fillStyle(shade(top, 0.72), 1);
-    box.fillPoints([{ x: D.sx, y: D.sy - h }, { x: C.sx, y: C.sy - h }, { x: C.sx, y: C.sy }, { x: D.sx, y: D.sy }], true);
-    box.fillStyle(shade(top, 0.86), 1);
-    box.fillPoints([{ x: C.sx, y: C.sy - h }, { x: B.sx, y: B.sy - h }, { x: B.sx, y: B.sy }, { x: C.sx, y: C.sy }], true);
-    box.fillStyle(top, 1);
-    box.fillPoints([{ x: A.sx, y: A.sy - h }, { x: B.sx, y: B.sy - h }, { x: C.sx, y: C.sy - h }, { x: D.sx, y: D.sy - h }], true);
-    box.lineStyle(1, 0x221a18, 0.55);
-    box.strokePoints([{ x: A.sx, y: A.sy - h }, { x: B.sx, y: B.sy - h }, { x: C.sx, y: C.sy - h }, { x: D.sx, y: D.sy - h }], true);
-
-    // Pixel step lines on stairs
-    if (isStairs) {
-      box.lineStyle(1, 0x3b3632, 0.6);
-      for (let i = 1; i <= 5; i++) {
-        const f = i / 6;
-        const lx = A.sx + (D.sx - A.sx) * f;
-        const ly = A.sy - h + (D.sy - A.sy) * f;
-        const rx = B.sx + (C.sx - B.sx) * f;
-        const ry = B.sy - h + (C.sy - B.sy) * f;
-        box.lineBetween(lx, ly, rx, ry);
-      }
-    }
-    box.setDepth(flat || isStairs || isDoor ? -495 : C.sy);
   }
 
   drawWalls(g: SceneGrid) {
     const w = this.addStatic(this.add.graphics());
-    const H = 52;
+    const H = 56;
     const A = this.corner(g, 0, 0);
     const B = this.corner(g, g.cols, 0);
     const D = this.corner(g, 0, g.rows);
 
-    // Back-right wall (cream plaster)
-    w.fillStyle(0xf5ecd6, 1);
+    // Warm cream interior walls (Photos 03, 07, 11)
+    w.fillStyle(0xf6edd8, 1);
     w.fillPoints([{ x: A.sx, y: A.sy - H }, { x: B.sx, y: B.sy - H }, { x: B.sx, y: B.sy }, { x: A.sx, y: A.sy }], true);
-    // Back-left wall (warmer shaded cream)
-    w.fillStyle(0xe8dec3, 1);
+    w.fillStyle(0xe8ddc2, 1);
     w.fillPoints([{ x: D.sx, y: D.sy - H }, { x: A.sx, y: A.sy - H }, { x: A.sx, y: A.sy }, { x: D.sx, y: D.sy }], true);
 
-    // Warm wood baseboard trim along both cutaway walls
+    // Warm wood baseboard trim
     const baseH = 7;
     w.fillStyle(0xb07a4a, 0.85);
     w.fillPoints([{ x: A.sx, y: A.sy - baseH }, { x: B.sx, y: B.sy - baseH }, { x: B.sx, y: B.sy }, { x: A.sx, y: A.sy }], true);
     w.fillStyle(0x96643a, 0.85);
     w.fillPoints([{ x: D.sx, y: D.sy - baseH }, { x: A.sx, y: A.sy - baseH }, { x: A.sx, y: A.sy }, { x: D.sx, y: D.sy }], true);
 
-    // Signature Higround orange wall cap + crisp dark outline
+    // Signature Higround orange cutaway cap
     w.lineStyle(3, 0xff5f0e, 1);
     w.lineBetween(D.sx, D.sy - H, A.sx, A.sy - H);
     w.lineBetween(A.sx, A.sy - H, B.sx, B.sy - H);
-    w.lineStyle(1, 0x221a18, 0.7);
+    w.lineStyle(1, 0x2b1d17, 0.8);
     w.lineBetween(D.sx, D.sy - H - 1, A.sx, A.sy - H - 1);
     w.lineBetween(A.sx, A.sy - H - 1, B.sx, B.sy - H - 1);
 
-    // On Floor 1: vertical wood slat accent panel behind Order Counter
+    // Floor 1 Photo 03: vertical wood slat wall behind counter + Skylight sunbeam glow at back!
     if (this.current === "floor1") {
       const s0 = this.corner(g, 0, g.rows - 16);
       const s1 = this.corner(g, 0, g.rows - 8);
-      w.fillStyle(0xb07a4a, 0.9);
+      w.fillStyle(0xb07a4a, 0.92);
       w.fillPoints([
         { x: s1.sx, y: s1.sy - H + 6 }, { x: s0.sx, y: s0.sy - H + 6 },
         { x: s0.sx, y: s0.sy - baseH }, { x: s1.sx, y: s1.sy - baseH },
@@ -568,59 +646,171 @@ class WorldScene extends Phaser.Scene {
         const sy = s1.sy + (s0.sy - s1.sy) * f;
         w.lineBetween(sx, sy - H + 6, sx, sy - baseH);
       }
+      // Warm skylight sunlight wash on back wall (Photo 07!)
+      const sk0 = this.corner(g, 5, 0);
+      const sk1 = this.corner(g, g.cols, 0);
+      w.fillStyle(0xfff9e6, 0.55);
+      w.fillPoints([
+        { x: sk0.sx, y: sk0.sy - H + 2 }, { x: sk1.sx, y: sk1.sy - H + 2 },
+        { x: sk1.sx, y: sk1.sy - baseH }, { x: sk0.sx, y: sk0.sy - baseH },
+      ], true);
+    }
+
+    // Floor 2 Photo 11: Large sunlit studio front window showing lush green tree leaves outside!
+    if (this.current === "floor2") {
+      const w0 = this.corner(g, 3, g.rows);
+      const w1 = this.corner(g, 7, g.rows);
+      // Place window along back-left upper Studio wall (clearly visible!)
+      const u0 = this.corner(g, 0, g.rows - 6);
+      const u1 = this.corner(g, 0, g.rows - 1);
+      w.fillStyle(0xc8ecfa, 1);
+      w.fillPoints([
+        { x: u1.sx, y: u1.sy - 46 }, { x: u0.sx, y: u0.sy - 46 },
+        { x: u0.sx, y: u0.sy - 16 }, { x: u1.sx, y: u1.sy - 16 },
+      ], true);
+      // Green tree foliage visible through the studio window
+      const midX = (u0.sx + u1.sx) / 2;
+      const midY = (u0.sy + u1.sy) / 2 - 30;
+      w.fillStyle(0x52a152, 0.9);
+      w.fillCircle(midX - 8, midY + 2, 9);
+      w.fillCircle(midX + 6, midY - 3, 10);
+      w.fillStyle(0x7ac76a, 0.85);
+      w.fillCircle(midX, midY - 5, 7);
+      w.lineStyle(2, 0x3b2f2a, 0.9);
+      w.strokePoints([
+        { x: u1.sx, y: u1.sy - 46 }, { x: u0.sx, y: u0.sy - 46 },
+        { x: u0.sx, y: u0.sy - 16 }, { x: u1.sx, y: u1.sy - 16 },
+      ], true);
+      void w0; void w1;
     }
 
     w.setDepth(-999);
   }
 
-  /** Cozy Higround storefront backdrop at the back edge of the street scene! */
+  /** Photo 01 & 02: Iconic Higround storefront with tall glass door, warm wood pillar, and huge ARCH WINDOW! */
   drawStreetFacade(g: SceneGrid) {
     const w = this.addStatic(this.add.graphics());
-    const H = 56;
+    const H = 64;
     const A = this.corner(g, 0, 0);
     const B = this.corner(g, g.cols, 0);
-    // White-cream ruko storefront facade
-    w.fillStyle(0xf5efe0, 1);
+
+    // Cream-white ruko facade
+    w.fillStyle(0xf6f0e2, 1);
     w.fillPoints([{ x: A.sx, y: A.sy - H }, { x: B.sx, y: B.sy - H }, { x: B.sx, y: B.sy }, { x: A.sx, y: A.sy }], true);
-    // Glass door (left side)
+
+    // Left glass entrance door
     const d0 = this.corner(g, 0.4, 0);
-    const d1 = this.corner(g, 2.8, 0);
-    w.fillStyle(0x7fb8e0, 0.85);
-    w.fillPoints([{ x: d0.sx, y: d0.sy - 36 }, { x: d1.sx, y: d1.sy - 36 }, { x: d1.sx, y: d1.sy }, { x: d0.sx, y: d0.sy }], true);
-    w.lineStyle(2, 0x221a18, 0.9);
-    w.strokePoints([{ x: d0.sx, y: d0.sy - 36 }, { x: d1.sx, y: d1.sy - 36 }, { x: d1.sx, y: d1.sy }, { x: d0.sx, y: d0.sy }], true);
-    // Iconic arched COFFEE & BURGER window (right side)
-    const w0 = this.corner(g, 3.8, 0);
-    const w1 = this.corner(g, 9.0, 0);
-    w.fillStyle(0x3a4d63, 0.9);
-    w.fillPoints([{ x: w0.sx, y: w0.sy - 32 }, { x: w1.sx, y: w1.sy - 32 }, { x: w1.sx, y: w1.sy - 4 }, { x: w0.sx, y: w0.sy - 4 }], true);
-    w.lineStyle(2, 0xb07a4a, 1);
-    w.strokePoints([{ x: w0.sx, y: w0.sy - 32 }, { x: w1.sx, y: w1.sy - 32 }, { x: w1.sx, y: w1.sy - 4 }, { x: w0.sx, y: w0.sy - 4 }], true);
-    // Higround orange fascia beam
+    const d1 = this.corner(g, 2.7, 0);
+    w.fillStyle(0x8ec5e8, 0.85);
+    w.fillPoints([{ x: d0.sx, y: d0.sy - 40 }, { x: d1.sx, y: d1.sy - 40 }, { x: d1.sx, y: d1.sy }, { x: d0.sx, y: d0.sy }], true);
+    w.lineStyle(2, 0x2b1d17, 0.9);
+    w.strokePoints([{ x: d0.sx, y: d0.sy - 40 }, { x: d1.sx, y: d1.sy - 40 }, { x: d1.sx, y: d1.sy }, { x: d0.sx, y: d0.sy }], true);
+
+    // Warm vertical wood pillar between door and arch window (Photo 02!)
+    const p0 = this.corner(g, 2.7, 0);
+    const p1 = this.corner(g, 3.5, 0);
+    w.fillStyle(0xc48a52, 1);
+    w.fillPoints([{ x: p0.sx, y: p0.sy - 42 }, { x: p1.sx, y: p1.sy - 42 }, { x: p1.sx, y: p1.sy }, { x: p0.sx, y: p0.sy }], true);
+
+    // Iconic Arched Window "COFFEE & BURGER" (Photo 02!)
+    const w0 = this.corner(g, 4.0, 0);
+    const w1 = this.corner(g, 8.8, 0);
+    const wMidX = (w0.sx + w1.sx) / 2;
+    const wMidY = (w0.sy + w1.sy) / 2;
+    w.fillStyle(0x2e3b48, 0.92);
+    w.fillPoints([
+      { x: w0.sx, y: w0.sy - 26 },
+      { x: wMidX, y: wMidY - 40 },
+      { x: w1.sx, y: w1.sy - 26 },
+      { x: w1.sx, y: w1.sy - 5 },
+      { x: w0.sx, y: w0.sy - 5 },
+    ], true);
+    w.lineStyle(2, 0x2b1d17, 0.95);
+    w.strokePoints([
+      { x: w0.sx, y: w0.sy - 26 },
+      { x: wMidX, y: wMidY - 40 },
+      { x: w1.sx, y: w1.sy - 26 },
+      { x: w1.sx, y: w1.sy - 5 },
+      { x: w0.sx, y: w0.sy - 5 },
+    ], true);
+
+    // Orange top trim beam
     w.lineStyle(4, 0xff5f0e, 1);
     w.lineBetween(A.sx, A.sy - H, B.sx, B.sy - H);
     w.setDepth(-998);
 
-    // Crisp pixel storefront sign "HIGROUND · COFFEE & RUN CLUB"
+    // Crisp HIGROUND facade sign cleanly above the roofline (zero overlap!)
     const mid = this.corner(g, 5.2, 0);
     this.addStatic(
-      this.add.text(mid.sx, mid.sy - H - 2, "HIGROUND · COFFEE & RUN CLUB", {
-        fontFamily: "monospace", fontSize: "9px", fontStyle: "bold", color: "#FFFDF7", backgroundColor: "#FF5F0E", padding: { x: 4, y: 2 },
+      this.add.text(mid.sx, mid.sy - H - 6, "HIGROUND · COFFEE & RUN CLUB", {
+        fontFamily: "monospace",
+        fontSize: "9px",
+        fontStyle: "bold",
+        color: "#FFF8EA",
+        backgroundColor: "#FF5F0E",
+        padding: { x: 5, y: 2 },
       }).setOrigin(0.5, 1).setResolution(3).setDepth(-990),
     );
   }
 
+  /** Zombies, Run! visual ruko upgrades + NIKELAND active event decorations! */
+  private drawClubUpgrades(g: SceneGrid) {
+    const u = this.opts.upgrades;
+
+    // Tier 2+: Warm glowing fairy string lights across cafe / teras!
+    if (u.stringLights) {
+      const lights = this.addStatic(this.add.graphics().setDepth(1e5));
+      const p1 = this.corner(g, 0.5, 2);
+      const p2 = this.corner(g, g.cols - 0.5, 2);
+      lights.lineStyle(1, 0x3b2f2a, 0.5);
+      lights.lineBetween(p1.sx, p1.sy - 46, p2.sx, p2.sy - 46);
+      for (let i = 1; i <= 7; i++) {
+        const f = i / 8;
+        const bx = p1.sx + (p2.sx - p1.sx) * f;
+        const by = p1.sy - 46 + (p2.sy - p1.sy) * f + Math.sin(f * Math.PI) * 7;
+        const bulb = this.addStatic(this.add.circle(bx, by, 2.5, i % 2 === 0 ? 0xf7d046 : 0xff9b42, 0.95).setDepth(1e5 + 1));
+        this.tweens.add({ targets: bulb, alpha: 0.45, duration: 900 + i * 110, yoyo: true, repeat: -1 });
+      }
+    }
+
+    // Tier 3+: Giant floating Higround Mascot Balloon beside Start Gate on Street!
+    if (this.current === "street" && u.mascotBalloon && this.textures.exists("spr-upgrade_balloon")) {
+      const bPos = this.project(g, 9.2, 4.5);
+      const bal = this.addStatic(
+        this.add.image(bPos.sx, bPos.sy, "spr-upgrade_balloon").setOrigin(0.5, 0.95).setDepth(bPos.sy + 12),
+      );
+      this.tweens.add({ targets: bal, y: bal.y - 5, duration: 1400, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    }
+
+    // Tier 4: Gleaming Golden Club Trophy Pedestal in Floor 2 Run Club Lounge!
+    if (this.current === "floor2" && u.goldTrophy && this.textures.exists("spr-upgrade_trophy")) {
+      const tPos = this.project(g, 6.8, 25.5);
+      this.addStatic(
+        this.add.image(tPos.sx, tPos.sy, "spr-upgrade_trophy").setOrigin(0.5, 0.88).setDepth(tPos.sy + 4),
+      );
+    }
+
+    // NIKELAND / Zwift: Live active event celebratory pennant over Start Gate!
+    if (this.current === "street" && this.opts.hasActiveEvent) {
+      const ePos = this.project(g, 7.2, 5.2);
+      const tag = this.addStatic(
+        this.add.text(ePos.sx, ePos.sy - 66, "★ EVENT AKTIF! ★", {
+          fontFamily: "monospace",
+          fontSize: "8px",
+          fontStyle: "bold",
+          color: "#241917",
+          backgroundColor: "#F7D046",
+          padding: { x: 4, y: 2 },
+        }).setOrigin(0.5, 1).setResolution(3).setDepth(1e5),
+      );
+      this.tweens.add({ targets: tag, y: tag.y - 4, duration: 650, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    }
+  }
+
   private spawnSteamSource(x: number, y: number, depth: number) {
     for (let i = 0; i < 3; i++) {
-      const dot = this.addStatic(this.add.rectangle(x, y, 2, 2, 0xfffdf7, 0.6).setDepth(depth));
-      this.steam.push({
-        dot,
-        baseX: x + (i - 1) * 4,
-        baseY: y,
-        age: i * 0.65,
-        life: 2.0,
-        drift: (i - 1) * 3,
-      });
+      const dot = this.addStatic(this.add.rectangle(x, y, 2, 2, 0xfffdf7, 0.65).setDepth(depth));
+      this.steam.push({ dot, baseX: x + (i - 1) * 4, baseY: y, age: i * 0.65, life: 2.0, drift: (i - 1) * 3 });
     }
   }
 
@@ -634,7 +824,7 @@ class WorldScene extends Phaser.Scene {
     for (const [tx, ty] of spots) {
       if (tx >= g.cols || ty >= g.rows) continue;
       const { sx, sy } = this.project(g, tx, ty);
-      const glow = this.addStatic(this.add.circle(sx, sy - 6, 48, 0xffc864, 0).setDepth(1.5e6));
+      const glow = this.addStatic(this.add.circle(sx, sy - 6, 52, 0xffcc66, 0).setDepth(1.5e6));
       this.lampGlows.push(glow);
     }
   }
@@ -651,9 +841,10 @@ class WorldScene extends Phaser.Scene {
 
   applyDayPhase() {
     const p = dayPhase(wibHour(Date.now()));
-    this.overlay.setFillStyle(p.tint, p.alpha);
+    this.cameras.main.setBackgroundColor(DIORAMA_BG[p.name] ?? 0xcfe4ce);
+    this.overlay.setFillStyle(p.tint, p.alpha * 0.72);
     for (const glow of this.lampGlows) {
-      glow.setFillStyle(0xffc864, p.lamps ? 0.14 : 0);
+      glow.setFillStyle(0xffcc66, p.lamps ? 0.18 : 0);
     }
     this.fitOverlay();
   }
@@ -672,31 +863,54 @@ class WorldScene extends Phaser.Scene {
       this.hoverLabel.setVisible(false);
       return;
     }
-    this.hoverLabel.setText(o.label).setPosition(wx + 8, wy - 18).setVisible(true);
+    const hint = INTERACTIVE_POIS.has(o.key) ? ` (Klik!)` : "";
+    this.hoverLabel.setText(`${o.label}${hint}`).setPosition(wx + 8, wy - 18).setVisible(true);
   }
 
-  focusMe(): SceneKey | null {
-    const me = this.opts.members.find((m) => m.isMe);
-    if (!me) return null;
-    const agent = this.agents.find((a) => a.memberId === me.id);
+  focusMember(memberId: string): SceneKey | null {
+    const agent = this.agents.find((a) => a.memberId === memberId);
     if (!agent || agent.mode === "gone") return null;
-    if (agent.scene !== this.current) {
-      this.setCurrent(agent.scene);
-    }
+    if (agent.scene !== this.current) this.setCurrent(agent.scene);
     const g = this.world.scenes[agent.scene];
     const { sx, sy } = this.project(g, agent.x, agent.y);
     this.cameras.main.pan(sx, sy - 10, 350, "Sine.easeInOut");
     return agent.scene;
   }
 
+  focusMe(): SceneKey | null {
+    const me = this.opts.members.find((m) => m.isMe);
+    return me ? this.focusMember(me.id) : null;
+  }
+
+  /** WorkAdventure / Gather.town live cheer reaction right inside the world! */
+  cheerMember(memberId: string) {
+    const agent = this.agents.find((a) => a.memberId === memberId);
+    if (!agent) return;
+    agent.bubble = { text: "👏 Semangat! 🔥", ttl: 3.2 };
+    const c = this.sprites.get(memberId);
+    if (c && c.visible) {
+      const img = c.getData("img") as Phaser.GameObjects.Image;
+      this.tweens.add({ targets: img, y: -8, duration: 150, yoyo: true, repeat: 2, ease: "Quad.easeOut" });
+      for (let i = 0; i < 4; i++) {
+        const heart = this.add.text(c.x + (i - 1.5) * 8, c.y - 24, i % 2 === 0 ? "🧡" : "✨", { fontSize: "10px" })
+          .setOrigin(0.5).setDepth(c.depth + 30);
+        this.tweens.add({
+          targets: heart,
+          y: heart.y - 26,
+          alpha: 0,
+          duration: 900 + i * 120,
+          onComplete: () => heart.destroy(),
+        });
+      }
+    }
+  }
+
   update(_t: number, deltaMs: number) {
     const dt = Math.min(deltaMs / 1000, 0.1);
-    this.elapsed += dt;
     const now = Date.now();
     const hour = wibHour(now);
     const counts: Record<SceneKey, number> = { street: 0, floor1: 0, floor2: 0 };
 
-    // Update ambient coffee steam puffs
     for (const s of this.steam) {
       s.age = (s.age + dt) % s.life;
       const p = s.age / s.life;
@@ -704,14 +918,24 @@ class WorldScene extends Phaser.Scene {
       s.dot.setAlpha((1 - p) * 0.65);
     }
 
+    // Update Pikmin-style glowing footstep trails
+    for (let i = this.trails.length - 1; i >= 0; i--) {
+      const tr = this.trails[i];
+      tr.age += dt;
+      if (tr.age >= tr.life) {
+        tr.dot.destroy();
+        this.trails.splice(i, 1);
+      } else {
+        tr.dot.setAlpha((1 - tr.age / tr.life) * 0.65);
+      }
+    }
+
     for (const a of this.agents) {
       tick(a, dt, this.rng, this.world);
       const c = this.sprite(a);
       if (a.mode === "gone") {
         c.setVisible(false);
-        if (!this.respawnAt.has(a.memberId)) {
-          this.respawnAt.set(a.memberId, now + 4000 + this.rng() * 8000);
-        }
+        if (!this.respawnAt.has(a.memberId)) this.respawnAt.set(a.memberId, now + 4000 + this.rng() * 8000);
         continue;
       }
 
@@ -723,9 +947,20 @@ class WorldScene extends Phaser.Scene {
       const img = c.getData("img") as Phaser.GameObjects.Image;
       const shadow = c.getData("shadow") as Phaser.GameObjects.Ellipse;
       const isMascot = a.memberId === MASCOT_ID;
+      const member = this.opts.members.find((m) => m.id === a.memberId);
       const pose = poseForAgent(a);
       const clock = (this.animClock.get(a.memberId) ?? 0) + dt * fpsForPose(pose);
       this.animClock.set(a.memberId, clock);
+
+      // Pikmin Bloom trail: members who ran today leave warm glowing footsteps as they walk/run!
+      if (member?.ranToday && a.scene === this.current && (a.mode === "walk" || a.mode === "leave")) {
+        const lastT = this.trailCooldown.get(a.memberId) ?? 0;
+        if (now - lastT > 260 && this.trails.length < 48) {
+          this.trailCooldown.set(a.memberId, now);
+          const dot = this.add.circle(sx, sy + 2, 2.2, 0xff5f0e, 0.65).setDepth(-450);
+          this.trails.push({ dot, age: 0, life: 2.4 });
+        }
+      }
 
       if (isMascot) {
         const mKey =
@@ -745,7 +980,6 @@ class WorldScene extends Phaser.Scene {
       }
       img.setFlipX(a.facing < 0);
 
-      // Kairosoft spring pop-in speech bubble
       const bubble = c.getData("bubble") as Phaser.GameObjects.Text;
       const prev = this.lastBubble.get(a.memberId) ?? "";
       const next = a.bubble?.text ?? "";
@@ -761,17 +995,11 @@ class WorldScene extends Phaser.Scene {
     }
 
     for (const [id, at] of this.respawnAt) {
-      if (now >= at) {
-        this.respawnAt.delete(id);
-        this.spawn(id, hour, false);
-      }
+      if (now >= at) { this.respawnAt.delete(id); this.spawn(id, hour, false); }
     }
 
     const key = JSON.stringify(counts);
-    if (key !== this.lastCounts) {
-      this.lastCounts = key;
-      this.opts.onSceneCount?.(counts);
-    }
+    if (key !== this.lastCounts) { this.lastCounts = key; this.opts.onSceneCount?.(counts); }
   }
 
   setCurrent(k: SceneKey) {
@@ -790,7 +1018,7 @@ export function createWorldGame(parent: HTMLElement, opts: GameOptions): WorldGa
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
-    backgroundColor: "#26232c",
+    backgroundColor: "#cfe4ce",
     pixelArt: true,
     roundPixels: true,
     scale: { mode: Phaser.Scale.RESIZE, width: parent.clientWidth, height: parent.clientHeight },
@@ -810,6 +1038,8 @@ export function createWorldGame(parent: HTMLElement, opts: GameOptions): WorldGa
     setZoom: (z) => { scene.cameras?.main?.setZoom(z); },
     setStudioMode: (m) => scene.sys?.isActive() && scene.setStudioOverride(m),
     focusMe: () => (scene.sys?.isActive() ? scene.focusMe() : null),
+    focusMember: (id) => (scene.sys?.isActive() ? scene.focusMember(id) : null),
+    cheerMember: (id) => scene.sys?.isActive() && scene.cheerMember(id),
     destroy: () => game.destroy(true),
   };
 }

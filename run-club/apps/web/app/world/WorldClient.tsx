@@ -5,16 +5,24 @@ import { Avatar } from "@/components/Avatar";
 import type { StudioModeOverride, WorldGame } from "@/game/createWorldGame";
 import type { WorldMember, WorldView } from "@/lib/data/service";
 import { km } from "@/lib/format";
-import { SCENE_LABEL, SCENES, type SceneKey } from "@/lib/world/layout";
+import { SCENES, type SceneKey } from "@/lib/world/layout";
 import { dayPhase, wibHour } from "@/lib/world/agents";
+import { PoiPopup, WorldDrawer, type DrawerTab } from "./WorldDrawers";
 
 const ICON: Record<string, string> = {
   shoe: "👟", road: "🛣️", medal: "🏅", pin: "📍", flame: "🔥", lotus: "🪷", star: "🌟", wave: "🌊", pose: "🤸",
 };
 
-export function WorldClient({ members, hud, ticker, meHandle }: {
-  members: WorldMember[]; hud: WorldView["hud"]; ticker: string[]; meHandle: string | null;
+export function WorldClient({
+  world,
+  meHandle,
+}: {
+  world: WorldView;
+  meHandle: string | null;
 }) {
+  const { members, hud, ticker, clubQuest, rukoUpgrade, rewards } = world;
+  const meMember = members.find((m) => m.isMe) ?? null;
+
   const box = useRef<HTMLDivElement>(null);
   const game = useRef<WorldGame | null>(null);
   const hour = wibHour(Date.now());
@@ -22,6 +30,9 @@ export function WorldClient({ members, hud, ticker, meHandle }: {
   const [zoom, setZoom] = useState(2);
   const [studioMode, setStudioMode] = useState<StudioModeOverride>("auto");
   const [selected, setSelected] = useState<WorldMember | null>(null);
+  const [selectedPoi, setSelectedPoi] = useState<string | null>(null);
+  const [drawer, setDrawer] = useState<DrawerTab>(null);
+  const [cheered, setCheered] = useState(false);
   const [counts, setCounts] = useState<Record<SceneKey, number>>({ street: 0, floor1: 0, floor2: 0 });
   const [clock, setClock] = useState("");
 
@@ -45,7 +56,17 @@ export function WorldClient({ members, hud, ticker, meHandle }: {
           isMe: m.isMe, level: m.level,
         })),
         initialScene: scene,
-        onSelect: (id) => setSelected(members.find((m) => m.id === id) ?? null),
+        upgrades: rukoUpgrade.unlocks,
+        hasActiveEvent: Boolean(hud.event),
+        onSelect: (id) => {
+          setSelectedPoi(null);
+          setCheered(false);
+          setSelected(members.find((m) => m.id === id) ?? null);
+        },
+        onSelectPoi: (poiKey) => {
+          setSelected(null);
+          setSelectedPoi(poiKey);
+        },
         onSceneCount: setCounts,
       });
       setTimeout(() => game.current?.setZoom(startZoom), 80);
@@ -55,146 +76,299 @@ export function WorldClient({ members, hud, ticker, meHandle }: {
       game.current?.destroy();
       game.current = null;
     };
-    // the game is created once; scene and zoom changes go through its API
+    // created once; scene and zoom updates go through the imperative WorldGame handle
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const pick = (k: SceneKey) => { setScene(k); game.current?.setScene(k); setSelected(null); };
+  const pick = (k: SceneKey) => { setScene(k); game.current?.setScene(k); setSelected(null); setSelectedPoi(null); };
   const zoomTo = (z: number) => { setZoom(z); game.current?.setZoom(z); };
   const switchStudio = (m: StudioModeOverride) => { setStudioMode(m); game.current?.setStudioMode(m); };
   const findMe = () => {
     const target = game.current?.focusMe();
     if (target) setScene(target);
   };
+  const jumpToMember = (m: WorldMember) => {
+    const target = game.current?.focusMember(m.id);
+    if (target) setScene(target);
+    setSelected(m);
+  };
+  const cheerMember = (m: WorldMember) => {
+    game.current?.cheerMember(m.id);
+  };
+
   const phase = dayPhase(hour);
+  const unlockedVouchers = rewards?.vouchers.filter((v) => v.unlocked).length ?? 0;
+  const xpPct = hud.myXpToNext === null ? 100 : Math.round((hud.myXpIntoLevel / (hud.myXpIntoLevel + hud.myXpToNext)) * 100);
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border-4 border-black bg-hg-cream px-3 py-2 text-sm font-bold shadow-[3px_3px_0_#111]">
-        <span className="rounded bg-black px-2 py-0.5 font-mono text-xs tracking-wider text-hg-yellow">{clock || "--.--"} WIB</span>
-        <span className="capitalize">{phase.name}</span>
-        <span className="rounded bg-hg-orange px-2 py-0.5 text-white">Run Club Week {hud.week}</span>
-        <span>Komunitas minggu ini: <span className="tabular-nums">{km(hud.communityKmWeek)} km</span></span>
-        {hud.event && (
-          <Link href={`/events/${hud.event.id}`} className="rounded bg-hg-violet px-2 py-0.5 text-white">
-            Event: {hud.event.name}{hud.event.multiplier > 1 ? ` · XP ×${hud.event.multiplier}` : ""}
-          </Link>
-        )}
-        {hud.myXp !== null && (
-          <span className="ml-auto rounded border-2 border-black bg-hg-yellow px-2 py-0.5">
-            Lv {hud.myLevel} · {hud.myXp.toLocaleString("id-ID")} XP
-          </span>
-        )}
-      </div>
+    <div className="space-y-2.5">
+      {/* FULL-IMMERSIVE GAME VIEWPORT (WorkAdventure / Gather / Kairosoft / Habitica Style!) */}
+      <div className="pixel-frame relative h-[76vh] min-h-[540px] w-full overflow-hidden rounded-xl bg-[#cfe4ce]">
+        {/* Phaser Isometric Canvas */}
+        <div ref={box} className="h-full w-full touch-none [image-rendering:pixelated]" aria-label="Dunia Higround" />
 
-      <div className="flex flex-wrap items-center gap-2">
-        <div role="tablist" aria-label="Lantai" className="flex flex-wrap gap-1">
-          {SCENES.map((k) => (
-            <button
-              key={k}
-              role="tab"
-              aria-selected={scene === k}
-              onClick={() => pick(k)}
-              className={`rounded-md border-2 border-black px-3 py-1 text-sm font-bold transition-transform active:translate-y-[1px] ${
-                scene === k ? "bg-hg-orange text-white shadow-[2px_2px_0_#111]" : "bg-white hover:bg-hg-cream"
-              }`}
-            >
-              {SCENE_LABEL[k]} <span className="opacity-75">({counts[k]})</span>
-            </button>
-          ))}
-        </div>
-
-        {scene === "floor2" && (
-          <div className="flex items-center gap-1 rounded-md border-2 border-black bg-hg-cream px-1.5 py-0.5 text-xs font-bold">
-            <span className="px-1">Studio:</span>
-            {(["auto", "yoga", "dine"] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => switchStudio(m)}
-                className={`rounded px-2 py-0.5 ${studioMode === m ? "bg-hg-navy text-white" : "bg-white"}`}
-              >
-                {m === "auto" ? "Auto WIB" : m === "yoga" ? "Yoga" : "Dine-in"}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div className="ml-auto flex items-center gap-1.5" aria-label="Kamera">
-          {meHandle && (
-            <button
-              onClick={findMe}
-              className="rounded-md border-2 border-black bg-hg-yellow px-2.5 py-1 text-xs font-bold shadow-[2px_2px_0_#111] hover:brightness-95"
-            >
-              Cari gue
-            </button>
-          )}
-          {meHandle && (
-            <Link
-              href="/create"
-              className="rounded-md border-2 border-black bg-white px-2.5 py-1 text-xs font-bold hover:bg-hg-cream"
-            >
-              Edit Karakter
+        {/* TOP-LEFT FLOATING HABITICA RPG PLAYER CARD */}
+        <div className="pointer-events-none absolute left-3 top-3 z-20 flex flex-col gap-2">
+          {meMember && hud.myLevel !== null ? (
+            <div className="pixel-frame pointer-events-auto flex items-center gap-2.5 rounded-lg bg-[#FFF8EA]/95 px-2.5 py-2 backdrop-blur-sm">
+              <Link href="/create" title="Edit karakter pixel" className="shrink-0 rounded-md border-2 border-[#2b1d17] bg-[#EFE1C4] p-1 hover:brightness-95">
+                <Avatar avatar={meMember.avatar} size={36} label={meMember.name} />
+              </Link>
+              <div className="min-w-[138px]">
+                <div className="flex items-center gap-1.5">
+                  <span className="truncate font-pixel text-sm leading-none text-[#241917]">{meMember.name.split(" ")[0]}</span>
+                  <span className="rounded bg-black px-1.5 py-0.5 font-mono text-[10px] font-bold text-hg-yellow">
+                    Lv {hud.myLevel}
+                  </span>
+                </div>
+                <div className="mt-1 h-2.5 w-full overflow-hidden rounded-full border border-[#2b1d17] bg-[#EFE1C4]">
+                  <div className="h-full bg-gradient-to-r from-hg-orange to-hg-yellow" style={{ width: `${xpPct}%` }} />
+                </div>
+                <div className="mt-0.5 flex items-center justify-between text-[10px] font-bold text-neutral-700">
+                  <span>{hud.myTitle}</span>
+                  <span>🔥 {hud.myStreakWeeks}w · ☕ {rewards?.tier.stamps ?? 0}</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <Link href="/login" className="pixel-btn pointer-events-auto rounded-lg bg-hg-orange px-3 py-2 text-xs font-bold text-white">
+              Masuk untuk Gabung Dunia →
             </Link>
           )}
-          <div className="flex gap-1" aria-label="Zoom">
-            {[1, 2, 3].map((z) => (
+        </div>
+
+        {/* TOP-CENTER FLOATING FLOOR SWITCHER & LIVE STATUS (WorkAdventure / Gather Style) */}
+        <div className="pointer-events-none absolute left-1/2 top-3 z-20 flex -translate-x-1/2 flex-col items-center gap-1.5">
+          <div role="tablist" aria-label="Lantai" className="pixel-frame pointer-events-auto flex items-center gap-1 rounded-lg bg-[#FFF8EA]/95 p-1 backdrop-blur-sm">
+            {SCENES.map((k) => (
               <button
-                key={z}
-                onClick={() => zoomTo(z)}
-                aria-pressed={zoom === z}
-                className={`h-8 w-8 rounded-md border-2 border-black text-sm font-bold ${
-                  zoom === z ? "bg-black text-white" : "bg-white"
+                key={k}
+                role="tab"
+                aria-selected={scene === k}
+                onClick={() => pick(k)}
+                className={`rounded-md px-2.5 py-1 text-xs font-bold transition-colors ${
+                  scene === k
+                    ? "bg-hg-orange text-white shadow-[inset_0_-2px_0_rgba(0,0,0,0.2)]"
+                    : "text-[#241917] hover:bg-[#EFE1C4]"
                 }`}
               >
-                {z}×
+                {k === "street" ? "Teras" : k === "floor1" ? "Lt.1 Coffee" : "Lt.2 Studio"}{" "}
+                <span className="opacity-80">({counts[k]})</span>
               </button>
             ))}
           </div>
-        </div>
-      </div>
 
-      <div className="relative overflow-hidden rounded-lg border-4 border-black shadow-[4px_4px_0_#111]">
-        <div ref={box} className="h-[64vh] min-h-[420px] w-full touch-none [image-rendering:pixelated]" aria-label="Dunia Higround" />
-        {selected && (
-          <div className="absolute bottom-3 left-3 right-3 mx-auto flex max-w-md items-center gap-3 rounded-lg border-4 border-hg-orange bg-[#FFFDF7] p-3 shadow-[4px_4px_0_#111]">
-            <Avatar avatar={selected.avatar} size={48} label="" />
-            <div className="min-w-0 flex-1">
-              <div className="truncate font-pixel text-lg leading-none">{selected.name}</div>
-              <div className="text-xs font-bold">Lv {selected.level} · {selected.title}</div>
-              <div className="mt-1 flex flex-wrap gap-1 text-xs">
-                {selected.badges.map((b) => (
-                  <span key={b.name} className="rounded border px-1">{ICON[b.icon] ?? "🏷️"} {b.name}</span>
+          <div className="flex flex-wrap items-center justify-center gap-1.5">
+            <div className="pixel-frame pointer-events-auto hidden items-center gap-2 rounded-lg bg-[#241917]/90 px-2.5 py-1 text-[11px] font-bold text-[#FFF8EA] md:flex">
+              <span className="font-mono text-hg-yellow">{clock || "--.--"} WIB</span>
+              <span className="capitalize opacity-85">{phase.name}</span>
+              <span className="text-emerald-400">● {members.length} aktif</span>
+            </div>
+
+            {scene === "floor2" && (
+              <div className="pixel-frame pointer-events-auto flex items-center gap-1 rounded-lg bg-[#FFF8EA]/95 px-2 py-0.5 text-[11px] font-bold">
+                {(["auto", "yoga", "dine"] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => switchStudio(m)}
+                    className={`rounded px-1.5 py-0.5 ${studioMode === m ? "bg-hg-navy text-white" : "hover:bg-[#EFE1C4]"}`}
+                  >
+                    {m === "auto" ? "Auto" : m === "yoga" ? "🧘 Yoga" : "☕ Dine"}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* TOP-RIGHT FLOATING CLUB QUEST PILL & CAMERA CONTROLS */}
+        <div className="pointer-events-none absolute right-3 top-3 z-20 flex flex-col items-end gap-1.5">
+          <button
+            onClick={() => setDrawer((d) => (d === "club" ? null : "club"))}
+            className="pixel-btn pointer-events-auto flex items-center gap-2 rounded-lg bg-[#FFF8EA]/95 px-2.5 py-1.5 text-left text-xs font-bold backdrop-blur-sm"
+            title="Klik untuk lihat Misi Klub & Upgrade Ruko"
+          >
+            <span>🏆</span>
+            <div>
+              <div className="leading-none text-hg-orange">Misi Klub: {clubQuest.pct}%</div>
+              <div className="font-mono text-[10px] text-neutral-700">
+                {km(clubQuest.currentKm)}/{clubQuest.targetKm} km · Ruko Tier {rukoUpgrade.tier}
+              </div>
+            </div>
+          </button>
+
+          {hud.event && (
+            <button
+              onClick={() => setDrawer((d) => (d === "events" ? null : "events"))}
+              className="pixel-btn pointer-events-auto rounded-lg bg-hg-violet px-2.5 py-1 text-[11px] font-bold text-white"
+            >
+              ★ LIVE: {hud.event.name} {hud.event.multiplier > 1 ? `×${hud.event.multiplier}` : ""}
+            </button>
+          )}
+
+          <div className="pointer-events-auto flex items-center gap-1">
+            {meHandle && (
+              <button onClick={findMe} className="pixel-btn rounded-md bg-hg-yellow px-2 py-1 text-[11px] font-bold">
+                📍 Cari gue
+              </button>
+            )}
+            <div className="flex gap-0.5" aria-label="Zoom">
+              {[1, 2, 3].map((z) => (
+                <button
+                  key={z}
+                  onClick={() => zoomTo(z)}
+                  aria-pressed={zoom === z}
+                  className={`pixel-btn h-7 w-7 rounded-md text-xs font-bold ${
+                    zoom === z ? "bg-[#241917] text-hg-yellow" : "bg-[#FFF8EA]"
+                  }`}
+                >
+                  {z}×
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* BACKDROP SCRIM WHEN AN IN-WORLD DRAWER IS OPEN */}
+        {drawer && (
+          <div
+            onClick={() => setDrawer(null)}
+            className="absolute inset-0 z-[25] bg-black/35 backdrop-blur-[1px]"
+            aria-hidden
+          />
+        )}
+
+        {/* CENTER OVERLAYS: IN-WORLD DRAWERS, CLICKED POI POPUP, OR CLICKED MEMBER CARD */}
+        <div className={`pointer-events-none absolute inset-x-3 z-30 flex justify-center ${
+          drawer ? "bottom-24 top-4 items-center" : "bottom-24 items-end"
+        }`}>
+          {drawer && (
+            <WorldDrawer
+              tab={drawer}
+              onClose={() => setDrawer(null)}
+              world={world}
+              onJumpMember={jumpToMember}
+              onCheerMember={cheerMember}
+            />
+          )}
+
+          {!drawer && selectedPoi && (
+            <PoiPopup
+              poiKey={selectedPoi}
+              onClose={() => setSelectedPoi(null)}
+              onOpenDrawer={(tab) => setDrawer(tab)}
+            />
+          )}
+
+          {!drawer && !selectedPoi && selected && (
+            <div className="pixel-frame-orange pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-xl bg-[#FFF8EA] p-3">
+              <div className="rounded-lg border-2 border-[#2b1d17] bg-[#EFE1C4] p-1.5">
+                <Avatar avatar={selected.avatar} size={46} label={selected.name} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="truncate font-pixel text-lg leading-none">{selected.name}</span>
+                  {selected.ranToday && (
+                    <span className="rounded bg-hg-orange px-1.5 py-0.5 text-[10px] font-bold text-white">LARI HARI INI 🔥</span>
+                  )}
+                </div>
+                <div className="mt-0.5 text-xs font-bold text-neutral-700">
+                  Lv {selected.level} · {selected.title} · {km(selected.weekKm)} km minggu ini
+                </div>
+                <div className="mt-1 flex flex-wrap gap-1 text-[11px]">
+                  {selected.badges.map((b) => (
+                    <span key={b.name} className="rounded border border-[#2b1d17]/30 bg-white px-1.5 py-0.5 font-medium">
+                      {ICON[b.icon] ?? "🏷️"} {b.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="flex flex-col items-end gap-1.5">
+                <button
+                  onClick={() => { cheerMember(selected); setCheered(true); }}
+                  className="pixel-btn rounded-md bg-hg-yellow px-2.5 py-1 text-xs font-bold"
+                >
+                  {cheered ? "🔥 Terkirim!" : "👏 Semangat"}
+                </button>
+                <div className="flex items-center gap-2">
+                  <Link href={`/u/${selected.handle}`} className="pixel-btn rounded-md bg-hg-orange px-2.5 py-1 text-xs font-bold text-white">
+                    Profil
+                  </Link>
+                  <button onClick={() => setSelected(null)} className="text-xs font-bold underline">Tutup</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* BOTTOM FLOATING PIXEL GAME ACTION DOCK (Kairosoft / Gather / Habitica) */}
+        <div className="pointer-events-none absolute inset-x-3 bottom-3 z-20 flex flex-col items-center gap-1.5">
+          {/* Sleek live activity ticker */}
+          {ticker.length > 0 && (
+            <div className="pointer-events-auto w-full max-w-2xl overflow-hidden rounded-full border-2 border-[#2b1d17] bg-[#241917]/90 py-0.5 text-xs font-medium text-hg-yellow">
+              <div className="ticker flex w-max gap-10 whitespace-nowrap px-4">
+                {[...ticker, ...ticker].map((t, i) => (
+                  <span key={i} aria-hidden={i >= ticker.length}>⚡ {t}</span>
                 ))}
               </div>
             </div>
-            <div className="flex flex-col items-end gap-1">
-              <Link href={`/u/${selected.handle}`} className="rounded-md border-2 border-black bg-hg-orange px-2 py-1 text-xs font-bold text-white">
-                Profil
-              </Link>
-              <button onClick={() => setSelected(null)} className="text-xs underline">Tutup</button>
-            </div>
-          </div>
-        )}
+          )}
+
+          <nav
+            aria-label="Dock Dunia Higround"
+            className="pixel-frame pointer-events-auto flex flex-wrap items-center justify-center gap-1 rounded-xl bg-[#FFF8EA]/95 px-2 py-1.5 backdrop-blur-sm"
+          >
+            <button
+              onClick={() => { setDrawer(null); setSelectedPoi(null); setSelected(null); }}
+              className={`pixel-btn rounded-lg px-2.5 py-1 text-xs font-bold ${drawer === null ? "bg-hg-orange text-white" : "bg-white"}`}
+            >
+              🗺️ Peta
+            </button>
+            <button
+              onClick={() => setDrawer((d) => (d === "club" ? null : "club"))}
+              className={`pixel-btn rounded-lg px-2.5 py-1 text-xs font-bold ${drawer === "club" ? "bg-hg-orange text-white" : "bg-white"}`}
+            >
+              🏆 Klub &amp; Quest
+            </button>
+            <button
+              onClick={() => setDrawer((d) => (d === "rewards" ? null : "rewards"))}
+              className={`pixel-btn relative rounded-lg px-2.5 py-1 text-xs font-bold ${drawer === "rewards" ? "bg-hg-orange text-white" : "bg-white"}`}
+            >
+              ☕ Rewards
+              {unlockedVouchers > 0 && (
+                <span className="ml-1 rounded-full bg-hg-red px-1.5 text-[10px] text-white">{unlockedVouchers}</span>
+              )}
+            </button>
+            <button
+              onClick={() => setDrawer((d) => (d === "events" ? null : "events"))}
+              className={`pixel-btn rounded-lg px-2.5 py-1 text-xs font-bold ${drawer === "events" ? "bg-hg-orange text-white" : "bg-white"}`}
+            >
+              🎟️ Event
+            </button>
+            <button
+              onClick={() => setDrawer((d) => (d === "online" ? null : "online"))}
+              className={`pixel-btn rounded-lg px-2.5 py-1 text-xs font-bold ${drawer === "online" ? "bg-hg-orange text-white" : "bg-white"}`}
+            >
+              👥 Aktif ({members.length})
+            </button>
+            <Link
+              href={meHandle ? "/create" : "/login"}
+              className="pixel-btn rounded-lg bg-hg-yellow px-2.5 py-1 text-xs font-bold text-[#241917]"
+            >
+              🎨 Karakter
+            </Link>
+            <Link
+              href="/yoga"
+              className="pixel-btn rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-[#241917]"
+            >
+              🧘 Yoga
+            </Link>
+          </nav>
+        </div>
       </div>
 
-      <div className="overflow-hidden rounded-md border-2 border-black bg-black py-1 text-sm text-hg-yellow" aria-label="Kabar terbaru">
-        {ticker.length ? (
-          <div className="ticker flex w-max gap-10 whitespace-nowrap px-3">
-            {[...ticker, ...ticker].map((t, i) => <span key={i} aria-hidden={i >= ticker.length}>{t}</span>)}
-          </div>
-        ) : <span className="px-3">Belum ada kabar 36 jam terakhir.</span>}
-      </div>
-
-      <nav className="grid grid-cols-5 gap-2 text-center text-xs font-bold sm:text-sm" aria-label="Menu dunia">
-        <Link href={meHandle ? `/u/${meHandle}` : "/login"} className="rounded-md border-2 border-black bg-white py-2 hover:bg-hg-cream">Profil</Link>
-        <Link href={meHandle ? "/create" : "/login"} className="rounded-md border-2 border-black bg-white py-2 hover:bg-hg-cream">Karakter</Link>
-        <Link href="/yoga" className="rounded-md border-2 border-black bg-white py-2 hover:bg-hg-cream">Yoga Quest</Link>
-        <Link href="/events" className="rounded-md border-2 border-black bg-white py-2 hover:bg-hg-cream">Event</Link>
-        <Link href="/" className="rounded-md border-2 border-black bg-white py-2 hover:bg-hg-cream">Menu</Link>
-      </nav>
-      <p className="text-xs text-neutral-600">
-        Geser untuk menggeser kamera, klik karakter untuk lihat profilnya. Aset pixel isometrik CC0 (PtDesigns) + landmark &amp; maskot Higround.
-        Karakter yang muncul: member yang aktif 7 hari terakhir.
+      <p className="text-center text-xs text-neutral-600">
+        Geser kamera untuk keliling ruko · Klik <b>karakter</b> untuk profil &amp; kirim semangat · Klik <b>Start Gate, Counter ORDER HERE!, Kios Gelato, atau Papan Klub</b> untuk interaksi langsung!
       </p>
     </div>
   );

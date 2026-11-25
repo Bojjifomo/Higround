@@ -6,6 +6,7 @@ import { buildWorld, reachable, SCENES } from "./layout";
 import { astar, toGrid, toScreen } from "./path";
 import { ANIM_FRAMES, normalizeAvatar, randomAvatar, renderAvatarPixels, SPRITE_H, SPRITE_W, type AnimPose } from "./sprite";
 import { WORLD_MANIFEST } from "./assetManifest";
+import { cafeVouchersFor, loyaltyTierOf, rukoUpgradeFor, weeklyClubQuestFor } from "../rewards";
 
 const world = buildWorld();
 
@@ -147,8 +148,25 @@ describe("character sprites & world manifest", () => {
     }
   });
   it("includes key Higround landmarks, mascot poses, and CC0 tiles in the sprite manifest", () => {
-    for (const key of ["start_gate", "order_counter", "gelato_kiosk", "mascot_fridges", "mascot_idle", "mascot_run", "tile_asphalt", "table_f1"]) {
+    for (const key of [
+      "start_gate", "order_counter", "gelato_kiosk", "mascot_fridges", "mascot_idle", "mascot_run",
+      "tile_asphalt", "table_f1", "communal_table", "plant_bench", "kids_corner", "vinyl_shelf",
+      "toilet_f1", "changing_booth", "kitchen", "upgrade_balloon", "upgrade_trophy",
+    ]) {
       expect(WORLD_MANIFEST.sprites[key]?.file).toMatch(/^\/assets\/world\//);
     }
+  });
+  it("computes cafe rewards, loyalty tiers, weekly club quest, and ruko upgrades from real activity", () => {
+    const input = { handle: "rina", level: 12, totalXp: 2400, totalKm: 45, higroundStarts: 6, yogaTahapCleared: 1, eventCheckins: 2 };
+    expect(loyaltyTierOf(input).name).toBe("Gold Pacer");
+    expect(loyaltyTierOf(input).stamps).toBe(8);
+    const vouchers = cafeVouchersFor(input);
+    expect(vouchers.find((v) => v.key === "free_americano")?.unlocked).toBe(true);
+    expect(vouchers.find((v) => v.key === "free_gelato")?.unlocked).toBe(true);
+    expect(vouchers.find((v) => v.key === "burger_20")?.unlocked).toBe(true);
+    expect(vouchers.find((v) => v.key === "runclub_tee")?.unlocked).toBe(false);
+    expect(rukoUpgradeFor(220).tier).toBe(3);
+    expect(rukoUpgradeFor(220).unlocks.mascotBalloon).toBe(true);
+    expect(weeklyClubQuestFor(75, 48).pct).toBe(50);
   });
 });

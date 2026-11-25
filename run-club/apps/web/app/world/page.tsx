@@ -6,5 +6,5 @@ export const dynamic = "force-dynamic";
 export default async function WorldPage() {
   const me = await currentMember();
   const w = await worldView(await getStore(), me, Date.now());
-  return <WorldClient members={w.members} hud={w.hud} ticker={w.ticker} meHandle={me?.handle ?? null} />;
+  return <WorldClient world={w} meHandle={me?.handle ?? null} />;
 }

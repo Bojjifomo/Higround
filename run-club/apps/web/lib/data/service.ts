@@ -6,6 +6,10 @@ import { dateShort, km as fmtKm } from "../format";
 import { activeEvent, checkinFromClass, eventBadgesOf, syncEvents } from "./events-service";
 import { badgeXpEntries, catalogue, earnedBadges, unlockedCosmetics, type Badge, type MemberStats } from "../badges";
 import {
+  cafeVouchersFor, loyaltyTierOf, rukoUpgradeFor, weeklyClubQuestFor,
+  type CafeVoucher, type LoyaltyTier, type RukoUpgradeTier, type WeeklyClubQuest,
+} from "../rewards";
+import {
   defaultRules as rules, earns, effortsOf, eligibility, isHigroundStart, ledgerFor, levelFor, localDate, weekKey,
   type Activity, type LevelInfo, type PbKey,
 } from "../xp";
@@ -386,13 +390,28 @@ export { DAY };
 export interface WorldMember {
   id: string; handle: string; name: string; avatar: Member["avatar"]; level: number; title: string;
   badges: { name: string; icon: string }[]; ranToday: boolean; yogaStars: number; isMe: boolean;
+  weekKm: number; totalKm: number; higroundStarts: number;
 }
 
 export interface WorldView {
   members: WorldMember[];
-  hud: { week: number; communityKmWeek: number; myXp: number | null; myLevel: number | null;
-         event: { id: string; name: string; multiplier: number } | null };
+  hud: {
+    week: number;
+    communityKmWeek: number;
+    communityTotalKm: number;
+    myXp: number | null;
+    myLevel: number | null;
+    myTitle: string | null;
+    myXpIntoLevel: number;
+    myXpToNext: number | null;
+    myStreakWeeks: number;
+    event: { id: string; name: string; multiplier: number; description: string } | null;
+  };
   ticker: string[];
+  clubQuest: WeeklyClubQuest;
+  rukoUpgrade: RukoUpgradeTier;
+  weeklyLeaders: { handle: string; name: string; avatar: Member["avatar"]; weekKm: number; level: number; ranToday: boolean }[];
+  rewards: { tier: LoyaltyTier; vouchers: CafeVoucher[] } | null;
 }
 
 const ISO_WEEK = (iso: string) => {
@@ -410,14 +429,16 @@ export async function worldView(store: Store, viewer: Member | null, now: number
   const thisWeek = weekKey(nowIso, rules);
   const since = now - 7 * DAY;
   const everyone = await store.members();
-  type Row = { m: Member; acts: StoredActivity[]; ok: StoredActivity[]; atts: YogaAttempt[]; last: number };
+  type Row = { m: Member; acts: StoredActivity[]; ok: StoredActivity[]; atts: YogaAttempt[]; last: number; weekKm: number; totalKm: number };
   const rows: Row[] = [];
   for (const m of everyone) {
     const acts = await store.activities(m.id);
     const ok = acts.filter((a) => earns(a, approvedIds(acts), rules));
     const atts = (await store.attempts(m.id)).filter((a) => a.status === "approved");
     const last = Math.max(0, ...ok.map((a) => Date.parse(a.startTime)), ...atts.map((a) => a.createdAt));
-    rows.push({ m, acts, ok, atts, last });
+    const weekKm = ok.filter((a) => weekKey(a.startTime, rules) === thisWeek).reduce((x, a) => x + a.distanceM, 0) / 1000;
+    const totalKm = ok.reduce((x, a) => x + a.distanceM, 0) / 1000;
+    rows.push({ m, acts, ok, atts, last, weekKm, totalKm });
   }
   const visible = rows.filter((r) => r.m.isPublic || r.m.id === viewer?.id);
   const active = visible.filter((r) => r.last >= since || r.m.id === viewer?.id)
@@ -426,16 +447,32 @@ export async function worldView(store: Store, viewer: Member | null, now: number
   const members: WorldMember[] = [];
   for (const r of active) {
     const lvl = await levelOf(store, r.m.id);
-    const earned = earnedBadges(await memberStats(store, r.m.id));
+    const stats = await memberStats(store, r.m.id);
+    const earned = earnedBadges(stats);
     const pinned = (r.m.pinnedBadges.length ? earned.filter((b) => r.m.pinnedBadges.includes(b.key)) : earned.slice(-3)).slice(0, 3);
-    const stars = progress(await yogaBests(store, r.m.id)).totalStars;
-    members.push({ id: r.m.id, handle: r.m.handle, name: r.m.displayName, avatar: r.m.avatar, level: lvl.level, title: lvl.title,
-                   badges: pinned.map((b) => ({ name: b.name, icon: b.icon })), yogaStars: stars, isMe: r.m.id === viewer?.id,
-                   ranToday: r.ok.some((a) => localDate(a.startTime, rules) === today) });
+    const stars = stats.yoga.totalStars;
+    members.push({
+      id: r.m.id, handle: r.m.handle, name: r.m.displayName, avatar: r.m.avatar, level: lvl.level, title: lvl.title,
+      badges: pinned.map((b) => ({ name: b.name, icon: b.icon })), yogaStars: stars, isMe: r.m.id === viewer?.id,
+      ranToday: r.ok.some((a) => localDate(a.startTime, rules) === today),
+      weekKm: r.weekKm, totalKm: r.totalKm, higroundStarts: stats.higroundStarts,
+    });
   }
 
-  const communityKmWeek = rows.reduce((s, r) => s + r.ok.filter((a) => weekKey(a.startTime, rules) === thisWeek)
-    .reduce((x, a) => x + a.distanceM, 0), 0) / 1000;
+  const communityKmWeek = rows.reduce((s, r) => s + r.weekKm, 0);
+  const communityTotalKm = rows.reduce((s, r) => s + r.totalKm, 0);
+  const weekNum = ISO_WEEK(nowIso);
+
+  const weeklyLeaders = (await Promise.all(
+    visible.filter((r) => r.m.isPublic).map(async (r) => ({
+      handle: r.m.handle,
+      name: r.m.displayName,
+      avatar: r.m.avatar,
+      weekKm: r.weekKm,
+      level: (await levelOf(store, r.m.id)).level,
+      ranToday: r.ok.some((a) => localDate(a.startTime, rules) === today),
+    })),
+  )).sort((a, b) => b.weekKm - a.weekKm || b.level - a.level).slice(0, 8);
 
   // Ticker: runs and yoga claims of the last 36 hours, public members only, newest first.
   const missions = new Map(yoga.levels.flatMap((l) => l.missions).map((m) => [m.key, m.name]));
@@ -452,12 +489,39 @@ export async function worldView(store: Store, viewer: Member | null, now: number
       events.push({ at: a.createdAt, text: `${first} dapat ${a.stars}★ ${missions.get(a.missionKey) ?? a.missionKey}` });
     }
   }
+
   const me = viewer ? await levelOf(store, viewer.id) : null;
+  const meStats = viewer ? await memberStats(store, viewer.id) : null;
+  const meCheckins = viewer ? (await store.checkinsOf(viewer.id)).length : 0;
+  const rewardInput = viewer && me && meStats ? {
+    handle: viewer.handle,
+    level: me.level,
+    totalXp: me.totalXp,
+    totalKm: meStats.totalKm,
+    higroundStarts: meStats.higroundStarts,
+    yogaTahapCleared: meStats.yoga.tahap.filter((t) => t.cleared).length,
+    eventCheckins: meCheckins,
+  } : null;
+
   const ev = await activeEvent(store, now);
   return {
     members,
-    hud: { week: ISO_WEEK(nowIso), communityKmWeek, myXp: me?.totalXp ?? null, myLevel: me?.level ?? null,
-           event: ev ? { id: ev.id, name: ev.name, multiplier: ev.multiplier } : null },
+    hud: {
+      week: weekNum,
+      communityKmWeek,
+      communityTotalKm,
+      myXp: me?.totalXp ?? null,
+      myLevel: me?.level ?? null,
+      myTitle: me?.title ?? null,
+      myXpIntoLevel: me?.xpIntoLevel ?? 0,
+      myXpToNext: me?.xpToNext ?? null,
+      myStreakWeeks: meStats?.bestStreakWeeks ?? 0,
+      event: ev ? { id: ev.id, name: ev.name, multiplier: ev.multiplier, description: ev.description } : null,
+    },
     ticker: events.sort((a, b) => b.at - a.at).slice(0, 12).map((e) => e.text),
+    clubQuest: weeklyClubQuestFor(communityKmWeek, weekNum),
+    rukoUpgrade: rukoUpgradeFor(communityTotalKm),
+    weeklyLeaders,
+    rewards: rewardInput ? { tier: loyaltyTierOf(rewardInput), vouchers: cafeVouchersFor(rewardInput) } : null,
   };
 }

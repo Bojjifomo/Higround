@@ -24,6 +24,7 @@ const POSES: { id: AnimPose; label: string }[] = [
   { id: "idle", label: "Idle" },
   { id: "walk", label: "Jalan" },
   { id: "run", label: "Lari" },
+  { id: "sit", label: "Ngopi" },
   { id: "stretch", label: "Stretch" },
   { id: "yoga", label: "Yoga" },
 ];
@@ -107,10 +108,10 @@ export function CharacterCreator({
       </div>
 
       {/* Main SnowHex-inspired pixel creator frame */}
-      <div className="overflow-hidden rounded-xl border-4 border-black bg-[#D9B88C] p-3 shadow-[5px_5px_0_#111] sm:p-4">
+      <div className="pixel-frame overflow-hidden rounded-xl bg-[#D9B88C] p-3 sm:p-4">
         <div className="grid gap-4 lg:grid-cols-[1.05fr_1fr]">
           {/* LEFT: Checkerboard Live Preview Stage */}
-          <div className="flex flex-col justify-between rounded-lg border-4 border-[#3B261C] bg-[#F5E7CE] p-3 shadow-inner">
+          <div className="pixel-frame flex flex-col justify-between rounded-lg bg-[#F5E7CE] p-3">
             {/* Top stage bar */}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="rounded border-2 border-[#3B261C] bg-[#FFFDF7] px-2.5 py-0.5 font-pixel text-sm leading-tight">

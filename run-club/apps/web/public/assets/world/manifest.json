@@ -20,6 +20,12 @@
       "anchorY": 0.5,
       "source": "PtDesigns (CC0)"
     },
+    "tile_grass": {
+      "file": "/assets/world/tiles/tile_grass.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "source": "PtDesigns (CC0)"
+    },
     "tile_concrete_1": {
       "file": "/assets/world/tiles/tile_concrete_1.png",
       "anchorX": 0.5,
@@ -28,6 +34,12 @@
     },
     "tile_concrete_2": {
       "file": "/assets/world/tiles/tile_concrete_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "source": "PtDesigns (CC0)"
+    },
+    "tile_skylight": {
+      "file": "/assets/world/tiles/tile_skylight.png",
       "anchorX": 0.5,
       "anchorY": 0.5,
       "source": "PtDesigns (CC0)"
@@ -50,18 +62,6 @@
       "anchorY": 0.5,
       "source": "PtDesigns (CC0)"
     },
-    "cafe_table": {
-      "file": "/assets/world/props/cafe_table.png",
-      "anchorX": 0.5,
-      "anchorY": 0.86,
-      "source": "PtDesigns (CC0)"
-    },
-    "cafe_chair": {
-      "file": "/assets/world/props/cafe_chair.png",
-      "anchorX": 0.5,
-      "anchorY": 0.86,
-      "source": "PtDesigns (CC0)"
-    },
     "plants_terrace": {
       "file": "/assets/world/props/plants_terrace.png",
       "anchorX": 0.5,
@@ -74,20 +74,8 @@
       "anchorY": 0.86,
       "source": "PtDesigns (CC0)"
     },
-    "plant_bench": {
-      "file": "/assets/world/props/plant_bench.png",
-      "anchorX": 0.5,
-      "anchorY": 0.86,
-      "source": "PtDesigns (CC0)"
-    },
     "sandwich_board": {
       "file": "/assets/world/props/sandwich_board.png",
-      "anchorX": 0.5,
-      "anchorY": 0.86,
-      "source": "PtDesigns (CC0)"
-    },
-    "book_ledge": {
-      "file": "/assets/world/props/book_ledge.png",
       "anchorX": 0.5,
       "anchorY": 0.86,
       "source": "PtDesigns (CC0)"
@@ -98,26 +86,8 @@
       "anchorY": 0.86,
       "source": "PtDesigns (CC0)"
     },
-    "communal_table": {
-      "file": "/assets/world/props/communal_table.png",
-      "anchorX": 0.5,
-      "anchorY": 0.86,
-      "source": "PtDesigns (CC0)"
-    },
-    "vinyl_shelf": {
-      "file": "/assets/world/props/vinyl_shelf.png",
-      "anchorX": 0.5,
-      "anchorY": 0.86,
-      "source": "PtDesigns (CC0)"
-    },
     "props_rack": {
       "file": "/assets/world/props/props_rack.png",
-      "anchorX": 0.5,
-      "anchorY": 0.86,
-      "source": "PtDesigns (CC0)"
-    },
-    "wall_desks": {
-      "file": "/assets/world/props/wall_desks.png",
       "anchorX": 0.5,
       "anchorY": 0.86,
       "source": "PtDesigns (CC0)"
@@ -134,53 +104,239 @@
       "anchorY": 0.86,
       "source": "PtDesigns (CC0)"
     },
-    "kitchen_oven": {
-      "file": "/assets/world/props/kitchen_oven.png",
-      "anchorX": 0.5,
-      "anchorY": 0.86,
-      "source": "PtDesigns (CC0)"
-    },
-    "espresso_prop": {
-      "file": "/assets/world/props/espresso_prop.png",
+    "tree_exterior": {
+      "file": "/assets/world/props/tree_exterior.png",
       "anchorX": 0.5,
       "anchorY": 0.86,
       "source": "PtDesigns (CC0)"
     },
     "table_f1": {
-      "file": "/assets/world/props/table_set.png",
+      "file": "/assets/world/landmarks/modern_table_set.png",
       "anchorX": 0.5,
       "anchorY": 0.84,
-      "source": "PtDesigns (CC0)"
+      "source": "PtDesigns (CC0) + Higround"
     },
     "table_f2": {
-      "file": "/assets/world/props/table_set.png",
+      "file": "/assets/world/landmarks/modern_table_set.png",
       "anchorX": 0.5,
       "anchorY": 0.84,
-      "source": "PtDesigns (CC0)"
+      "source": "PtDesigns (CC0) + Higround"
     },
     "table_f3": {
-      "file": "/assets/world/props/table_set.png",
+      "file": "/assets/world/landmarks/modern_table_set.png",
       "anchorX": 0.5,
       "anchorY": 0.84,
-      "source": "PtDesigns (CC0)"
+      "source": "PtDesigns (CC0) + Higround"
     },
     "table_m1": {
-      "file": "/assets/world/props/table_set.png",
+      "file": "/assets/world/landmarks/modern_table_set.png",
       "anchorX": 0.5,
       "anchorY": 0.84,
-      "source": "PtDesigns (CC0)"
+      "source": "PtDesigns (CC0) + Higround"
     },
     "table_m2": {
-      "file": "/assets/world/props/table_set.png",
+      "file": "/assets/world/landmarks/modern_table_set.png",
       "anchorX": 0.5,
       "anchorY": 0.84,
-      "source": "PtDesigns (CC0)"
+      "source": "PtDesigns (CC0) + Higround"
     },
     "table_m3": {
-      "file": "/assets/world/props/table_set.png",
+      "file": "/assets/world/landmarks/modern_table_set.png",
       "anchorX": 0.5,
       "anchorY": 0.84,
+      "source": "PtDesigns (CC0) + Higround"
+    },
+    "studio_table_set": {
+      "file": "/assets/world/landmarks/studio_table_set.png",
+      "anchorX": 0.5,
+      "anchorY": 0.84,
+      "source": "PtDesigns (CC0) + Higround"
+    },
+    "curved_bar": {
+      "file": "/assets/world/landmarks/curved_bar.png",
+      "anchorX": 0.5,
+      "anchorY": 0.85,
+      "source": "PtDesigns (CC0) + Higround"
+    },
+    "communal_table": {
+      "file": "/assets/world/landmarks/communal_table.png",
+      "anchorX": 0.5,
+      "anchorY": 0.84,
+      "source": "PtDesigns (CC0) + Higround"
+    },
+    "plant_bench": {
+      "file": "/assets/world/landmarks/plant_bench.png",
+      "anchorX": 0.5,
+      "anchorY": 0.88,
+      "source": "PtDesigns (CC0) + Higround"
+    },
+    "round_mirror": {
+      "file": "/assets/world/landmarks/plant_bench.png",
+      "anchorX": 0.5,
+      "anchorY": 0.88,
+      "source": "PtDesigns (CC0) + Higround"
+    },
+    "book_ledge": {
+      "file": "/assets/world/landmarks/book_ledge.png",
+      "anchorX": 0.5,
+      "anchorY": 0.88,
+      "source": "PtDesigns (CC0) + Higround"
+    },
+    "kids_corner": {
+      "file": "/assets/world/landmarks/kids_corner.png",
+      "anchorX": 0.5,
+      "anchorY": 0.88,
+      "source": "PtDesigns (CC0) + Higround"
+    },
+    "vinyl_shelf": {
+      "file": "/assets/world/landmarks/vinyl_shelf.png",
+      "anchorX": 0.5,
+      "anchorY": 0.88,
+      "source": "PtDesigns (CC0) + Higround"
+    },
+    "wall_desks": {
+      "file": "/assets/world/landmarks/wall_desks.png",
+      "anchorX": 0.5,
+      "anchorY": 0.86,
+      "source": "PtDesigns (CC0) + Higround"
+    },
+    "kitchen": {
+      "file": "/assets/world/landmarks/kitchen.png",
+      "anchorX": 0.5,
+      "anchorY": 0.85,
+      "source": "PtDesigns (CC0) + Higround"
+    },
+    "toilet_f1": {
+      "file": "/assets/world/landmarks/restroom_unit.png",
+      "anchorX": 0.5,
+      "anchorY": 0.88,
+      "source": "PtDesigns (CC0) + Higround"
+    },
+    "toilet_f2": {
+      "file": "/assets/world/landmarks/restroom_unit.png",
+      "anchorX": 0.5,
+      "anchorY": 0.88,
+      "source": "PtDesigns (CC0) + Higround"
+    },
+    "changing_booth": {
+      "file": "/assets/world/landmarks/changing_booth.png",
+      "anchorX": 0.5,
+      "anchorY": 0.88,
+      "source": "PtDesigns (CC0) + Higround"
+    },
+    "storage_f2": {
+      "file": "/assets/world/landmarks/storage_f2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.88,
+      "source": "PtDesigns (CC0) + Higround"
+    },
+    "mascot_banner": {
+      "file": "/assets/world/landmarks/mascot_banner.png",
+      "anchorX": 0.5,
+      "anchorY": 0.92,
+      "source": "Higround (own)"
+    },
+    "leaderboard_board": {
+      "file": "/assets/world/landmarks/leaderboard_board.png",
+      "anchorX": 0.5,
+      "anchorY": 0.9,
+      "source": "Higround (own)"
+    },
+    "yoga_quest_board": {
+      "file": "/assets/world/landmarks/yoga_quest_board.png",
+      "anchorX": 0.5,
+      "anchorY": 0.9,
+      "source": "Higround (own)"
+    },
+    "medal_wall": {
+      "file": "/assets/world/landmarks/medal_wall.png",
+      "anchorX": 0.5,
+      "anchorY": 0.9,
+      "source": "Higround (own)"
+    },
+    "poster_wall_f2": {
+      "file": "/assets/world/landmarks/poster_frames.png",
+      "anchorX": 0.5,
+      "anchorY": 0.9,
       "source": "PtDesigns (CC0)"
+    },
+    "run_posters": {
+      "file": "/assets/world/landmarks/poster_frames.png",
+      "anchorX": 0.5,
+      "anchorY": 0.9,
+      "source": "PtDesigns (CC0)"
+    },
+    "guest_check": {
+      "file": "/assets/world/landmarks/poster_frames.png",
+      "anchorX": 0.5,
+      "anchorY": 0.9,
+      "source": "PtDesigns (CC0)"
+    },
+    "yoga_wall": {
+      "file": "/assets/world/landmarks/yoga_wall.png",
+      "anchorX": 0.5,
+      "anchorY": 0.9,
+      "source": "PtDesigns (CC0)"
+    },
+    "mirror_wall": {
+      "file": "/assets/world/landmarks/mirror_wall.png",
+      "anchorX": 0.5,
+      "anchorY": 0.9,
+      "source": "PtDesigns (CC0)"
+    },
+    "hydration_station": {
+      "file": "/assets/world/landmarks/hydration_station.png",
+      "anchorX": 0.5,
+      "anchorY": 0.9,
+      "source": "PtDesigns (CC0) + Higround"
+    },
+    "hydration_out": {
+      "file": "/assets/world/landmarks/hydration_station.png",
+      "anchorX": 0.5,
+      "anchorY": 0.9,
+      "source": "PtDesigns (CC0) + Higround"
+    },
+    "cone": {
+      "file": "/assets/world/landmarks/cone.png",
+      "anchorX": 0.5,
+      "anchorY": 0.9,
+      "source": "Higround (own)"
+    },
+    "scooters": {
+      "file": "/assets/world/landmarks/scooters.png",
+      "anchorX": 0.5,
+      "anchorY": 0.86,
+      "source": "Higround (own)"
+    },
+    "bar_sink": {
+      "file": "/assets/world/landmarks/bar_sink.png",
+      "anchorX": 0.5,
+      "anchorY": 0.88,
+      "source": "PtDesigns (CC0)"
+    },
+    "shoe_rack": {
+      "file": "/assets/world/landmarks/shoe_rack.png",
+      "anchorX": 0.5,
+      "anchorY": 0.88,
+      "source": "PtDesigns (CC0)"
+    },
+    "yoga_mat_single": {
+      "file": "/assets/world/landmarks/yoga_mat_single.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "source": "Higround (own)"
+    },
+    "stretch_mat": {
+      "file": "/assets/world/landmarks/stretch_mat.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "source": "Higround (own)"
+    },
+    "upgrade_trophy": {
+      "file": "/assets/world/landmarks/upgrade_trophy.png",
+      "anchorX": 0.5,
+      "anchorY": 0.88,
+      "source": "PtDesigns (CC0) + Higround"
     },
     "start_gate": {
       "file": "/assets/world/landmarks/start_gate.png",
@@ -194,11 +350,6 @@
       "anchorY": 0.85,
       "source": "Higround (own)"
     },
-    "curved_bar": {
-      "file": "/assets/world/landmarks/curved_bar.png",
-      "anchorX": 0.5,
-      "anchorY": 0.85
-    },
     "gelato_kiosk": {
       "file": "/assets/world/landmarks/gelato_kiosk.png",
       "anchorX": 0.5,
@@ -210,71 +361,6 @@
       "anchorX": 0.5,
       "anchorY": 0.9,
       "source": "Higround (own)"
-    },
-    "kids_corner": {
-      "file": "/assets/world/landmarks/kids_corner.png",
-      "anchorX": 0.5,
-      "anchorY": 0.88
-    },
-    "mascot_banner": {
-      "file": "/assets/world/landmarks/mascot_banner.png",
-      "anchorX": 0.5,
-      "anchorY": 0.92
-    },
-    "leaderboard_board": {
-      "file": "/assets/world/landmarks/leaderboard_board.png",
-      "anchorX": 0.5,
-      "anchorY": 0.9
-    },
-    "yoga_quest_board": {
-      "file": "/assets/world/landmarks/yoga_quest_board.png",
-      "anchorX": 0.5,
-      "anchorY": 0.9
-    },
-    "medal_wall": {
-      "file": "/assets/world/landmarks/medal_wall.png",
-      "anchorX": 0.5,
-      "anchorY": 0.9
-    },
-    "hydration_station": {
-      "file": "/assets/world/landmarks/hydration_station.png",
-      "anchorX": 0.5,
-      "anchorY": 0.9
-    },
-    "hydration_out": {
-      "file": "/assets/world/landmarks/hydration_station.png",
-      "anchorX": 0.5,
-      "anchorY": 0.9
-    },
-    "cone": {
-      "file": "/assets/world/landmarks/cone.png",
-      "anchorX": 0.5,
-      "anchorY": 0.9
-    },
-    "scooters": {
-      "file": "/assets/world/landmarks/scooters.png",
-      "anchorX": 0.5,
-      "anchorY": 0.86
-    },
-    "bar_sink": {
-      "file": "/assets/world/landmarks/bar_sink.png",
-      "anchorX": 0.5,
-      "anchorY": 0.88
-    },
-    "shoe_rack": {
-      "file": "/assets/world/landmarks/shoe_rack.png",
-      "anchorX": 0.5,
-      "anchorY": 0.88
-    },
-    "yoga_mat_single": {
-      "file": "/assets/world/landmarks/yoga_mat_single.png",
-      "anchorX": 0.5,
-      "anchorY": 0.5
-    },
-    "stretch_mat": {
-      "file": "/assets/world/landmarks/stretch_mat.png",
-      "anchorX": 0.5,
-      "anchorY": 0.5
     },
     "mascot_idle": {
       "file": "/assets/world/mascot/mascot_idle.png",
@@ -304,6 +390,12 @@
       "file": "/assets/world/mascot/guide_idle.png",
       "anchorX": 0.5,
       "anchorY": 0.94,
+      "source": "Higround (own)"
+    },
+    "upgrade_balloon": {
+      "file": "/assets/world/landmarks/upgrade_balloon.png",
+      "anchorX": 0.5,
+      "anchorY": 0.95,
       "source": "Higround (own)"
     }
   }
