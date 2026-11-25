@@ -1,17 +1,43 @@
 import type { Avatar as AvatarSpec } from "@/lib/data/store";
-import { PERSON, personPalette } from "@/lib/world/sprite";
+import { renderAvatarPixels, type AnimPose } from "@/lib/world/sprite";
 
-/** Placeholder pixel avatar from the paper-doll colours (same pattern as the world sprites). */
-export function Avatar({ avatar, size = 64, label }: { avatar: AvatarSpec; size?: number; label: string }) {
-  const color = personPalette(avatar);
+/** Crisp pixel-art modular avatar (SVG), identical to the in-world Phaser sprites. */
+export function Avatar({
+  avatar,
+  size = 64,
+  label,
+  pose = "idle",
+  frame = 0,
+  flip = false,
+  className = "",
+}: {
+  avatar: AvatarSpec;
+  size?: number;
+  label: string;
+  pose?: AnimPose;
+  frame?: number;
+  flip?: boolean;
+  className?: string;
+}) {
+  const sprite = renderAvatarPixels(avatar, pose, frame);
   const rects: React.ReactNode[] = [];
-  PERSON.forEach((row, y) =>
+  sprite.rows.forEach((row, y) =>
     [...row].forEach((ch, x) => {
-      if (color[ch]) rects.push(<rect key={`${x}-${y}`} x={x} y={y} width={1.02} height={1.02} fill={color[ch]} />);
-    }));
+      const fill = sprite.palette[ch];
+      if (fill) rects.push(<rect key={`${x}-${y}`} x={x} y={y} width={1.03} height={1.03} fill={fill} />);
+    }),
+  );
   return (
-    <svg viewBox="0 0 16 20" width={size} height={(size * 20) / 16} role="img" aria-label={label}
-         shapeRendering="crispEdges" className="drop-shadow-[2px_2px_0_rgba(0,0,0,0.15)]">
+    <svg
+      viewBox={`0 0 ${sprite.width} ${sprite.height}`}
+      width={size}
+      height={Math.round((size * sprite.height) / sprite.width)}
+      role="img"
+      aria-label={label}
+      shapeRendering="crispEdges"
+      style={flip ? { transform: "scaleX(-1)" } : undefined}
+      className={`drop-shadow-[2px_2px_0_rgba(0,0,0,0.18)] ${className}`}
+    >
       {rects}
     </svg>
   );

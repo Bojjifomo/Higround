@@ -16,6 +16,7 @@ import {
 import { getProvider } from "@/lib/providers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createSupabase } from "@/lib/supabase/server";
+import { normalizeAvatar, randomAvatar, type AvatarColors } from "@/lib/world/sprite";
 import type { Side, Stars } from "@/lib/yoga";
 
 async function me() {
@@ -176,12 +177,6 @@ export async function signInWithGoogle(formData: FormData) {
   redirect(data.url);
 }
 
-const AVATAR_SET = {
-  skin: ["#F1C9A5", "#D9A27A", "#B67A55", "#8D5A3B"], hair: ["#1d1d1d", "#4a2f1e", "#7a4a2a"],
-  top: ["#FF5F0E", "#2E3A8C", "#F7D046", "#E0352B", "#4B4FB8"], bottom: ["#222222", "#3b3f58"], shoes: ["#ffffff", "#FF5F0E", "#111111"],
-};
-const pickOne = (xs: string[]) => xs[Math.floor(Math.random() * xs.length)];
-
 export async function createProfile(_prev: FormState, formData: FormData): Promise<FormState> {
   const u = await authUser();
   if (!u) redirect("/login");
@@ -192,13 +187,31 @@ export async function createProfile(_prev: FormState, formData: FormData): Promi
   if (!/^[a-z0-9_]{3,24}$/.test(handle)) return { ok: false, message: "Username 3–24 huruf kecil, angka, atau _." };
   if (displayName.length < 1 || displayName.length > 40) return { ok: false, message: "Nama 1–40 karakter." };
   if (await store.memberByHandle(handle)) return { ok: false, message: "Username sudah dipakai." };
+  const initialAvatar = { ...randomAvatar(), customized: false };
   await store.addMember({
     id: u.id, handle, displayName, isPublic: true, role: roleForEmail(u.email), pinnedBadges: [], waVerifiedAt: null,
     yogaConsentVersion: null, joinedAt: new Date().toISOString(),
-    avatar: { skin: pickOne(AVATAR_SET.skin), hair: pickOne(AVATAR_SET.hair), top: pickOne(AVATAR_SET.top),
-              bottom: pickOne(AVATAR_SET.bottom), shoes: pickOne(AVATAR_SET.shoes) },
+    avatar: initialAvatar,
   });
-  redirect(`/u/${handle}?welcome=1`);
+  redirect("/onboarding/connect");
+}
+
+export async function saveAvatar(_prev: FormState, formData: FormData): Promise<FormState> {
+  const m = await me();
+  const raw = String(formData.get("avatar") ?? "");
+  let parsed: Partial<AvatarColors> = {};
+  try {
+    parsed = JSON.parse(raw) as Partial<AvatarColors>;
+  } catch {
+    return { ok: false, message: "Data karakter tidak valid." };
+  }
+  const avatar = { ...normalizeAvatar(parsed), customized: true };
+  await (await getStore()).updateMember(m.id, { avatar });
+  revalidatePath("/world");
+  revalidatePath(`/u/${m.handle}`);
+  revalidatePath("/");
+  const next = safeNext(formData.get("next")) ?? "/world";
+  redirect(next);
 }
 
 export async function syncNow() {

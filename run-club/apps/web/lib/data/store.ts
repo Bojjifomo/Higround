@@ -6,12 +6,11 @@
 import type { Activity, LedgerEntry } from "../xp/types";
 import type { Checkin, ClubEvent } from "../events";
 import type { Side, Stars } from "../yoga";
+import type { AvatarColors } from "../world/sprite";
 
 export type Role = "member" | "instructor" | "admin";
 
-export interface Avatar {
-  skin: string; hair: string; top: string; bottom: string; shoes: string;
-}
+export type Avatar = AvatarColors;
 
 export interface Member {
   id: string;

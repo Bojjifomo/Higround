@@ -17,15 +17,15 @@ export default async function Home() {
           <p className="text-sm font-bold uppercase tracking-widest text-hg-orange">Higround Harapan Indah</p>
           <h1 className="mt-2 font-pixel text-5xl leading-none">Lari, yoga, naik level.</h1>
           <p className="mt-3 max-w-prose text-neutral-700">
-            Sambungkan jam lu lewat Intervals.icu. Tiap lari dan tiap misi Yoga Quest jadi XP, dan start dari Higround
-            dapat bonus. Dunia pixel Higround menyusul.
+            Sambungkan jam lu lewat Intervals.icu, bikin karakter pixel kamu sendiri, lalu nongkrong &amp; lari bareng di Dunia Higround!
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             {me ? (
               <>
-                <Link href={`/u/${me.handle}`} className="rounded-md border-2 border-black bg-hg-orange px-4 py-2 font-bold text-white shadow-[3px_3px_0_#111]">Profil gue</Link>
+                <Link href="/world" className="rounded-md border-2 border-black bg-hg-orange px-4 py-2 font-bold text-white shadow-[3px_3px_0_#111]">Masuk Dunia Higround</Link>
+                <Link href="/create" className="rounded-md border-2 border-black bg-hg-yellow px-4 py-2 font-bold">Edit Karakter</Link>
+                <Link href={`/u/${me.handle}`} className="rounded-md border-2 border-black bg-white px-4 py-2 font-bold">Profil gue</Link>
                 <Link href="/yoga" className="rounded-md border-2 border-black bg-white px-4 py-2 font-bold">Yoga Quest</Link>
-                <Link href="/world" className="rounded-md border-2 border-black bg-white px-4 py-2 font-bold">Masuk dunia Higround</Link>
               </>
             ) : (
               <Link href="/login" className="rounded-md border-2 border-black bg-hg-orange px-4 py-2 font-bold text-white shadow-[3px_3px_0_#111]">Masuk</Link>

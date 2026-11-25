@@ -4,6 +4,8 @@ import {
 } from "./agents";
 import { buildWorld, reachable, SCENES } from "./layout";
 import { astar, toGrid, toScreen } from "./path";
+import { ANIM_FRAMES, normalizeAvatar, randomAvatar, renderAvatarPixels, SPRITE_H, SPRITE_W, type AnimPose } from "./sprite";
+import { WORLD_MANIFEST } from "./assetManifest";
 
 const world = buildWorld();
 
@@ -125,5 +127,28 @@ describe("time of day", () => {
     expect(dayPhase(6).name).toBe("pagi");
     expect(dayPhase(13).alpha).toBe(0);
     expect(dayPhase(21)).toMatchObject({ name: "malam", lamps: true });
+  });
+});
+
+describe("character sprites & world manifest", () => {
+  it("normalizes legacy 5-color avatars and renders all 6 animated poses with crisp outlines", () => {
+    const legacy = normalizeAvatar({ skin: "#F1C9A5", hair: "#1d1d1d", top: "#FF5F0E", bottom: "#222222", shoes: "#ffffff" });
+    expect(legacy.hairStyle).toBe("short");
+    const custom = randomAvatar(42);
+    for (const pose of Object.keys(ANIM_FRAMES) as AnimPose[]) {
+      for (let f = 0; f < ANIM_FRAMES[pose]; f++) {
+        const s = renderAvatarPixels(custom, pose, f);
+        expect(s.width).toBe(SPRITE_W);
+        expect(s.height).toBe(SPRITE_H);
+        expect(s.rows.length).toBe(SPRITE_H);
+        expect(s.rows.every((r) => r.length === SPRITE_W)).toBe(true);
+        expect(s.rows.some((r) => r.includes("o"))).toBe(true);
+      }
+    }
+  });
+  it("includes key Higround landmarks, mascot poses, and CC0 tiles in the sprite manifest", () => {
+    for (const key of ["start_gate", "order_counter", "gelato_kiosk", "mascot_fridges", "mascot_idle", "mascot_run", "tile_asphalt", "table_f1"]) {
+      expect(WORLD_MANIFEST.sprites[key]?.file).toMatch(/^\/assets\/world\//);
+    }
   });
 });

@@ -19,15 +19,19 @@ export const PEOPLE: [string, string, Role, boolean][] = [
   ["gita", "Gita Maharani", "member", false],
 ];
 
-const SKIN = ["#F1C9A5", "#D9A27A", "#B67A55", "#8D5A3B"];
-const HAIR = ["#1d1d1d", "#4a2f1e", "#7a4a2a", "#c9a15a"];
-const TOP = ["#FF5F0E", "#2E3A8C", "#F7D046", "#E0352B", "#4B4FB8", "#2f7d4b"];
-const BOTTOM = ["#222222", "#3b3f58", "#6b5b4b"];
-const SHOES = ["#ffffff", "#FF5F0E", "#111111"];
+const DEMO_AVATARS: Avatar[] = [
+  { skin: "#F4CCA4", hair: "#1F1A18", top: "#FF5F0E", bottom: "#222228", shoes: "#FFFDF7", hairStyle: "spiky", eyeStyle: "classic", topStyle: "higround", bottomStyle: "run_shorts", headwear: "cap", headwearColor: "#FF5F0E", accessory: "shades", accessoryColor: "#F7D046", customized: true },
+  { skin: "#E2AE82", hair: "#4A2F1E", top: "#4B4FB8", bottom: "#3B425E", shoes: "#FFFDF7", hairStyle: "bun", eyeStyle: "happy", topStyle: "singlet", bottomStyle: "pants", headwear: "headband", headwearColor: "#F7D046", accessory: "none", customized: true },
+  { skin: "#F4CCA4", hair: "#7A4A2A", top: "#FF5F0E", bottom: "#222228", shoes: "#FF5F0E", hairStyle: "ponytail", eyeStyle: "wide", topStyle: "higround", bottomStyle: "run_shorts", headwear: "visor", headwearColor: "#FFFDF7", accessory: "vest", accessoryColor: "#2E3A8C", customized: true },
+  { skin: "#C48A5E", hair: "#1F1A18", top: "#2E3A8C", bottom: "#222228", shoes: "#F7D046", hairStyle: "short", eyeStyle: "cool", topStyle: "singlet", bottomStyle: "run_shorts", headwear: "headband", headwearColor: "#FF5F0E", accessory: "medal", accessoryColor: "#F7D046", customized: true },
+  { skin: "#E2AE82", hair: "#1F1A18", top: "#2F7D4B", bottom: "#6B5B4B", shoes: "#1F1F24", hairStyle: "sidepart", eyeStyle: "classic", topStyle: "hoodie", bottomStyle: "joggers", headwear: "beanie", headwearColor: "#2E3A8C", accessory: "glasses", accessoryColor: "#1F1F24", customized: true },
+  { skin: "#F4CCA4", hair: "#C93B2B", top: "#F7D046", bottom: "#222228", shoes: "#FFFDF7", hairStyle: "bob", eyeStyle: "wink", topStyle: "jacket", bottomStyle: "run_shorts", headwear: "none", accessory: "earphones", accessoryColor: "#FF5F0E", customized: true },
+  { skin: "#9C6542", hair: "#1F1A18", top: "#E0352B", bottom: "#3B425E", shoes: "#FFFDF7", hairStyle: "curly", eyeStyle: "happy", topStyle: "polo", bottomStyle: "shorts", headwear: "mascot_hat", headwearColor: "#E0352B", accessory: "none", customized: true },
+  { skin: "#FFE0C4", hair: "#4A2F1E", top: "#E6689E", bottom: "#222228", shoes: "#FF5F0E", hairStyle: "long", eyeStyle: "wide", topStyle: "tee", bottomStyle: "joggers", headwear: "none", accessory: "glasses", accessoryColor: "#FF5F0E", customized: true },
+];
 
 function avatarFor(i: number): Avatar {
-  return { skin: SKIN[i % SKIN.length], hair: HAIR[(i * 3) % HAIR.length], top: TOP[i % TOP.length],
-           bottom: BOTTOM[i % BOTTOM.length], shoes: SHOES[(i + 1) % SHOES.length] };
+  return DEMO_AVATARS[i % DEMO_AVATARS.length];
 }
 
 /** Yoga claims for some members: everyone who did yoga cleared Tahap 1; a couple went further. */

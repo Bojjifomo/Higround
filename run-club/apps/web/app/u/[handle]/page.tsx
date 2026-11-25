@@ -49,10 +49,18 @@ export default async function Profile({ params, searchParams }: {
           </div>
         </div>
         {p.isOwner && (
-          <form action={togglePublic} className="mt-3 flex items-center gap-2 text-sm">
-            <span>Profil {member.isPublic ? "publik untuk member lain" : "privat"}.</span>
-            <Button variant="ghost">{member.isPublic ? "Jadikan privat" : "Jadikan publik"}</Button>
-          </form>
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+            <Link
+              href={`/create?next=${encodeURIComponent(`/u/${member.handle}`)}`}
+              className="rounded-md border-2 border-black bg-hg-yellow px-3 py-1.5 font-bold text-black shadow-[2px_2px_0_#111] hover:brightness-95"
+            >
+              🎨 Edit Karakter
+            </Link>
+            <form action={togglePublic} className="flex items-center gap-2">
+              <span>Profil {member.isPublic ? "publik untuk member lain" : "privat"}.</span>
+              <Button variant="ghost">{member.isPublic ? "Jadikan privat" : "Jadikan publik"}</Button>
+            </form>
+          </div>
         )}
       </Panel>
 
