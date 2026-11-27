@@ -141,3 +141,147 @@ export function Calendar({ days }: { days: { day: string; km: number }[] }) {
     </div>
   );
 }
+
+const HEAT31 = ["#EFE6D3", "#F9D3B8", "#F2A472", "#E0530A", "#9C3A06"]; // rest, <3, 3-7, 7-12, 12+ km
+const WALK_COLOR = "#4FA88B";
+const DOW_LABELS = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
+
+export interface Heatmap31Day {
+  day: string;
+  runKm: number;
+  walkKm: number;
+  totalKm: number;
+  runCount: number;
+  walkCount: number;
+}
+
+export function Heatmap31({ days }: { days: Heatmap31Day[] }) {
+  const defaultIdx = (() => {
+    for (let i = days.length - 1; i >= 0; i--) {
+      if (days[i].totalKm > 0) return i;
+    }
+    return Math.max(0, days.length - 1);
+  })();
+  const [selected, setSelected] = useState<number>(defaultIdx);
+
+  if (days.length === 0) return null;
+
+  const firstDow = (new Date(days[0].day + "T00:00:00Z").getUTCDay() + 6) % 7; // 0 = Mon .. 6 = Sun
+  const activeDays = days.filter((d) => d.totalKm > 0).length;
+  const runDays = days.filter((d) => d.runKm > 0).length;
+  const walkDays = days.filter((d) => d.walkKm > 0).length;
+
+  const bgFor = (d: Heatmap31Day) => {
+    if (d.runKm > 0) {
+      const idx = d.runKm < 3 ? 1 : d.runKm < 7 ? 2 : d.runKm < 12 ? 3 : 4;
+      return HEAT31[idx];
+    }
+    if (d.walkKm > 0) return WALK_COLOR;
+    return HEAT31[0];
+  };
+
+  const textFor = (d: Heatmap31Day) => {
+    if (d.runKm >= 7 || (d.runKm === 0 && d.walkKm > 0)) return "#FFFDF7";
+    return "#3B261C";
+  };
+
+  const picked = days[selected] ?? days[days.length - 1];
+
+  return (
+    <div className="space-y-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-600">
+        <span>
+          <b>{dateShort(days[0].day)} – {dateShort(days[days.length - 1].day)}</b> ({days.length} hari)
+        </span>
+        <span className="font-semibold text-[#241917]">
+          {activeDays} hari aktif · {runDays} lari{walkDays > 0 ? ` · ${walkDays} jalan` : ""}
+        </span>
+      </div>
+
+      {/* Day-of-week header */}
+      <div className="grid grid-cols-7 gap-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-neutral-500">
+        {DOW_LABELS.map((l) => <div key={l}>{l}</div>)}
+      </div>
+
+      {/* 31-day aligned calendar grid */}
+      <div className="grid grid-cols-7 gap-1.5">
+        {Array.from({ length: firstDow }).map((_, i) => (
+          <div key={`pad-${i}`} aria-hidden="true" />
+        ))}
+        {days.map((d, idx) => {
+          const dayNum = Number(d.day.slice(8, 10));
+          const isSelected = idx === selected;
+          const hasBoth = d.runKm > 0 && d.walkKm > 0;
+          const summary = d.totalKm > 0
+            ? `${dateShort(d.day)}: ${d.runKm > 0 ? `Lari ${km(d.runKm)} km` : ""}${hasBoth ? " + " : ""}${d.walkKm > 0 ? `Jalan ${km(d.walkKm)} km` : ""}`
+            : `${dateShort(d.day)}: istirahat`;
+          return (
+            <button
+              key={d.day}
+              type="button"
+              onClick={() => setSelected(idx)}
+              onMouseEnter={() => setSelected(idx)}
+              title={summary}
+              aria-label={summary}
+              aria-pressed={isSelected}
+              className={`relative flex h-9 items-center justify-center rounded-md text-xs font-bold tabular-nums transition-transform ${
+                isSelected ? "ring-2 ring-black ring-offset-1 scale-[1.04]" : "hover:scale-[1.03]"
+              }`}
+              style={{ background: bgFor(d), color: textFor(d) }}
+            >
+              {dayNum}
+              {hasBoth && (
+                <span
+                  aria-hidden="true"
+                  className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full border border-white"
+                  style={{ background: WALK_COLOR }}
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Selected day detail pill (touch-friendly on iPhone) */}
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border-2 border-[#2b1d17] bg-white px-3 py-1.5 text-xs">
+        <span className="font-bold text-[#241917]">📅 {dateShort(picked.day)}</span>
+        <span className="tabular-nums text-neutral-700">
+          {picked.totalKm === 0 ? (
+            "Istirahat"
+          ) : (
+            <>
+              {picked.runKm > 0 && (
+                <span className="font-bold text-hg-orange">
+                  🏃 Lari {km(picked.runKm)} km{picked.runCount > 1 ? ` (${picked.runCount}×)` : ""}
+                </span>
+              )}
+              {picked.runKm > 0 && picked.walkKm > 0 && " · "}
+              {picked.walkKm > 0 && (
+                <span className="font-bold text-[#2F7D4B]">
+                  🚶 Jalan {km(picked.walkKm)} km{picked.walkCount > 1 ? ` (${picked.walkCount}×)` : ""}
+                </span>
+              )}
+            </>
+          )}
+        </span>
+      </div>
+
+      {/* Legend */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-neutral-600">
+        <span className="inline-flex items-center gap-1">
+          <span className="inline-block h-3 w-3 rounded-sm" style={{ background: HEAT31[0] }} /> Istirahat
+        </span>
+        <span className="inline-flex items-center gap-1">
+          Lari:
+          {HEAT31.slice(1).map((c) => (
+            <span key={c} className="inline-block h-3 w-3 rounded-sm" style={{ background: c }} />
+          ))}
+          <span className="text-neutral-500">(&lt;3 · 3–7 · 7–12 · 12+ km)</span>
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="inline-block h-3 w-3 rounded-sm" style={{ background: WALK_COLOR }} /> Jalan Kaki
+        </span>
+      </div>
+    </div>
+  );
+}

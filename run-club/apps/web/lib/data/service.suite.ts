@@ -44,12 +44,21 @@ export function serviceSuite(label: string, make: () => Promise<{ store: Store; 
     });
 
     describe("profile", () => {
-      it("shows the run dashboard, yoga and badges", async () => {
+      it("shows the run dashboard, walk summary, 31-day heatmap, PB badges, run buddies, yoga and badges", async () => {
         const p = (await profileView(s, "rina", bima, NOW))!;
         expect(p.hidden).toBe(false);
         expect(p.run!.weeks).toHaveLength(12);
         expect(p.run!.days.length).toBeGreaterThanOrEqual(78);
+        expect(p.run!.days31).toHaveLength(31);
         expect(p.run!.higroundStarts).toBeGreaterThan(0);
+        expect(p.run!.walk.walks).toBeGreaterThanOrEqual(2);
+        expect(p.run!.walk.totalKm).toBeGreaterThan(5);
+        expect(p.run!.pbBadges["1k"]).toBeDefined();
+        expect(p.run!.groupRunsCount).toBeGreaterThan(0);
+        // Sunday Long Runs at Higround match other public runners (never private gita)
+        const allBuddyHandles = p.run!.recent.flatMap((a) => a.buddies.map((b) => b.handle));
+        expect(allBuddyHandles.length).toBeGreaterThan(0);
+        expect(allBuddyHandles).not.toContain("gita");
         expect(p.badges.earned.has("yoga_clear_1")).toBe(true);
         expect(p.yoga!.progress.tahap[1].unlocked).toBe(true);
       });

@@ -79,28 +79,28 @@ flowchart LR
 - [ ] **Musik BGM pakai Embed Playlist Higround (Spotify/YouTube):** drawer/mini-player embed playlist resmi Higround di `/world` (dengan toggle buka/tutup + tetap ada SFX 8-bit Tone.js).
 
 ### F. Profil & Dashboard Member (`/u/[handle]`)
-- [ ] **Track Jalan Kaki (`Walk`)** selain lari — ikut muncul di dashboard & heatmap profil *(tidak ikut Leaderboard Lari)*.
-- [ ] **Hilangkan Elevasi** dari kartu statistik profil.
-- [ ] **Tampilkan Kilometer per Minggu** secara jelas.
-- [ ] **Heatmap diperjelas konteksnya:**
+- [x] **Track Jalan Kaki (`Walk`)** selain lari — ikut muncul di dashboard & heatmap profil *(tidak ikut Leaderboard Lari)*.
+- [x] **Hilangkan Elevasi** dari kartu statistik profil.
+- [x] **Tampilkan Kilometer per Minggu** secara jelas.
+- [x] **Heatmap diperjelas konteksnya:**
   - Khusus **1 bulan terakhir = 31 kotak** (lengkap dengan judul *"Aktivitas 31 Hari Terakhir"*, label, dan legenda intensitas).
-- [ ] **Personal Best (PB) dengan Badge Sendiri:**
+- [x] **Personal Best (PB) dengan Badge Sendiri:**
   - **1K**, **5K**, **10K**, **21K (HM)**, **42K (FM)**, **50K (Ultra)** — masing-masing punya desain badge PB sendiri.
-- [ ] **Pemisahan kategori Badge:**
+- [x] **Pemisahan kategori Badge:**
   - **Run Badge** (termasuk PB Badges)
   - **Yoga Badge** *(siap ditampilkan terpisah / locked)*
-- [ ] **Aktivitas Lari + Share per Run:**
+- [x] **Aktivitas Lari + Share per Run:**
   - Daftar aktivitas lari lengkap, tiap item aktivitas punya tombol **Share Story** khusus untuk sesi lari itu.
-- [ ] **Deteksi Lari Bareng Member Lain (*Run Buddy / Group Run* — Feedback WA):**
+- [x] **Deteksi Lari Bareng Member Lain (*Run Buddy / Group Run* — Feedback WA):**
   - Backend otomatis mendeteksi aktivitas di hari yang sama dengan `start_time` berdekatan (mis. ≤15 menit) dan `start_lat/start_lng` dalam radius berdekatan (mis. ≤250 m — baik saat start dari Higround maupun lokasi lain).
   - Koordinat GPS **tidak pernah diekspos ke publik**; yang tampil hanya tag *"Lari bareng @Nama"* + statistik/riwayat partner lari di profil & Misi Klub.
-- [ ] **Hapus bagian Riwayat XP** (*"riwayat xp ga usa"*).
-- [ ] **Tombol Ganti Karakter** langsung dari halaman Profil.
+- [x] **Hapus bagian Riwayat XP** (*"riwayat xp ga usa"*).
+- [x] **Tombol Ganti Karakter** langsung dari halaman Profil.
 
 ### G. Share IG Story (`/share`)
-- [ ] Dukungan **Share per Run** (data diambil dari 1 aktivitas lari spesifik: jarak, pace, durasi, tanggal, lokasi/start gate, badge PB kalau pecah rekor, plus avatar pixel member).
-- [ ] Dukungan **Share Lari Bareng (*Run Buddy*)**: kalau sesi lari terdeteksi bareng member lain, tampilkan badge *"Lari bareng @Nama"* + jajaran avatar pixel squad langsung di kartu/stiker IG Story.
-- [ ] **Dua Mode Layout 9:16 (Toggle):**
+- [x] Dukungan **Share per Run** (data diambil dari 1 aktivitas lari spesifik: jarak, pace, durasi, tanggal, lokasi/start gate, badge PB kalau pecah rekor, plus avatar pixel member).
+- [x] Dukungan **Share Lari Bareng (*Run Buddy*)**: kalau sesi lari terdeteksi bareng member lain, tampilkan badge *"Lari bareng @Nama"* + jajaran avatar pixel squad langsung di kartu/stiker IG Story.
+- [x] **Dua Mode Layout 9:16 (Toggle):**
   - **Card Pixel** (background diorama ruko Higround + avatar + stats)
   - **Stiker Transparan** (PNG transparan buat ditempel di atas foto lari di IG Story ala Strava/NRC)
 
@@ -127,8 +127,8 @@ flowchart LR
 |---|---|---|
 | **Fase A — Stabilisasi & Flow Inti** | Hapus Username (Nickname only, no symbol/emoji), Fix Intervals.icu (onboarding + profil), Fix HUD mobile portrait tumpang tindih, Fix touch-pan peta HP, Fix player tidak ketemu, Online-Only Presence, Lock Yoga Quest, Takeout tombol Karakter di dock bawah | **Done** |
 | **Fase B — Character Creator v2** | Smoothness & kontras siluet baju/celana (`36×48`), Mata sipit + wajah negatif/lucu, 5 Atasan, 3 Bawahan, 6 Sepatu unik, Fix alignment Topi + Topeng, 3 Aksesori | **Done** |
-| **Fase C — Profil, Run Buddy & Share Story v2** | Track Jalan Kaki (`Walk`), hapus Elevasi & Riwayat XP, KM/minggu, Heatmap 31 hari jelas, PB Badges (1K–50K), pisah Run vs Yoga Badge, Deteksi Lari Bareng (*Run Buddy*), Share per Run + Share Lari Bareng (Card Pixel + Stiker Transparan) | Next |
-| **Fase D — Dunia Pixel & Fitur Kafe** | Virtual Gamepad + auto-walk fallback, Leaderboard KM (khusus Lari) clickable, Medali Top 1–3 di atas kepala, Klik profil orang lain, Menu Higround, Link Google Maps Review, Embed BGM Playlist Higround | Pending |
+| **Fase C — Profil, Run Buddy & Share Story v2** | Track Jalan Kaki (`Walk`), hapus Elevasi & Riwayat XP, KM/minggu, Heatmap 31 hari jelas, PB Badges (1K–50K), pisah Run vs Yoga Badge, Deteksi Lari Bareng (*Run Buddy*), Share per Run + Share Lari Bareng (Card Pixel + Stiker Transparan) | **Done** |
+| **Fase D — Dunia Pixel & Fitur Kafe** | Virtual Gamepad + auto-walk fallback, Leaderboard KM (khusus Lari) clickable, Medali Top 1–3 di atas kepala, Klik profil orang lain, Menu Higround, Link Google Maps Review, Embed BGM Playlist Higround | Next |
 | **Fase E — AI Coach, Komunitas & Bisnis** | AI Running Coach Gemini di Profil, Chat + Filter Kata Kasar Indonesia, Giveaway Email via Resend, Export Database Admin, LunaPOS Monthly CSV/Excel Loyalty Sync | Pending |
 
 ---

@@ -78,10 +78,14 @@ export function mockRawActivities(userId: string, now: number): Record<string, u
   extra(20, { id: `i${tag}-tm`, type: "VirtualRun", name: "Treadmill", distance: 6000, moving_time: 6 * pace,
               total_elevation_gain: 0, max_speed: 3.2 });
   extra(15, { id: `i${tag}-ride`, type: "Ride", name: "Gowes pagi", distance: 30000, moving_time: 4000 });
+  extra(11, { id: `i${tag}-walk1`, type: "Walk", name: "Recovery Walk", distance: 4200, moving_time: 2850,
+              total_elevation_gain: 12, max_speed: 2.0 });
   extra(9, { id: `i${tag}-strava`, type: "Run", source: "STRAVA",
              _note: "STRAVA activities are not available via the API" });
   extra(4, { id: `i${tag}-sus`, type: "Run", name: "Lari (kayaknya naik motor)", distance: 21000,
              moving_time: 21 * 140, max_speed: 12.5, start_latlng: [HG.lat, HG.lng] });
+  extra(2, { id: `i${tag}-walk2`, type: "Walk", name: "Jalan santai sore", distance: 3400, moving_time: 2300,
+             total_elevation_gain: 8, max_speed: 2.1 });
   return out;
 }
 

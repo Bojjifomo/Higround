@@ -10,6 +10,10 @@ import {
   type CafeVoucher, type LoyaltyTier, type RukoUpgradeTier, type WeeklyClubQuest,
 } from "../rewards";
 import {
+  buildLast31DaysHeatmap, computeProfilePbs, detectRunBuddiesForMember, isWalkActivity,
+  type HeatmapDay, type MemberActivityBundle, type ProfilePbKey, type ProfilePbResult, type RunBuddy,
+} from "../runs";
+import {
   defaultRules as rules, earns, effortsOf, eligibility, isHigroundStart, ledgerFor, levelFor, localDate, weekKey,
   type Activity, type LevelInfo, type PbKey,
 } from "../xp";
@@ -237,16 +241,40 @@ export async function classAward(store: Store, staff: Member, userId: string, mi
 
 // ── read models ───────────────────────────────────────────────────────────────
 
-export interface RunView {
-  totalKm: number; weekKm: number; monthKm: number; runs: number; elevationM: number; higroundStarts: number;
-  weeks: { week: string; km: number; paceSPerKm: number | null; runs: number }[];
-  days: { day: string; km: number }[];
-  pbs: Partial<Record<PbKey, number>>;
-  recent: (StoredActivity & { status: "ok" | "pending" | "approved" | "rejected" | "uncounted" })[];
+export interface WalkSummary {
+  weekKm: number;
+  monthKm: number;
+  totalKm: number;
+  walks: number;
 }
 
-export function runView(acts: StoredActivity[], now: number): RunView {
+export interface RecentActivityItem extends StoredActivity {
+  status: "ok" | "pending" | "approved" | "rejected" | "uncounted";
+  isWalk: boolean;
+  buddies: RunBuddy[];
+  pbKeys: ProfilePbKey[];
+}
+
+export interface RunView {
+  totalKm: number; weekKm: number; monthKm: number; runs: number; elevationM: number; higroundStarts: number;
+  walk: WalkSummary;
+  groupRunsCount: number;
+  uniqueBuddiesCount: number;
+  weeks: { week: string; km: number; paceSPerKm: number | null; runs: number }[];
+  days: { day: string; km: number }[];
+  days31: HeatmapDay[];
+  pbs: Partial<Record<PbKey, number>>;
+  pbBadges: Partial<Record<ProfilePbKey, ProfilePbResult>>;
+  recent: RecentActivityItem[];
+}
+
+export function runView(
+  acts: StoredActivity[],
+  now: number,
+  buddyMap: Map<string, RunBuddy[]> = new Map(),
+): RunView {
   const ok = acts.filter((a) => earns(a, approvedIds(acts), rules));
+  const walks = acts.filter((a) => isWalkActivity(a));
   const nowIso = new Date(now).toISOString();
   const thisWeek = weekKey(nowIso, rules);
   const today = localDate(nowIso, rules);
@@ -263,20 +291,48 @@ export function runView(acts: StoredActivity[], now: number): RunView {
   for (let d = firstDay; d <= today; d = addDays(d, 1)) {
     days.push({ day: d, km: km(ok.filter((a) => localDate(a.startTime, rules) === d)) });
   }
+  const days31 = buildLast31DaysHeatmap(ok, walks, now, rules);
   const pbs: Partial<Record<PbKey, number>> = {};
   for (const a of ok) {
     for (const [k, s] of Object.entries(effortsOf(a)) as [PbKey, number][]) if (pbs[k] == null || s < pbs[k]!) pbs[k] = s;
   }
-  const recent = [...acts].sort((a, b) => Date.parse(b.startTime) - Date.parse(a.startTime)).slice(0, 10).map((a) => ({
-    ...a,
-    status: !a.counted ? "uncounted" as const
-      : a.reviewStatus === "none" ? "ok" as const : a.reviewStatus,
-  }));
+  const pbBadges = computeProfilePbs(ok);
+  const pbByActivity = new Map<string, ProfilePbKey[]>();
+  for (const [k, res] of Object.entries(pbBadges) as [ProfilePbKey, ProfilePbResult][]) {
+    if (!res) continue;
+    const list = pbByActivity.get(res.activityId) ?? [];
+    list.push(k);
+    pbByActivity.set(res.activityId, list);
+  }
+  const uniqueBuddies = new Set<string>();
+  for (const list of buddyMap.values()) {
+    for (const b of list) uniqueBuddies.add(b.userId);
+  }
+  const recent: RecentActivityItem[] = [...acts]
+    .sort((a, b) => Date.parse(b.startTime) - Date.parse(a.startTime))
+    .slice(0, 15)
+    .map((a) => ({
+      ...a,
+      status: !a.counted ? "uncounted" as const
+        : a.reviewStatus === "none" ? "ok" as const : a.reviewStatus,
+      isWalk: isWalkActivity(a),
+      buddies: buddyMap.get(a.id) ?? [],
+      pbKeys: pbByActivity.get(a.id) ?? [],
+    }));
   return {
     totalKm: km(ok), weekKm: km(ok.filter((a) => weekKey(a.startTime, rules) === thisWeek)),
     monthKm: km(ok.filter((a) => localDate(a.startTime, rules).startsWith(month))),
     runs: ok.length, elevationM: ok.reduce((s, a) => s + a.elevGainM, 0),
-    higroundStarts: ok.filter((a) => a.isHigroundStart).length, weeks, days, pbs, recent,
+    higroundStarts: ok.filter((a) => a.isHigroundStart).length,
+    walk: {
+      weekKm: km(walks.filter((a) => weekKey(a.startTime, rules) === thisWeek)),
+      monthKm: km(walks.filter((a) => localDate(a.startTime, rules).startsWith(month))),
+      totalKm: km(walks),
+      walks: walks.length,
+    },
+    groupRunsCount: buddyMap.size,
+    uniqueBuddiesCount: uniqueBuddies.size,
+    weeks, days, days31, pbs, pbBadges, recent,
   };
 }
 
@@ -328,14 +384,31 @@ export async function profileView(store: Store, handle: string, viewer: Member |
     .map((k) => catalogue.badges.find((b) => b.key === k)).filter((b): b is Badge => !!b && earned.has(b.key)).slice(0, 3);
   const bests = await yogaBests(store, member.id);
   const mastered = yoga.levels.flatMap((t) => t.missions).filter((m) => missionStars(m, bests[m.key]) >= 2).map((m) => m.name);
+
+  let run: RunView | null = null;
+  let history: HistoryItem[] = [];
+  if (!hidden) {
+    const myActs = await store.activities(member.id);
+    const publicOthers = (await store.members()).filter((m) => m.id !== member.id && m.isPublic);
+    const bundles: MemberActivityBundle[] = await Promise.all(
+      publicOthers.map(async (m) => ({ member: m, activities: await store.activities(m.id) })),
+    );
+    const buddyMap = detectRunBuddiesForMember(member.id, myActs, bundles, rules);
+    run = runView(myActs, now, buddyMap);
+    history = historyOf(
+      await store.ledger(member.id),
+      myActs,
+      25,
+      new Map((await store.events()).map((e) => [e.id, e.name])),
+    );
+  }
+
   return {
-    member, isOwner, hidden, level,
-    run: hidden ? null : runView(await store.activities(member.id), now),
+    member, isOwner, hidden, level, run,
     yoga: hidden ? null : { progress: stats.yoga, bests, masteredPoses: mastered },
     badges: { all: catalogue.badges, earned, pinned },
     cosmetics: unlockedCosmetics(level.level, earned).map((c) => c.name),
-    history: hidden ? [] : historyOf(await store.ledger(member.id), await store.activities(member.id), 25,
-                                     new Map((await store.events()).map((e) => [e.id, e.name]))),
+    history,
     eventBadges: hidden ? [] : await eventBadgesOf(store, member.id),
   };
 }
