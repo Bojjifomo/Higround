@@ -155,7 +155,7 @@ export function WorldDrawer({
           {tab === "club" && "🏆 Klub, Misi Mingguan & Upgrade Ruko"}
           {tab === "rewards" && "☕ Higround Cafe Rewards & Voucher"}
           {tab === "events" && "🎟️ Event & Check-in QR Ruko"}
-          {tab === "online" && `👥 Member Aktif di Peta (${world.members.length})`}
+          {tab === "online" && `👥 Member Online di Peta (${world.members.length})`}
         </h2>
         <button onClick={() => { void sfx.select(); onClose(); }} className="pixel-btn rounded bg-white px-2.5 py-0.5 text-xs font-bold">✕</button>
       </div>

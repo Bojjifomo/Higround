@@ -142,6 +142,9 @@ export function serviceSuite(label: string, make: () => Promise<{ store: Store; 
         expect(other.hud.week).toBe(48);
         expect(other.ticker.length).toBeGreaterThan(0);
         expect(other.ticker.join(" ")).not.toMatch(/Gita/);
+        // Online-only filter: only online members (+ viewer) appear in /world
+        const onlineOnly = await worldView(s, bima, NOW, new Set([bima.id, rina.id]));
+        expect(onlineOnly.members.map((m) => m.handle).sort()).toEqual(["bima", "rina"]);
       });
     });
 

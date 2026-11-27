@@ -28,7 +28,8 @@ export function Connection({
   welcome: boolean;
   isMock?: boolean;
 }) {
-  const feedback = note ? NOTE[note] : null;
+  const rawFeedback = note ? NOTE[note] : null;
+  const feedback = integ && rawFeedback?.err && note !== "sync_failed" ? null : rawFeedback;
   const profilePath = `/u/${handle}`;
   const connectHref = `/api/intervals/connect?next=${encodeURIComponent(profilePath)}&from=${encodeURIComponent(profilePath)}`;
 

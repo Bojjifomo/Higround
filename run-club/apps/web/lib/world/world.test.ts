@@ -4,7 +4,7 @@ import {
 } from "./agents";
 import { buildWorld, reachable, SCENES } from "./layout";
 import { astar, toGrid, toScreen } from "./path";
-import { ANIM_FRAMES, normalizeAvatar, randomAvatar, renderAvatarPixels, SPRITE_H, SPRITE_W, type AnimPose } from "./sprite";
+import { ANIM_FRAMES, AVATAR_OPTIONS, normalizeAvatar, randomAvatar, renderAvatarPixels, SPRITE_H, SPRITE_W, type AnimPose } from "./sprite";
 import { WORLD_MANIFEST } from "./assetManifest";
 import { cafeVouchersFor, loyaltyTierOf, rukoUpgradeFor, weeklyClubQuestFor } from "../rewards";
 
@@ -154,6 +154,38 @@ describe("character sprites & world manifest", () => {
         expect(s.rows.some((r) => r.includes("o"))).toBe(true);
       }
     }
+  });
+  it("renders visually distinct silhouettes for every v2 face, top, bottom, shoe, headwear/mask, and accessory option", () => {
+    const base = normalizeAvatar({
+      skin: "#F6CFA8", hair: "#1F1A18", top: "#FF5F0E", bottom: "#2E3A8C", shoes: "#E0352B",
+      hairStyle: "short", eyeStyle: "classic", topStyle: "tee", bottomStyle: "shorts",
+      shoeStyle: "sneakers", headwear: "none", accessory: "none",
+    });
+    const uniqueCount = <K extends keyof typeof AVATAR_OPTIONS>(field: K) => {
+      const rendered = AVATAR_OPTIONS[field].map((o) =>
+        renderAvatarPixels({ ...base, [field]: o.id }, "idle", 0).rows.join("\n"),
+      );
+      return new Set(rendered).size;
+    };
+    expect(AVATAR_OPTIONS.topStyle).toHaveLength(5);
+    expect(AVATAR_OPTIONS.bottomStyle).toHaveLength(3);
+    expect(AVATAR_OPTIONS.shoeStyle).toHaveLength(6);
+    expect(AVATAR_OPTIONS.accessory).toHaveLength(3);
+    expect(uniqueCount("eyeStyle")).toBe(AVATAR_OPTIONS.eyeStyle.length);
+    expect(uniqueCount("topStyle")).toBe(5);
+    expect(uniqueCount("bottomStyle")).toBe(3);
+    expect(uniqueCount("shoeStyle")).toBe(6);
+    expect(uniqueCount("headwear")).toBe(AVATAR_OPTIONS.headwear.length);
+    expect(uniqueCount("accessory")).toBe(3);
+
+    // Legacy v1 Supabase avatar JSONB normalizes cleanly to v2 IDs
+    const migrated = normalizeAvatar({
+      skin: "#F6CFA8", hair: "#1F1A18", top: "#FF5F0E", bottom: "#222228", shoes: "#FFFDF7",
+      eyeStyle: "cool", topStyle: "higround", bottomStyle: "run_shorts", headwear: "visor", accessory: "shades",
+    });
+    expect(migrated).toMatchObject({
+      eyeStyle: "sipit", topStyle: "tee", bottomStyle: "shorts", shoeStyle: "sneakers", headwear: "cap", accessory: "glasses",
+    });
   });
   it("includes key Higround landmarks, mascot poses, and CC0 tiles in the sprite manifest", () => {
     for (const key of [

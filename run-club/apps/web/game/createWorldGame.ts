@@ -17,7 +17,7 @@ import { spriteEntry, WORLD_MANIFEST } from "@/lib/world/assetManifest";
 import { buildWorld, type SceneGrid, type SceneKey, type World, type WorldObject } from "@/lib/world/layout";
 import { ISO_H, ISO_W, toGrid, toScreen } from "@/lib/world/path";
 import {
-  ANIM_FRAMES, MASCOT, MASCOT_PALETTE, renderAvatarPixels, type AnimPose, type AvatarColors,
+  ANIM_FRAMES, MASCOT, MASCOT_PALETTE, renderAvatarPixels, SPRITE_W, type AnimPose, type AvatarColors,
 } from "@/lib/world/sprite";
 
 export type StudioModeOverride = "auto" | "yoga" | "dine";
@@ -42,6 +42,7 @@ export interface WorldGame {
   setScene(key: SceneKey): void;
   setZoom(z: number): void;
   setStudioMode(mode: StudioModeOverride): void;
+  syncMembers(members: GameMember[]): void;
   focusMe(): SceneKey | null;
   focusMember(memberId: string): SceneKey | null;
   cheerMember(memberId: string): void;
@@ -280,33 +281,35 @@ class WorldScene extends Phaser.Scene {
     canvas?.addEventListener("touchcancel", resetDrag);
   }
 
-  makeCharacterTextures() {
-    const paint = (key: string, rows: string[], pal: Record<string, string>) => {
-      if (this.textures.exists(key)) return;
-      const g = this.make.graphics({ x: 0, y: 0 }, false);
-      rows.forEach((row, y) =>
-        [...row].forEach((ch, x) => {
-          const c = pal[ch];
-          if (c) {
-            g.fillStyle(parseInt(c.slice(1), 16), 1);
-            g.fillRect(x, y, 1, 1);
-          }
-        }),
-      );
-      g.generateTexture(key, rows[0].length, rows.length);
-      g.destroy();
-    };
-
-    const poses: AnimPose[] = ["idle", "walk", "run", "sit", "stretch", "yoga"];
-    for (const m of this.opts.members) {
-      for (const pose of poses) {
-        for (let f = 0; f < ANIM_FRAMES[pose]; f++) {
-          const spr = renderAvatarPixels(m.avatar, pose, f);
-          paint(`p-${m.id}-${pose}-${f}`, spr.rows, spr.palette);
+  private paintTexture(key: string, rows: string[], pal: Record<string, string>) {
+    if (this.textures.exists(key)) return;
+    const g = this.make.graphics({ x: 0, y: 0 }, false);
+    rows.forEach((row, y) =>
+      [...row].forEach((ch, x) => {
+        const c = pal[ch];
+        if (c) {
+          g.fillStyle(parseInt(c.slice(1), 16), 1);
+          g.fillRect(x, y, 1, 1);
         }
+      }),
+    );
+    g.generateTexture(key, rows[0].length, rows.length);
+    g.destroy();
+  }
+
+  private ensureMemberTextures(m: GameMember) {
+    const poses: AnimPose[] = ["idle", "walk", "run", "sit", "stretch", "yoga"];
+    for (const pose of poses) {
+      for (let f = 0; f < ANIM_FRAMES[pose]; f++) {
+        const spr = renderAvatarPixels(m.avatar, pose, f);
+        this.paintTexture(`p-${m.id}-${pose}-${f}`, spr.rows, spr.palette);
       }
     }
-    paint(`p-${MASCOT_ID}-fallback`, MASCOT, MASCOT_PALETTE);
+  }
+
+  makeCharacterTextures() {
+    for (const m of this.opts.members) this.ensureMemberTextures(m);
+    this.paintTexture(`p-${MASCOT_ID}-fallback`, MASCOT, MASCOT_PALETTE);
   }
 
   spawn(memberId: string, hour: number, scatter: boolean): void {
@@ -352,7 +355,7 @@ class WorldScene extends Phaser.Scene {
     if (isMascot && this.textures.exists("spr-mascot_idle")) {
       img.setScale(0.95);
     } else if (!isMascot) {
-      img.setScale(0.86); // crisp 28x36 scaled nicely to ~24x31 on 32x16 tiles
+      img.setScale(24 / SPRITE_W); // crisp ~24px wide on 32x16 tiles at any sprite resolution
     }
 
     const shadow = this.add.ellipse(0, 0, isMascot ? 18 : 15, 6, 0x1a1412, 0.28);
@@ -1131,6 +1134,35 @@ class WorldScene extends Phaser.Scene {
     this.studioOverride = mode;
     if (this.current === "floor2") this.drawScene();
   }
+
+  /** Add newly online members and remove members who went offline without resetting existing walkers. */
+  syncMembers(nextMembers: GameMember[]) {
+    const nextIds = new Set(nextMembers.map((m) => m.id));
+    this.opts.members = nextMembers;
+
+    // Remove agents & sprites for members who went offline (never remove the mascot)
+    for (const a of [...this.agents]) {
+      if (a.memberId === MASCOT_ID) continue;
+      if (!nextIds.has(a.memberId)) {
+        this.sprites.get(a.memberId)?.destroy();
+        this.sprites.delete(a.memberId);
+        this.animClock.delete(a.memberId);
+        this.lastBubble.delete(a.memberId);
+        this.respawnAt.delete(a.memberId);
+      }
+    }
+    this.agents = this.agents.filter((a) => a.memberId === MASCOT_ID || nextIds.has(a.memberId));
+
+    // Spawn members who just came online
+    const existingIds = new Set(this.agents.map((a) => a.memberId));
+    const hour = wibHour(Date.now());
+    for (const m of nextMembers) {
+      this.ensureMemberTextures(m);
+      if (!existingIds.has(m.id)) {
+        this.spawn(m.id, hour, false);
+      }
+    }
+  }
 }
 
 export function createWorldGame(parent: HTMLElement, opts: GameOptions): WorldGame {
@@ -1166,6 +1198,7 @@ export function createWorldGame(parent: HTMLElement, opts: GameOptions): WorldGa
       }
     },
     setStudioMode: (m) => scene.sys?.isActive() && scene.setStudioOverride(m),
+    syncMembers: (ms) => scene.sys?.isActive() && scene.syncMembers(ms),
     focusMe: () => (scene.sys?.isActive() ? scene.focusMe() : null),
     focusMember: (id) => (scene.sys?.isActive() ? scene.focusMember(id) : null),
     cheerMember: (id) => scene.sys?.isActive() && scene.cheerMember(id),

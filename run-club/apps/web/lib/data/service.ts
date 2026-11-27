@@ -422,8 +422,17 @@ const ISO_WEEK = (iso: string) => {
   return 1 + Math.round(((d.getTime() - firstThu.getTime()) / DAY - 3 + ((firstThu.getUTCDay() + 6) % 7)) / 7);
 };
 
-/** Who is in the world right now (all public signed-up members up to 25, you always), the HUD and the ticker. */
-export async function worldView(store: Store, viewer: Member | null, now: number): Promise<WorldView> {
+/**
+ * Who is in the world right now, the HUD and the ticker.
+ * When `onlineIds` is provided (production Supabase mode), ONLY currently online members (and the viewer) appear
+ * so the ruko never gets overcrowded as the club grows.
+ */
+export async function worldView(
+  store: Store,
+  viewer: Member | null,
+  now: number,
+  onlineIds: Set<string> | null = null,
+): Promise<WorldView> {
   const nowIso = new Date(now).toISOString();
   const today = localDate(nowIso, rules);
   const thisWeek = weekKey(nowIso, rules);
@@ -441,7 +450,10 @@ export async function worldView(store: Store, viewer: Member | null, now: number
     rows.push({ m, acts, ok, atts, last, joined, weekKm, totalKm });
   }
   const visible = rows.filter((r) => r.m.isPublic || r.m.id === viewer?.id);
-  const active = [...visible]
+  const pool = onlineIds
+    ? visible.filter((r) => onlineIds.has(r.m.id) || r.m.id === viewer?.id)
+    : visible;
+  const active = [...pool]
     .sort((a, b) =>
       Number(b.m.id === viewer?.id) - Number(a.m.id === viewer?.id) ||
       b.last - a.last ||

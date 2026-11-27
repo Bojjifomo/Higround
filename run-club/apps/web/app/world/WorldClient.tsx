@@ -22,7 +22,10 @@ export function WorldClient({
   world: WorldView;
   meHandle: string | null;
 }) {
-  const { members, hud, ticker, clubQuest, rukoUpgrade, rewards } = world;
+  const { hud, ticker, clubQuest, rukoUpgrade, rewards } = world;
+  const [members, setMembers] = useState<WorldMember[]>(world.members);
+  const membersRef = useRef<WorldMember[]>(world.members);
+  membersRef.current = members;
   const meMember = members.find((m) => m.isMe) ?? null;
 
   const box = useRef<HTMLDivElement>(null);
@@ -54,6 +57,44 @@ export function WorldClient({
     return () => clearInterval(id);
   }, []);
 
+  // Live online presence heartbeat: only online members stay on the map & in Aktif (Online)
+  useEffect(() => {
+    let alive = true;
+    const ping = async () => {
+      try {
+        const res = await fetch("/api/world/presence", { method: "POST", cache: "no-store" });
+        if (!res.ok || !alive) return;
+        const data = (await res.json()) as { ok?: boolean; members?: WorldMember[] };
+        if (!data.ok || !Array.isArray(data.members) || !alive) return;
+        setMembers(data.members);
+        game.current?.syncMembers(
+          data.members.map((m) => ({
+            id: m.id, name: m.name, avatar: m.avatar, ranToday: m.ranToday, yogaStars: m.yogaStars,
+            isMe: m.isMe, level: m.level,
+          })),
+        );
+      } catch {
+        // transient network hiccup — next heartbeat will recover
+      }
+    };
+    const sendOffline = () => {
+      if (typeof navigator !== "undefined" && navigator.sendBeacon) {
+        navigator.sendBeacon("/api/world/presence?offline=1");
+      }
+    };
+    const id = setInterval(ping, 15_000);
+    const onVisible = () => { if (document.visibilityState === "visible") void ping(); };
+    window.addEventListener("pagehide", sendOffline);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      alive = false;
+      clearInterval(id);
+      window.removeEventListener("pagehide", sendOffline);
+      document.removeEventListener("visibilitychange", onVisible);
+      sendOffline();
+    };
+  }, []);
+
   useEffect(() => {
     let alive = true;
     const startZoom = 2;
@@ -61,7 +102,7 @@ export function WorldClient({
     import("@/game/createWorldGame").then(({ createWorldGame }) => {
       if (!alive || !box.current) return;
       game.current = createWorldGame(box.current, {
-        members: members.map((m) => ({
+        members: membersRef.current.map((m) => ({
           id: m.id, name: m.name, avatar: m.avatar, ranToday: m.ranToday, yogaStars: m.yogaStars,
           isMe: m.isMe, level: m.level,
         })),
@@ -72,7 +113,7 @@ export function WorldClient({
         onSelect: (id) => {
           setSelectedPoi(null);
           setCheered(false);
-          setSelected(members.find((m) => m.id === id) ?? null);
+          setSelected(membersRef.current.find((m) => m.id === id) ?? null);
         },
         onSelectPoi: (poiKey) => {
           setSelected(null);
@@ -86,7 +127,7 @@ export function WorldClient({
       game.current?.destroy();
       game.current = null;
     };
-    // created once; scene and zoom updates go through the imperative WorldGame handle
+    // created once; scene, zoom and member presence updates go through the imperative WorldGame handle
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -224,7 +265,7 @@ export function WorldClient({
               <div className="pixel-frame pointer-events-auto flex items-center gap-2 rounded-lg bg-[#241917]/90 px-2.5 py-0.5 text-[11px] font-bold text-[#FFF8EA]">
                 <span className="font-mono text-hg-yellow">{clock || "--.--"} WIB</span>
                 <span className="capitalize opacity-85">{phase.name}</span>
-                <span className="text-emerald-400">● {members.length} aktif</span>
+                <span className="text-emerald-400">● {members.length} online</span>
               </div>
             </div>
 
@@ -339,7 +380,7 @@ export function WorldClient({
             <WorldDrawer
               tab={drawer}
               onClose={() => setDrawer(null)}
-              world={world}
+              world={{ ...world, members }}
               onJumpMember={jumpToMember}
               onCheerMember={cheerMember}
             />
@@ -456,7 +497,7 @@ export function WorldClient({
               onClick={() => setDrawer((d) => (d === "online" ? null : "online"))}
               className={`pixel-btn rounded-lg px-2 py-1 text-[11px] font-bold sm:px-2.5 sm:text-xs ${drawer === "online" ? "bg-hg-orange text-white" : "bg-white"}`}
             >
-              👥 Aktif ({members.length})
+              👥 Online ({members.length})
             </button>
             <Link
               href={meHandle ? "/share" : "/login"}

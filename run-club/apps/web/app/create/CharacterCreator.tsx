@@ -1,6 +1,6 @@
 "use client";
 import { useActionState, useEffect, useState } from "react";
-import { Avatar } from "@/components/Avatar";
+import { Avatar, type AvatarCrop } from "@/components/Avatar";
 import { SpringBounce } from "@/components/SpringUI";
 import { Button } from "@/components/ui";
 import { saveAvatar, type FormState } from "@/app/actions";
@@ -13,13 +13,13 @@ import {
 type TabKey = "face" | "hair" | "top" | "bottom" | "shoes" | "headwear" | "accessory";
 
 const TABS: { key: TabKey; label: string; icon: string; colorField: keyof typeof AVATAR_PALETTES; colorLabel: string }[] = [
-  { key: "face", label: "Wajah", icon: "🙂", colorField: "skin", colorLabel: "Warna Kulit" },
+  { key: "face", label: "Wajah", icon: "😤", colorField: "skin", colorLabel: "Warna Kulit" },
   { key: "hair", label: "Rambut", icon: "💇", colorField: "hair", colorLabel: "Warna Rambut" },
   { key: "top", label: "Atasan", icon: "👕", colorField: "top", colorLabel: "Warna Baju" },
   { key: "bottom", label: "Bawahan", icon: "🩳", colorField: "bottom", colorLabel: "Warna Celana" },
   { key: "shoes", label: "Sepatu", icon: "👟", colorField: "shoes", colorLabel: "Warna Sepatu" },
-  { key: "headwear", label: "Topi", icon: "🧢", colorField: "headwearColor", colorLabel: "Warna Topi" },
-  { key: "accessory", label: "Aksesori", icon: "🕶️", colorField: "accessoryColor", colorLabel: "Warna Aksesori" },
+  { key: "headwear", label: "Topi & Topeng", icon: "🎭", colorField: "headwearColor", colorLabel: "Warna Topi / Topeng" },
+  { key: "accessory", label: "Aksesori", icon: "👓", colorField: "accessoryColor", colorLabel: "Warna Aksesori" },
 ];
 
 const POSES: { id: AnimPose; label: string }[] = [
@@ -160,14 +160,14 @@ export function CharacterCreator({
                 <SpringBounce triggerKey={bounceTick}>
                   <Avatar
                     avatar={avatar}
-                    size={138}
+                    size={164}
                     pose={pose}
                     frame={frame}
                     flip={flip}
                     label={`Preview karakter ${displayName}`}
                   />
                 </SpringBounce>
-                <div className="-mt-3 h-4 w-24 rounded-full bg-black/20" />
+                <div className="-mt-3 h-4 w-28 rounded-full bg-black/20" />
               </div>
 
               <span className="absolute bottom-2 right-2 rounded border border-[#5C3A28] bg-[#FFFDF7]/90 px-2 py-0.5 font-pixel text-xs text-[#3B261C]">
@@ -297,39 +297,41 @@ function StyleOptionGrid({
   avatar: NormalizedAvatar;
   onPatch: (p: Partial<NormalizedAvatar>, note?: string) => void;
 }) {
-  if (tab === "shoes") {
-    return (
-      <div className="rounded-md border-2 border-dashed border-[#5C3A28]/40 bg-[#FFFDF7] p-4 text-center text-sm">
-        <p className="font-bold text-[#3B261C]">Pilih warna sepatu lari kamu di palet warna di atas!</p>
-        <p className="mt-1 text-xs text-neutral-600">
-          Coba klik pose <b>Lari</b> di kiri buat lihat gaya sepatu kamu pas sprint di depan Start Gate.
-        </p>
-      </div>
-    );
-  }
-
-  const configMap = {
-    face: { field: "eyeStyle" as const, options: AVATAR_OPTIONS.eyeStyle },
-    hair: { field: "hairStyle" as const, options: AVATAR_OPTIONS.hairStyle },
-    top: { field: "topStyle" as const, options: AVATAR_OPTIONS.topStyle },
-    bottom: { field: "bottomStyle" as const, options: AVATAR_OPTIONS.bottomStyle },
-    headwear: { field: "headwear" as const, options: AVATAR_OPTIONS.headwear },
-    accessory: { field: "accessory" as const, options: AVATAR_OPTIONS.accessory },
+  const configMap: Record<TabKey, {
+    field: "eyeStyle" | "hairStyle" | "topStyle" | "bottomStyle" | "shoeStyle" | "headwear" | "accessory";
+    options: readonly { id: string; label: string }[];
+    crop: AvatarCrop;
+    size: number;
+  }> = {
+    face: { field: "eyeStyle", options: AVATAR_OPTIONS.eyeStyle, crop: "head", size: 58 },
+    hair: { field: "hairStyle", options: AVATAR_OPTIONS.hairStyle, crop: "head", size: 58 },
+    top: { field: "topStyle", options: AVATAR_OPTIONS.topStyle, crop: "torso", size: 62 },
+    bottom: { field: "bottomStyle", options: AVATAR_OPTIONS.bottomStyle, crop: "legs", size: 58 },
+    shoes: { field: "shoeStyle", options: AVATAR_OPTIONS.shoeStyle, crop: "feet", size: 60 },
+    headwear: { field: "headwear", options: AVATAR_OPTIONS.headwear, crop: "head", size: 58 },
+    accessory: { field: "accessory", options: AVATAR_OPTIONS.accessory, crop: "full", size: 48 },
   };
-  const { field, options } = configMap[tab];
+  const { field, options, crop, size } = configMap[tab];
 
   return (
     <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4">
       {options.map((opt) => {
         const selected = avatar[field] === opt.id;
-        const previewAvatar: NormalizedAvatar = { ...avatar, [field]: opt.id };
+        const previewAvatar: NormalizedAvatar = {
+          ...avatar,
+          [field]: opt.id,
+          // Keep full masks out of the way while browsing face/hair options
+          ...(tab === "face" && (avatar.headwear === "mask_luchador" || avatar.headwear === "mask_cat")
+            ? { headwear: "none" as const }
+            : {}),
+        };
         return (
           <button
             key={opt.id}
             type="button"
             onClick={() => onPatch({ [field]: opt.id } as Partial<NormalizedAvatar>)}
             aria-pressed={selected}
-            className={`relative flex flex-col items-center rounded-md border-2 p-2 text-center transition-all ${
+            className={`relative flex flex-col items-center justify-between rounded-md border-2 p-2 text-center transition-all ${
               selected
                 ? "border-hg-orange bg-[#FFFDF7] shadow-[3px_3px_0_#FF5F0E]"
                 : "border-[#5C3A28]/50 bg-[#EFE0C4] hover:border-[#3B261C] hover:bg-[#FFFDF7]"
@@ -343,7 +345,9 @@ function StyleOptionGrid({
                 <span className="pointer-events-none absolute bottom-0.5 right-0.5 h-2 w-2 border-b-2 border-r-2 border-black" />
               </>
             )}
-            <Avatar avatar={previewAvatar} size={46} label={opt.label} />
+            <div className="flex min-h-[52px] items-center justify-center">
+              <Avatar avatar={previewAvatar} size={size} crop={crop} label={opt.label} />
+            </div>
             <span className="mt-1 line-clamp-1 text-[11px] font-bold leading-tight text-[#3B261C]">
               {opt.label}
             </span>

@@ -1,6 +1,6 @@
 # Revisi & Roadmap Higround Run Club (v4)
 
-> **Status:** Keputusan 1–7 terkunci — **Fase A selesai** (lanjut Fase B).  
+> **Status:** Keputusan 1–7 terkunci — **Fase A + Online-Only Presence + Fase B selesai** (siap QA di iPhone, lanjut Fase C).  
 > **Sumber:** Catatan revisi Andreas + 10 screenshot QA mobile + feedback WA tim internal (27–28 Nov 2026).
 
 ---
@@ -17,7 +17,7 @@ flowchart LR
 
 | Prioritas | Fokus | Dampak Utama |
 |---|---|---|
-| **Fase A (P0)** | Bug kritis mobile + Onboarding tanpa username + Fix Intervals.icu | Member baru bisa langsung daftar, connect jam, dan main lancar di HP tanpa HUD nabrak/peta macet |
+| **Fase A (P0)** | Bug kritis mobile + Onboarding tanpa username + Fix Intervals.icu + Online-Only Presence | Member baru bisa langsung daftar, connect jam, dan main lancar di HP tanpa HUD nabrak/peta macet/keramean |
 | **Fase B (P1)** | Rombak Character Creator sesuai QA mobile (siluet lebih smooth & kebaca) + rapikan dock bawah | Karakter lebih lucu, ekspresif, baju/celana kelihatan jelas bedanya, proporsi topi pas |
 | **Fase C (P1)** | Rombak Profil/Dashboard (Walk, PB Badges, Heatmap 31 hari, Share per Run, Deteksi Lari Bareng) | Dashboard relevan buat pelari & pejalan kaki, siap pamer ke IG Story (Card + Stiker) |
 | **Fase D (P2)** | Gameplay `/world` (Gamepad + Auto, Medal Top 1–3, Klik Profil, Embed Playlist Higround, Menu & Review) | Dunia pixel beneran terasa kayak game sosial & nyambung ke ruko fisik Higround |
@@ -44,27 +44,26 @@ flowchart LR
 - [x] **Fix Peta tidak bisa digeser-geser (touch pan/drag) di HP** *(QA Screenshot 16.48)*.
 - [x] **Fix karakter player tidak ketemu saat masuk `/world`** (*"kok player ga ketemu"*):
   - Pastikan karakter user selalu spawn di lokasi terlihat & kamera langsung auto-center ke karakter saat load + saat tekan `Cari gue`.
-- [x] **Tampilkan semua member yang sudah login** di tab **Aktif** dan di dalam peta (bukan cuma 1 orang).
+- [x] **Online-Only Presence di `/world`** *(update Andreas: hanya member yang sedang online yang muncul di peta & tab Online supaya tidak keramean saat member bertambah; live heartbeat `/api/world/presence` + auto-hilang saat tutup tab)*.
 - [x] **Takeout tombol Karakter dari dock bawah** — pindahkan tombol **"Ganti Karakter"** ke lokasi yang lebih rapi (mis. kartu profil / halaman profil).
 - [x] **Yoga Quest di-lock sementara**: tetap tampil di UI (dengan ikon gembok / badge *Coming Soon*), tapi **tidak bisa diklik dulu**.
 
 ### D. Character Creator (`/create`)
-- [ ] **Keterbacaan & Smoothness Pixel Sprite (Feedback WA):**
-  - Upgrade siluet, shading, dan kontras antara atasan & bawahan agar di preview Character Creator & dunia game perbedaan jenis baju/celana kelihatan jelas dan lebih halus/rapi.
-- [ ] **Wajah & Mata:**
-  - Perbanyak variasi mata (termasuk **mata sipit**).
-  - Tambah ekspresi **negatif / lucu** (tidak harus selalu positif/senyum): mis. **Marah/Kesal, Cemberut, Ngantuk/Capek, Datar/Poker Face, Panik**.
-- [ ] **Atasan (5 siluet berbeda saja):**
-  - **Singlet**, **Kaos Pendek**, **Lengan Panjang**, **Jaket**, **Polo** *(hapus variasi motif yang siluetnya sama)*.
-- [ ] **Bawahan (3 pilihan saja):**
+- [x] **Keterbacaan & Smoothness Pixel Sprite (Feedback WA):**
+  - Upgrade resolusi sprite ke `36×48` + zoomed crop preview per kategori (Wajah/Atasan/Bawahan/Sepatu/Topi) agar perbedaan baju/celana/sepatu langsung terbaca jelas & jauh lebih halus.
+- [x] **Wajah & Mata:**
+  - 10 ekspresi termasuk **Mata Sipit** + ekspresi **negatif / lucu**: **Marah/Kesal, Cemberut, Ngantuk, Datar (Poker Face), Panik**.
+- [x] **Atasan (5 siluet berbeda saja):**
+  - **Singlet**, **Kaos Pendek**, **Lengan Panjang**, **Jaket**, **Polo**.
+- [x] **Bawahan (3 pilihan saja):**
   - **Panjang**, **Pendek**, **Dalaman**.
-- [ ] **Sepatu (tambah gaya unik & lucu + palet warna):**
+- [x] **Sepatu (6 gaya unik & lucu + palet warna):**
   - **Sepatu Biasa**, **Sendal Jepit**, **Nyeker**, **Sepatu Ice Skating**, **Sepatu Manjat Es (berpul)**, **Sepatu Bola**.
-- [ ] **Topi & Topeng:**
-  - **Perbaiki posisi/alignment semua topi** supaya pas menempel di kepala (sekarang beberapa topi melayang/meleset).
-  - Tambah topi aneh/lucu & kategori **Topeng** (mis. Topeng Luchador, Topeng Hewan, Helm, Mahkota, dll).
-- [ ] **Aksesori (disederhanakan jadi 3 pilihan saja):**
-  - **Polos**, **Kacamata Biasa**, **Medali** *(buang Kacamata Hitam, Hydration Vest, Earphone)*.
+- [x] **Topi & Topeng:**
+  - **Perbaiki posisi/alignment semua topi** supaya pas menempel di kepala (`headY` anchor + auto-flatten rambut tinggi).
+  - Tambah topi aneh/lucu (**Mahkota, Helm, Baling-Baling**) & **Topeng** (**Topeng Luchador, Topeng Kucing**).
+- [x] **Aksesori (3 pilihan saja):**
+  - **Polos**, **Kacamata Biasa**, **Medali**.
 
 ### E. Gameplay & Interaksi di `/world`
 - [ ] **Virtual Gamepad / D-Pad Cursor:**
@@ -126,9 +125,9 @@ flowchart LR
 
 | Fase | Ruang Lingkup | Status |
 |---|---|---|
-| **Fase A — Stabilisasi & Flow Inti** | Hapus Username (Nickname only, no symbol/emoji), Fix Intervals.icu (onboarding + profil), Fix HUD mobile portrait tumpang tindih, Fix touch-pan peta HP, Fix player tidak ketemu, Member aktif tampil semua, Lock Yoga Quest, Takeout tombol Karakter di dock bawah | **Done** |
-| **Fase B — Character Creator v2** | Smoothness & kontras siluet baju/celana, Mata sipit + wajah negatif/lucu, 5 Atasan, 3 Bawahan, 6 Sepatu unik, Fix alignment Topi + Topeng, 3 Aksesori | Next |
-| **Fase C — Profil, Run Buddy & Share Story v2** | Track Jalan Kaki (`Walk`), hapus Elevasi & Riwayat XP, KM/minggu, Heatmap 31 hari jelas, PB Badges (1K–50K), pisah Run vs Yoga Badge, Deteksi Lari Bareng (*Run Buddy*), Share per Run + Share Lari Bareng (Card Pixel + Stiker Transparan) | Pending |
+| **Fase A — Stabilisasi & Flow Inti** | Hapus Username (Nickname only, no symbol/emoji), Fix Intervals.icu (onboarding + profil), Fix HUD mobile portrait tumpang tindih, Fix touch-pan peta HP, Fix player tidak ketemu, Online-Only Presence, Lock Yoga Quest, Takeout tombol Karakter di dock bawah | **Done** |
+| **Fase B — Character Creator v2** | Smoothness & kontras siluet baju/celana (`36×48`), Mata sipit + wajah negatif/lucu, 5 Atasan, 3 Bawahan, 6 Sepatu unik, Fix alignment Topi + Topeng, 3 Aksesori | **Done** |
+| **Fase C — Profil, Run Buddy & Share Story v2** | Track Jalan Kaki (`Walk`), hapus Elevasi & Riwayat XP, KM/minggu, Heatmap 31 hari jelas, PB Badges (1K–50K), pisah Run vs Yoga Badge, Deteksi Lari Bareng (*Run Buddy*), Share per Run + Share Lari Bareng (Card Pixel + Stiker Transparan) | Next |
 | **Fase D — Dunia Pixel & Fitur Kafe** | Virtual Gamepad + auto-walk fallback, Leaderboard KM (khusus Lari) clickable, Medali Top 1–3 di atas kepala, Klik profil orang lain, Menu Higround, Link Google Maps Review, Embed BGM Playlist Higround | Pending |
 | **Fase E — AI Coach, Komunitas & Bisnis** | AI Running Coach Gemini di Profil, Chat + Filter Kata Kasar Indonesia, Giveaway Email via Resend, Export Database Admin, LunaPOS Monthly CSV/Excel Loyalty Sync | Pending |
 

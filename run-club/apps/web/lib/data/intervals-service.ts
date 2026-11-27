@@ -23,7 +23,8 @@ export type SyncResult = { ok: true; runs: number } | { ok: false; error: string
 export async function syncMember(store: Store, provider: ActivityProvider, userId: string, now: number): Promise<SyncResult> {
   const integ = await store.integration(userId);
   if (!integ) return { ok: false, error: "Belum tersambung ke Intervals.icu." };
-  const oldest = wibDate(now - (integ.lastSyncedAt ? RESYNC_DAYS : BACKFILL_DAYS) * DAY);
+  const existing = await store.activities(userId);
+  const oldest = wibDate(now - (integ.lastSyncedAt && existing.length > 0 ? RESYNC_DAYS : BACKFILL_DAYS) * DAY);
   try {
     const acts = await provider.listActivities(integ.token, userId, oldest, wibDate(now));
     await store.upsertActivities(acts.map((a) => toStored(a)));

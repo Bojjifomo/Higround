@@ -77,10 +77,10 @@ export function ShareStudio({ baseProps }: { baseProps: Omit<RunStoryProps, "tem
     const hop = Math.abs(Math.sin(frame * 0.25)) * 8;
     if (mascotImg) ctx.drawImage(mascotImg, 352, 300 - hop, 108, 108);
 
-    // Draw live custom 28x36 pixel character pixel-by-pixel!
+    // Draw live custom pixel character pixel-by-pixel!
     const pose = template === "run" ? "run" : template === "levelup" ? "stretch" : "yoga";
     const spr = renderAvatarPixels(baseProps.avatar, pose, Math.floor(frame / 4));
-    const pxSize = 5;
+    const pxSize = Math.max(3, Math.round(180 / spr.height));
     const ox = Math.round(W / 2 - (spr.width * pxSize) / 2);
     const bob = template === "run" ? Math.abs(Math.sin(frame * 0.42)) * 10 : 0;
     const oy = Math.round(424 - spr.height * pxSize - bob);
