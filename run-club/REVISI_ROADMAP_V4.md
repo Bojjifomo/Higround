@@ -100,6 +100,7 @@ flowchart LR
 
 ### G. Share IG Story (`/share`)
 - [ ] Dukungan **Share per Run** (data diambil dari 1 aktivitas lari spesifik: jarak, pace, durasi, tanggal, lokasi/start gate, badge PB kalau pecah rekor, plus avatar pixel member).
+- [ ] Dukungan **Share Lari Bareng (*Run Buddy*)**: kalau sesi lari terdeteksi bareng member lain, tampilkan badge *"Lari bareng @Nama"* + jajaran avatar pixel squad langsung di kartu/stiker IG Story.
 - [ ] **Dua Mode Layout 9:16 (Toggle):**
   - **Card Pixel** (background diorama ruko Higround + avatar + stats)
   - **Stiker Transparan** (PNG transparan buat ditempel di atas foto lari di IG Story ala Strava/NRC)
@@ -127,7 +128,7 @@ flowchart LR
 |---|---|---|
 | **Fase A — Stabilisasi & Flow Inti** | Hapus Username (Nickname only, no symbol/emoji), Fix Intervals.icu (onboarding + profil), Fix HUD mobile portrait tumpang tindih, Fix touch-pan peta HP, Fix player tidak ketemu, Member aktif tampil semua, Lock Yoga Quest, Takeout tombol Karakter di dock bawah | **Done** |
 | **Fase B — Character Creator v2** | Smoothness & kontras siluet baju/celana, Mata sipit + wajah negatif/lucu, 5 Atasan, 3 Bawahan, 6 Sepatu unik, Fix alignment Topi + Topeng, 3 Aksesori | Next |
-| **Fase C — Profil, Run Buddy & Share Story v2** | Track Jalan Kaki (`Walk`), hapus Elevasi & Riwayat XP, KM/minggu, Heatmap 31 hari jelas, PB Badges (1K–50K), pisah Run vs Yoga Badge, Deteksi Lari Bareng (*Run Buddy*), Share per Run (Card Pixel + Stiker Transparan) | Pending |
+| **Fase C — Profil, Run Buddy & Share Story v2** | Track Jalan Kaki (`Walk`), hapus Elevasi & Riwayat XP, KM/minggu, Heatmap 31 hari jelas, PB Badges (1K–50K), pisah Run vs Yoga Badge, Deteksi Lari Bareng (*Run Buddy*), Share per Run + Share Lari Bareng (Card Pixel + Stiker Transparan) | Pending |
 | **Fase D — Dunia Pixel & Fitur Kafe** | Virtual Gamepad + auto-walk fallback, Leaderboard KM (khusus Lari) clickable, Medali Top 1–3 di atas kepala, Klik profil orang lain, Menu Higround, Link Google Maps Review, Embed BGM Playlist Higround | Pending |
 | **Fase E — AI Coach, Komunitas & Bisnis** | AI Running Coach Gemini di Profil, Chat + Filter Kata Kasar Indonesia, Giveaway Email via Resend, Export Database Admin, LunaPOS Monthly CSV/Excel Loyalty Sync | Pending |
 
@@ -140,17 +141,18 @@ flowchart LR
 3. **BGM Playlist Higround:** **Opsi B** — **Embed Spotify/YouTube** Playlist Higround *(dengan mini-drawer player agar nggak mengganggu peta & catatan preview 30 detik jika user tidak login Spotify di browser)*.
 4. **Menu Kafe & Link Google Maps Review:**
    - Google Maps: `https://maps.app.goo.gl/zWJ7nExLghEzYQjm9`
-   - Menu Kafe (Drive): `https://drive.google.com/file/d/1uxWolkAArosG4Nlxr2NGkjSPRFI3wUGa/view?usp=sharing` *(catatan: perlu akses public/share sebelum Fase D supaya item & harganya bisa diekstrak ke `config/cafe_menu.json` atau di-embed langsung)*.
+   - Menu Kafe (Drive — **akses terverifikasi**): `higround_operational_menu offline_compressed (1).pdf` (`https://drive.google.com/file/d/1uxWolkAArosG4Nlxr2NGkjSPRFI3wUGa/view?usp=sharing`, 5.1 MB) → siap diekstrak ke `config/cafe_menu.json` + link lihat PDF penuh di Fase D.
 5. **Loyalty Member (LunaPOS) & Giveaway Email:**
-   - POS: **LunaPOS** (`lunapos.id`) → tidak punya public open API, jadi pakai **upload file CSV/Excel bulanan** di `/admin` untuk sync loyalty member.
+   - POS: **LunaPOS** (`lunapos.id`) → **Monthly CSV Upload Sync** di `/admin`.
    - Giveaway email: kirim otomatis lewat **Resend** (`RESEND_API_KEY`).
 6. **AI Assistant Gemini:**
-   - Fokus utama: **Running Coach** yang membaca histori lari member langsung di **Dashboard Profil**.
+   - Fokus utama: **Running Coach** yang membaca histori lari member langsung di **Dashboard Profil** *(key `GEMINI_API_KEY` menyusul; UI kasih graceful state sampai key diisi)*.
    - Panduan setup `GEMINI_API_KEY`:
      1. Buka [aistudio.google.com/apikey](https://aistudio.google.com/apikey) pakai akun Google/Gemini yang mau dipakai kuotanya.
      2. Klik **Create API key** → pilih/buat Google Cloud Project → salin key (`AIza...`).
      3. Di Mac mini (`~/higround-runclub-web/run-club/apps/web/.env.local`), tambahkan `GEMINI_API_KEY=AIza...` (jangan pernah di-commit ke git), lalu `pm2 restart runclub --update-env`.
      4. Pakai model hemat & cepat seperti `gemini-2.5-flash` (ada free tier di AI Studio; kalau trafik naik, tinggal aktifkan billing Pay-as-you-go di project tsb).
-7. **Deteksi Lari Bareng (*Run Buddy / Group Run*):**
-   - Otomatis dideteksi di backend dari tabel `activities` pada tanggal yang sama: cocokkan pasangan aktivitas member yang berbeda dengan selisih `start_time ≤ 15 menit` dan jarak Haversine `(start_lat, start_lng) ≤ 250 m` (baik di Higround maupun di rute/lokasi lain), opsional tambahan kecocokan durasi/jarak. Hanya menampilkan nama/handle partner lari (koordinat GPS tetap privat).
+7. **Deteksi Lari Bareng (*Run Buddy / Group Run*) + Share Story:**
+   - Otomatis dideteksi di backend dari tabel `activities` pada tanggal yang sama: cocokkan pasangan aktivitas member yang berbeda dengan selisih `start_time ≤ 15 menit` dan jarak Haversine `(start_lat, start_lng) ≤ 250 m` (baik di Higround maupun di rute/lokasi lain). Koordinat GPS tetap privat.
+   - Hasil deteksi tampil di profil & **bisa langsung di-share ke IG Story** (`/share`) lengkap dengan avatar & nama partner lari bareng!
 
