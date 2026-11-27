@@ -2,7 +2,9 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/Avatar";
+import { AnimatedNumber, LevelUpModal, SpringPop } from "@/components/SpringUI";
 import type { StudioModeOverride, WorldGame } from "@/game/createWorldGame";
+import { sfx } from "@/lib/audio/sfx";
 import type { WorldMember, WorldView } from "@/lib/data/service";
 import { km } from "@/lib/format";
 import { SCENES, type SceneKey } from "@/lib/world/layout";
@@ -33,8 +35,16 @@ export function WorldClient({
   const [selectedPoi, setSelectedPoi] = useState<string | null>(null);
   const [drawer, setDrawer] = useState<DrawerTab>(null);
   const [cheered, setCheered] = useState(false);
+  const [showLevelModal, setShowLevelModal] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [bgmOn, setBgmOn] = useState(false);
   const [counts, setCounts] = useState<Record<SceneKey, number>>({ street: 0, floor1: 0, floor2: 0 });
   const [clock, setClock] = useState("");
+
+  useEffect(() => {
+    setMuted(sfx.isMuted());
+    return () => { sfx.stopBgm(); };
+  }, []);
 
   useEffect(() => {
     const fmt = new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit" });
@@ -80,20 +90,35 @@ export function WorldClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const pick = (k: SceneKey) => { setScene(k); game.current?.setScene(k); setSelected(null); setSelectedPoi(null); };
-  const zoomTo = (z: number) => { setZoom(z); game.current?.setZoom(z); };
-  const switchStudio = (m: StudioModeOverride) => { setStudioMode(m); game.current?.setStudioMode(m); };
+  const pick = (k: SceneKey) => { void sfx.select(); setScene(k); game.current?.setScene(k); setSelected(null); setSelectedPoi(null); };
+  const zoomTo = (z: number) => { void sfx.pop(z); setZoom(z); game.current?.setZoom(z); };
+  const switchStudio = (m: StudioModeOverride) => { void sfx.select(); setStudioMode(m); game.current?.setStudioMode(m); };
   const findMe = () => {
+    void sfx.select();
     const target = game.current?.focusMe();
     if (target) setScene(target);
   };
   const jumpToMember = (m: WorldMember) => {
+    void sfx.select();
     const target = game.current?.focusMember(m.id);
     if (target) setScene(target);
     setSelected(m);
   };
   const cheerMember = (m: WorldMember) => {
+    void sfx.cheer();
     game.current?.cheerMember(m.id);
+  };
+  const toggleMute = () => {
+    const next = !muted;
+    sfx.setMuted(next);
+    setMuted(next);
+    if (next) setBgmOn(false);
+    else void sfx.pop(2);
+  };
+  const toggleBgm = async () => {
+    const playing = await sfx.toggleBgm();
+    setBgmOn(playing);
+    if (playing) setMuted(false);
   };
 
   const phase = dayPhase(hour);
@@ -117,9 +142,14 @@ export function WorldClient({
               <div className="min-w-[138px]">
                 <div className="flex items-center gap-1.5">
                   <span className="truncate font-pixel text-sm leading-none text-[#241917]">{meMember.name.split(" ")[0]}</span>
-                  <span className="rounded bg-black px-1.5 py-0.5 font-mono text-[10px] font-bold text-hg-yellow">
-                    Lv {hud.myLevel}
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowLevelModal(true)}
+                    title="Lihat status Level & bikin IG Story!"
+                    className="rounded bg-black px-1.5 py-0.5 font-mono text-[10px] font-bold text-hg-yellow hover:bg-hg-orange hover:text-white"
+                  >
+                    Lv <AnimatedNumber value={hud.myLevel} /> ★
+                  </button>
                 </div>
                 <div className="mt-1 h-2.5 w-full overflow-hidden rounded-full border border-[#2b1d17] bg-[#EFE1C4]">
                   <div className="h-full bg-gradient-to-r from-hg-orange to-hg-yellow" style={{ width: `${xpPct}%` }} />
@@ -207,6 +237,22 @@ export function WorldClient({
           )}
 
           <div className="pointer-events-auto flex items-center gap-1">
+            <button
+              type="button"
+              onClick={toggleBgm}
+              title={bgmOn ? "Matikan musik lo-fi kafe" : "Nyalakan musik lo-fi kafe (Tone.js)"}
+              className={`pixel-btn rounded-md px-2 py-1 text-[11px] font-bold ${bgmOn ? "bg-hg-orange text-white" : "bg-[#FFF8EA]"}`}
+            >
+              {bgmOn ? "🎵 On" : "🎵 BGM"}
+            </button>
+            <button
+              type="button"
+              onClick={toggleMute}
+              title={muted ? "Aktifkan efek suara" : "Matikan efek suara"}
+              className="pixel-btn rounded-md bg-[#FFF8EA] px-2 py-1 text-[11px] font-bold"
+            >
+              {muted ? "🔇" : "🔊"}
+            </button>
             {meHandle && (
               <button onClick={findMe} className="pixel-btn rounded-md bg-hg-yellow px-2 py-1 text-[11px] font-bold">
                 📍 Cari gue
@@ -261,7 +307,7 @@ export function WorldClient({
           )}
 
           {!drawer && !selectedPoi && selected && (
-            <div className="pixel-frame-orange pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-xl bg-[#FFF8EA] p-3">
+            <SpringPop className="pixel-frame-orange pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-xl bg-[#FFF8EA] p-3">
               <div className="rounded-lg border-2 border-[#2b1d17] bg-[#EFE1C4] p-1.5">
                 <Avatar avatar={selected.avatar} size={46} label={selected.name} />
               </div>
@@ -284,12 +330,14 @@ export function WorldClient({
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1.5">
-                <button
-                  onClick={() => { cheerMember(selected); setCheered(true); }}
-                  className="pixel-btn rounded-md bg-hg-yellow px-2.5 py-1 text-xs font-bold"
-                >
-                  {cheered ? "🔥 Terkirim!" : "👏 Semangat"}
-                </button>
+                {!selected.isMe && (
+                  <button
+                    onClick={() => { cheerMember(selected); setCheered(true); }}
+                    className="pixel-btn rounded-md bg-hg-yellow px-2.5 py-1 text-xs font-bold"
+                  >
+                    {cheered ? "🔥 Terkirim!" : "👏 Semangat"}
+                  </button>
+                )}
                 <div className="flex items-center gap-2">
                   <Link href={`/u/${selected.handle}`} className="pixel-btn rounded-md bg-hg-orange px-2.5 py-1 text-xs font-bold text-white">
                     Profil
@@ -297,7 +345,7 @@ export function WorldClient({
                   <button onClick={() => setSelected(null)} className="text-xs font-bold underline">Tutup</button>
                 </div>
               </div>
-            </div>
+            </SpringPop>
           )}
         </div>
 
@@ -353,12 +401,21 @@ export function WorldClient({
             </button>
             <Link
               href={meHandle ? "/create" : "/login"}
+              onClick={() => void sfx.select()}
               className="pixel-btn rounded-lg bg-hg-yellow px-2.5 py-1 text-xs font-bold text-[#241917]"
             >
               🎨 Karakter
             </Link>
             <Link
+              href={meHandle ? "/share" : "/login"}
+              onClick={() => void sfx.select()}
+              className="pixel-btn rounded-lg bg-hg-navy px-2.5 py-1 text-xs font-bold text-white"
+            >
+              🎬 Story
+            </Link>
+            <Link
               href="/yoga"
+              onClick={() => void sfx.select()}
               className="pixel-btn rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-[#241917]"
             >
               🧘 Yoga
@@ -366,6 +423,16 @@ export function WorldClient({
           </nav>
         </div>
       </div>
+
+      {showLevelModal && meMember && hud.myLevel !== null && hud.myXp !== null && (
+        <LevelUpModal
+          level={hud.myLevel}
+          title={hud.myTitle ?? "Runner"}
+          totalXp={hud.myXp}
+          weekKm={meMember.weekKm}
+          onClose={() => setShowLevelModal(false)}
+        />
+      )}
 
       <p className="text-center text-xs text-neutral-600">
         Geser kamera untuk keliling ruko · Klik <b>karakter</b> untuk profil &amp; kirim semangat · Klik <b>Start Gate, Counter ORDER HERE!, Kios Gelato, atau Papan Klub</b> untuk interaksi langsung!

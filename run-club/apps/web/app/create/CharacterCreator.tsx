@@ -1,8 +1,10 @@
 "use client";
 import { useActionState, useEffect, useState } from "react";
 import { Avatar } from "@/components/Avatar";
+import { SpringBounce } from "@/components/SpringUI";
 import { Button } from "@/components/ui";
 import { saveAvatar, type FormState } from "@/app/actions";
+import { sfx } from "@/lib/audio/sfx";
 import {
   ANIM_FRAMES, AVATAR_OPTIONS, AVATAR_PALETTES, normalizeAvatar, randomAvatar,
   type AnimPose, type AvatarColors, type NormalizedAvatar,
@@ -45,6 +47,7 @@ export function CharacterCreator({
   nextPath: string;
 }) {
   const [avatar, setAvatar] = useState<NormalizedAvatar>(() => normalizeAvatar(initial));
+  const [bounceTick, setBounceTick] = useState(0);
   const [tab, setTab] = useState<TabKey>("hair");
   const [pose, setPose] = useState<AnimPose>("walk");
   const [flip, setFlip] = useState(false);
@@ -72,11 +75,17 @@ export function CharacterCreator({
 
   const patch = (p: Partial<NormalizedAvatar>, note?: string) => {
     setAvatar((prev) => ({ ...prev, ...p }));
+    setBounceTick((n) => {
+      void sfx.pop(n + 1);
+      return n + 1;
+    });
     if (note) setMascotLine(note);
   };
 
   const handleRandom = () => {
     setAvatar(randomAvatar());
+    setBounceTick((n) => n + 1);
+    void sfx.dice();
     const quips = [
       "Kece banget! Siap start dari Higround nih!",
       "Wih, gaya barunya bikin pace makin kencang!",
@@ -146,16 +155,18 @@ export function CharacterCreator({
                 backgroundSize: "24px 24px",
               }}
             >
-              {/* Soft ground shadow */}
+              {/* Soft ground shadow + Kairosoft squash-and-stretch spring bounce! */}
               <div className="relative flex flex-col items-center">
-                <Avatar
-                  avatar={avatar}
-                  size={138}
-                  pose={pose}
-                  frame={frame}
-                  flip={flip}
-                  label={`Preview karakter ${displayName}`}
-                />
+                <SpringBounce triggerKey={bounceTick}>
+                  <Avatar
+                    avatar={avatar}
+                    size={138}
+                    pose={pose}
+                    frame={frame}
+                    flip={flip}
+                    label={`Preview karakter ${displayName}`}
+                  />
+                </SpringBounce>
                 <div className="-mt-3 h-4 w-24 rounded-full bg-black/20" />
               </div>
 

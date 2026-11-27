@@ -12,6 +12,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@react-spring/web": "^10.1.2",
+    "@remotion/player": "^4.0.547",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.45.4",
     "next": "^15.5.29",
@@ -20,7 +22,9 @@
     "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "server-only": "^0.0.1"
+    "remotion": "^4.0.547",
+    "server-only": "^0.0.1",
+    "tone": "^15.1.22"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.2.14",

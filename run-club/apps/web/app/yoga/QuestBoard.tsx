@@ -1,7 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Button, Stars } from "@/components/ui";
+import { sfx } from "@/lib/audio/sfx";
 import type { ClaimOutcome } from "@/lib/data/service";
 import { missionStars, type Mission, type Side, type SideBests, type Tahap, type YogaProgress } from "@/lib/yoga";
 import { claimYogaTimer, startYogaTimer } from "../actions";
@@ -72,17 +73,41 @@ function MissionTimer({ mission, bests, cooldowns, flat = false }: {
   const [elapsed, setElapsed] = useState(0);
   const [result, setResult] = useState<ClaimOutcome | null>(null);
   const [pending, start] = useTransition();
+  const prevStars = useRef(0);
   const cooldown = cooldowns[`${mission.key}:${side}`] ?? 0;
 
+  // SPEC §8.2-C3: Wake Lock keeps phone screen awake on the yoga mat while timer runs
   useEffect(() => {
     if (!run) return;
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - run.t0) / 1000)), 250);
-    return () => clearInterval(id);
+    let wakeLock: { release: () => Promise<void> } | null = null;
+    const nav = navigator as Navigator & { wakeLock?: { request: (type: "screen") => Promise<{ release: () => Promise<void> }> } };
+    nav.wakeLock?.request("screen").then((l) => { wakeLock = l; }).catch(() => {});
+    return () => {
+      clearInterval(id);
+      wakeLock?.release().catch(() => {});
+    };
   }, [run]);
+
+  const reached = mission.stars_s.filter((s) => elapsed >= s).length;
+
+  // SPEC §8.2-C3: Tone.js harmonic bell ding! each time a star threshold is reached
+  useEffect(() => {
+    if (!run) {
+      prevStars.current = 0;
+      return;
+    }
+    if (reached > prevStars.current && reached >= 1 && reached <= 3) {
+      void sfx.starDing(reached as 1 | 2 | 3);
+      prevStars.current = reached;
+    }
+  }, [reached, run]);
 
   const begin = () => start(async () => {
     setResult(null);
+    void sfx.select();
     const r = await startYogaTimer(mission.key, side, cues.every(Boolean));
+    prevStars.current = 0;
     setElapsed(0);
     setRun({ timerId: r.timerId, t0: Date.now() });
   });
@@ -91,10 +116,10 @@ function MissionTimer({ mission, bests, cooldowns, flat = false }: {
     const r = await claimYogaTimer(run.timerId);
     setRun(null);
     setResult(r);
+    if (r.ok) void sfx.levelUp();
     router.refresh();
   });
 
-  const reached = mission.stars_s.filter((s) => elapsed >= s).length;
   return (
     <div className="border-t-2 border-black p-3 text-sm">
       {mission.per_side && (

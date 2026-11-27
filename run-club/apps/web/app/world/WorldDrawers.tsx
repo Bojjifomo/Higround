@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Avatar } from "@/components/Avatar";
+import { SpringPop } from "@/components/SpringUI";
+import { sfx } from "@/lib/audio/sfx";
 import type { WorldMember, WorldView } from "@/lib/data/service";
 import { km } from "@/lib/format";
 
@@ -89,7 +91,7 @@ export function PoiPopup({
   const info = POI_INFO[poiKey];
   if (!info) return null;
   return (
-    <div className="pixel-frame-orange pointer-events-auto mx-auto w-full max-w-md rounded-xl bg-[#FFF8EA] p-3.5 text-sm">
+    <SpringPop className="pixel-frame-orange pointer-events-auto mx-auto w-full max-w-md rounded-xl bg-[#FFF8EA] p-3.5 text-sm">
       <div className="flex items-start justify-between gap-2">
         <div>
           <span className="inline-block rounded bg-hg-orange px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
@@ -97,28 +99,28 @@ export function PoiPopup({
           </span>
           <h3 className="mt-1 font-pixel text-lg leading-tight text-[#241917]">{info.title}</h3>
         </div>
-        <button onClick={onClose} className="pixel-btn rounded bg-white px-2 py-0.5 text-xs font-bold">✕</button>
+        <button onClick={() => { void sfx.select(); onClose(); }} className="pixel-btn rounded bg-white px-2 py-0.5 text-xs font-bold">✕</button>
       </div>
       <p className="mt-2 text-xs leading-relaxed text-neutral-700">{info.desc}</p>
       <p className="mt-2 rounded border border-[#2b1d17]/15 bg-[#EFE1C4]/70 px-2.5 py-1.5 text-[11px] font-medium text-[#3b261c]">
         💡 {info.tip}
       </p>
       <div className="mt-3 flex items-center justify-end gap-2">
-        <button onClick={onClose} className="rounded px-2.5 py-1 text-xs font-bold underline">Tutup</button>
+        <button onClick={() => { void sfx.select(); onClose(); }} className="rounded px-2.5 py-1 text-xs font-bold underline">Tutup</button>
         {info.ctaHref ? (
-          <Link href={info.ctaHref} className="pixel-btn rounded-md bg-hg-orange px-3 py-1.5 text-xs font-bold text-white">
+          <Link href={info.ctaHref} onClick={() => void sfx.select()} className="pixel-btn rounded-md bg-hg-orange px-3 py-1.5 text-xs font-bold text-white">
             {info.ctaLabel}
           </Link>
         ) : info.openDrawer ? (
           <button
-            onClick={() => { onClose(); onOpenDrawer(info.openDrawer!); }}
+            onClick={() => { void sfx.select(); onClose(); onOpenDrawer(info.openDrawer!); }}
             className="pixel-btn rounded-md bg-hg-orange px-3 py-1.5 text-xs font-bold text-white"
           >
             {info.ctaLabel}
           </button>
         ) : null}
       </div>
-    </div>
+    </SpringPop>
   );
 }
 
@@ -139,7 +141,7 @@ export function WorldDrawer({
   const [cheeredId, setCheeredId] = useState<string | null>(null);
 
   return (
-    <div className="pixel-frame pointer-events-auto flex max-h-full w-full max-w-lg flex-col overflow-hidden rounded-xl bg-[#FFF8EA]">
+    <SpringPop className="pixel-frame pointer-events-auto flex max-h-full w-full max-w-lg flex-col overflow-hidden rounded-xl bg-[#FFF8EA]">
       <div className="flex shrink-0 items-center justify-between border-b-2 border-[#2b1d17] bg-[#EFE1C4] px-4 py-2.5">
         <h2 className="font-pixel text-lg leading-none text-[#241917]">
           {tab === "club" && "🏆 Klub, Misi Mingguan & Upgrade Ruko"}
@@ -147,7 +149,7 @@ export function WorldDrawer({
           {tab === "events" && "🎟️ Event & Check-in QR Ruko"}
           {tab === "online" && `👥 Member Aktif di Peta (${world.members.length})`}
         </h2>
-        <button onClick={onClose} className="pixel-btn rounded bg-white px-2.5 py-0.5 text-xs font-bold">✕</button>
+        <button onClick={() => { void sfx.select(); onClose(); }} className="pixel-btn rounded bg-white px-2.5 py-0.5 text-xs font-bold">✕</button>
       </div>
 
       <div className="overflow-y-auto p-4 text-sm space-y-4">
@@ -288,7 +290,7 @@ export function WorldDrawer({
                               </span>
                             ) : (
                               <button
-                                onClick={() => setClaimedKey(v.key)}
+                                onClick={() => { void sfx.cashier(); setClaimedKey(v.key); }}
                                 className="pixel-btn rounded bg-hg-orange px-2.5 py-1 text-xs font-bold text-white"
                               >
                                 Tunjukkan ke Kasir
@@ -363,6 +365,7 @@ export function WorldDrawer({
                   {!m.isMe && (
                     <button
                       onClick={() => {
+                        void sfx.cheer();
                         onCheerMember(m);
                         setCheeredId(m.id);
                         setTimeout(() => setCheeredId((cur) => (cur === m.id ? null : cur)), 1500);
@@ -385,6 +388,6 @@ export function WorldDrawer({
           </ul>
         )}
       </div>
-    </div>
+    </SpringPop>
   );
 }

@@ -1,0 +1,26 @@
+{
+  "arch_facade_3d": {
+    "file": "/assets/world/blender/arch_facade_3d.png",
+    "width": 94,
+    "height": 95,
+    "pipeline": "blender_higround_studio (standalone 3D ortho 2:1)"
+  },
+  "staircase_3d": {
+    "file": "/assets/world/blender/staircase_3d.png",
+    "width": 80,
+    "height": 55,
+    "pipeline": "blender_higround_studio (standalone 3D ortho 2:1)"
+  },
+  "studio_window_3d": {
+    "file": "/assets/world/blender/studio_window_3d.png",
+    "width": 69,
+    "height": 86,
+    "pipeline": "blender_higround_studio (standalone 3D ortho 2:1)"
+  },
+  "skylight_bench_3d": {
+    "file": "/assets/world/blender/skylight_bench_3d.png",
+    "width": 76,
+    "height": 79,
+    "pipeline": "blender_higround_studio (standalone 3D ortho 2:1)"
+  }
+}

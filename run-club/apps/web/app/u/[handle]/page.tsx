@@ -56,6 +56,12 @@ export default async function Profile({ params, searchParams }: {
             >
               🎨 Edit Karakter
             </Link>
+            <Link
+              href="/share"
+              className="rounded-md border-2 border-black bg-hg-navy px-3 py-1.5 font-bold text-white shadow-[2px_2px_0_#111] hover:brightness-110"
+            >
+              🎬 Bikin Video IG Story
+            </Link>
             <form action={togglePublic} className="flex items-center gap-2">
               <span>Profil {member.isPublic ? "publik untuk member lain" : "privat"}.</span>
               <Button variant="ghost">{member.isPublic ? "Jadikan privat" : "Jadikan publik"}</Button>

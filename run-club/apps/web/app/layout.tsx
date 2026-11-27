@@ -26,6 +26,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               <Link className="rounded px-2 py-1 hover:bg-black/15" href="/world">Dunia</Link>
               <Link className="rounded px-2 py-1 hover:bg-black/15" href="/events">Event</Link>
               {me && <Link className="rounded px-2 py-1 hover:bg-black/15" href="/create">Karakter</Link>}
+              {me && <Link className="rounded px-2 py-1 hover:bg-black/15" href="/share">IG Story</Link>}
               {me && <Link className="rounded px-2 py-1 hover:bg-black/15" href={`/u/${me.handle}`}>Profil</Link>}
               {me && <Link className="rounded px-2 py-1 hover:bg-black/15" href="/yoga">Yoga Quest</Link>}
               {me?.role === "admin" && <Link className="rounded px-2 py-1 hover:bg-black/15" href="/admin">Admin</Link>}
