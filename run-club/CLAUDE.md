@@ -2,6 +2,7 @@
 
 Read `SPEC.md` first. It is the source of truth; items marked **[KEPUTUSAN]** are owner decisions:
 ask before changing them. **[MENUNGGU]** = input that does not exist yet: use a placeholder or env var.
+For the latest v1–v3 implementation handoff, Mac mini PM2 deploy workflow, and the compiled v4 QA revision roadmap, also read `HANDOFF_CONTEXT.md` and `REVISI_ROADMAP_V4.md`.
 
 ## Layout
 
