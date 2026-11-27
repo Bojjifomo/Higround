@@ -2,14 +2,18 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Panel } from "@/components/ui";
 import { currentMember, getStore } from "@/lib/data";
+import { getProvider } from "@/lib/providers";
 import { OnboardingStepper } from "@/components/OnboardingStepper";
 
 export const dynamic = "force-dynamic";
 
 const NOTE: Record<string, string> = {
   denied: "Kamu membatalkan izin di Intervals.icu. Kamu bisa coba lagi atau lewati dulu.",
-  expired: "Sesi sambung kedaluwarsa, coba lagi.",
-  failed: "Gagal menyambung ke Intervals.icu. Coba lagi sebentar lagi.",
+  expired: "Sesi sambung kedaluwarsa (cookie OAuth hilang/habis). Coba klik Sambungkan lagi.",
+  duplicate: "Akun Intervals.icu ini sudah tersambung ke member Higround lain.",
+  oauth_error: "OAuth Intervals.icu ditolak atau token gagal ditukar. Pastikan kredensial app Intervals.icu & Redirect URI sudah aktif.",
+  config_error: "Konfigurasi INTERVALS_REDIRECT_URI di server belum valid. Hubungi admin.",
+  failed: "Gagal menyimpan sambungan Intervals.icu ke server. Coba lagi sebentar lagi atau lewati dulu.",
 };
 
 export default async function OnboardingConnect({ searchParams }: { searchParams: Promise<{ intervals?: string }> }) {
@@ -18,6 +22,7 @@ export default async function OnboardingConnect({ searchParams }: { searchParams
   const { intervals } = await searchParams;
   const integ = await (await getStore()).integration(me.id);
   if (integ) redirect("/create?welcome=1&intervals=connected");
+  const isMock = getProvider().name === "intervals-mock";
 
   return (
     <div className="mx-auto max-w-lg space-y-4">
@@ -42,7 +47,13 @@ export default async function OnboardingConnect({ searchParams }: { searchParams
 
         {intervals && NOTE[intervals] && (
           <p role="alert" className="mb-3 rounded border-2 border-hg-red bg-white px-3 py-2 text-xs font-bold text-hg-red">
-            {NOTE[intervals]}
+            ⚠️ {NOTE[intervals]}
+          </p>
+        )}
+
+        {isMock && (
+          <p className="mb-3 rounded border-2 border-black/30 bg-hg-yellow/40 px-3 py-2 text-xs font-medium text-neutral-800">
+            ℹ️ <b>Mode Simulasi Intervals.icu aktif</b> (kredensial OAuth Intervals.icu belum dipasang di server). Klik sambungkan untuk mencoba data lari simulasi, atau lewati dulu.
           </p>
         )}
 
@@ -58,7 +69,7 @@ export default async function OnboardingConnect({ searchParams }: { searchParams
 
           <div className="flex flex-wrap items-center gap-2 pt-1">
             <a
-              href="/api/intervals/connect?next=%2Fcreate%3Fwelcome%3D1"
+              href="/api/intervals/connect?next=%2Fcreate%3Fwelcome%3D1&from=%2Fonboarding%2Fconnect"
               className="rounded-md border-2 border-black bg-hg-orange px-4 py-2 text-sm font-bold text-white shadow-[3px_3px_0_#111] hover:translate-x-[-1px] hover:translate-y-[-1px]"
             >
               Sambungkan Intervals.icu →

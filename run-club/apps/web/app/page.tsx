@@ -25,7 +25,14 @@ export default async function Home() {
                 <Link href="/world" className="rounded-md border-2 border-black bg-hg-orange px-4 py-2 font-bold text-white shadow-[3px_3px_0_#111]">Masuk Dunia Higround</Link>
                 <Link href="/create" className="rounded-md border-2 border-black bg-hg-yellow px-4 py-2 font-bold">Edit Karakter</Link>
                 <Link href={`/u/${me.handle}`} className="rounded-md border-2 border-black bg-white px-4 py-2 font-bold">Profil gue</Link>
-                <Link href="/yoga" className="rounded-md border-2 border-black bg-white px-4 py-2 font-bold">Yoga Quest</Link>
+                <button
+                  type="button"
+                  disabled
+                  title="Yoga Quest sedang dikunci (Coming Soon)"
+                  className="cursor-not-allowed rounded-md border-2 border-neutral-400 bg-neutral-100 px-4 py-2 font-bold text-neutral-500"
+                >
+                  🔒 Yoga Quest · Coming Soon
+                </button>
               </>
             ) : (
               <Link href="/login" className="rounded-md border-2 border-black bg-hg-orange px-4 py-2 font-bold text-white shadow-[3px_3px_0_#111]">Masuk</Link>

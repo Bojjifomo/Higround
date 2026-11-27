@@ -28,7 +28,15 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               {me && <Link className="rounded px-2 py-1 hover:bg-black/15" href="/create">Karakter</Link>}
               {me && <Link className="rounded px-2 py-1 hover:bg-black/15" href="/share">IG Story</Link>}
               {me && <Link className="rounded px-2 py-1 hover:bg-black/15" href={`/u/${me.handle}`}>Profil</Link>}
-              {me && <Link className="rounded px-2 py-1 hover:bg-black/15" href="/yoga">Yoga Quest</Link>}
+              {me && (
+                <span
+                  aria-disabled="true"
+                  title="Yoga Quest — Coming Soon"
+                  className="inline-flex cursor-not-allowed items-center gap-1 rounded px-2 py-1 text-white/65"
+                >
+                  🔒 Yoga Quest
+                </span>
+              )}
               {me?.role === "admin" && <Link className="rounded px-2 py-1 hover:bg-black/15" href="/admin">Admin</Link>}
               {staff && <Link className="rounded px-2 py-1 hover:bg-black/15" href="/admin/class">Class Mode</Link>}
               {me ? (

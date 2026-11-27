@@ -90,10 +90,12 @@ export function createMockProvider(opts: { now?: () => number; baseUrl?: string 
   return {
     name: "intervals-mock",
     authorizeUrl(state) {
-      return `${opts.baseUrl ?? ""}/api/intervals/callback?code=mock&state=${encodeURIComponent(state)}`;
+      const code = `mock-${state.slice(0, 16)}`;
+      return `${opts.baseUrl ?? ""}/api/intervals/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`;
     },
     async exchangeCode(code) {
-      return { accessToken: `mock-token-${code}`, scope: "ACTIVITY:READ", athleteId: `mock-${code}`, athleteName: "Mock Runner" };
+      const clean = code.replace(/^mock-/, "") || "demo";
+      return { accessToken: `mock-token-${clean}`, scope: "ACTIVITY:READ", athleteId: `mock-${clean}`, athleteName: "Mock Runner" };
     },
     async listActivities(_token, userId, oldest, newest) {
       return mockRawActivities(userId, now())

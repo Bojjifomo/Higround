@@ -38,19 +38,22 @@ export interface Hints {
   ranToday: boolean;
   yogaStars: number;
   isMascot?: boolean;
+  isMe?: boolean;
+  preferredScene?: SceneKey;
 }
 
 export function chooseRoutine(h: Hints, hourWib: number, rng: Rng): { name: string; loop: boolean } {
   if (h.isMascot) return { name: "mascot", loop: true };
+  const loop = Boolean(h.isMe);
   const morning = hourWib >= 5 && hourWib < 10;
-  if (h.ranToday && morning) return { name: "post_run", loop: false };
-  if (h.ranToday && rng() < 0.5) return { name: "post_run", loop: false };
-  if (morning && rng() < 0.35) return { name: "pre_run", loop: false };
-  if (h.yogaStars > 0 && rng() < (hourWib < 11 ? 0.5 : 0.25)) return { name: "yoga_session", loop: false };
+  if (h.ranToday && morning) return { name: "post_run", loop };
+  if (h.ranToday && rng() < 0.5) return { name: "post_run", loop };
+  if (morning && rng() < 0.35) return { name: "pre_run", loop };
+  if (h.yogaStars > 0 && rng() < (hourWib < 11 ? 0.5 : 0.25)) return { name: "yoga_session", loop };
   const r = rng();
-  if (r < 0.45) return { name: "coffee_visit", loop: false };
-  if (r < 0.75) return { name: "chill", loop: false };
-  return { name: "family", loop: false };
+  if (r < 0.45) return { name: "coffee_visit", loop };
+  if (r < 0.75) return { name: "chill", loop };
+  return { name: "family", loop };
 }
 
 export const MASCOT_ROUTINE = ["start_gate:stretch", "curved_bar:pickup_drink", "stretch_zone:stretch", "communal_table:chat",
@@ -97,6 +100,23 @@ export function actionSeconds(action: string | null, rng: Rng): number {
   return 2 + rng() * 2.5;
 }
 
+function visibleSpotIn(sceneKey: SceneKey, world: World): Tile {
+  const g = world.scenes[sceneKey];
+  const preferredKeys =
+    sceneKey === "street" ? ["start_gate", "stretch_spot", "sandwich_board"]
+      : sceneKey === "floor1" ? ["order_counter", "curved_bar", "communal_table"]
+        : ["stretch_zone", "leaderboard_board", "yoga_mats"];
+  for (const k of preferredKeys) {
+    if (g.access[k]) return g.access[k];
+  }
+  const portal = g.portals.street ?? g.portals.floor1 ?? g.portals.floor2;
+  if (portal) return portal;
+  for (let y = Math.floor(g.rows / 2); y < g.rows; y++) {
+    for (let x = 0; x < g.cols; x++) if (g.walkable[y]?.[x]) return { x, y };
+  }
+  return { x: 0, y: 0 };
+}
+
 export function spawnAgent(id: string, memberId: string, h: Hints, hourWib: number, rng: Rng, world: World = buildWorld()): Agent {
   const { name, loop } = chooseRoutine(h, hourWib, rng);
   const tokens = name === "mascot" ? MASCOT_ROUTINE : world.routines[name] ?? world.routines.coffee_visit;
@@ -107,9 +127,19 @@ export function spawnAgent(id: string, memberId: string, h: Hints, hourWib: numb
     id, memberId, routine: name, loop, scene: "street", x: start.x, y: start.y, path: [], steps: expandRoutine(tokens, world, rng),
     stepIndex: 0, mode: "walk", timer: 0, bubble: null, facing: 1, exit,
   };
-  if (loop) {                                               // the mascot starts inside, already at home
+  if (h.isMascot) {                                         // the mascot starts inside, already at home
     const first = a.steps[0];
-    Object.assign(a, { scene: first.scene, x: first.tile.x, y: first.tile.y });
+    if (first) Object.assign(a, { scene: first.scene, x: first.tile.x, y: first.tile.y });
+  } else if (h.isMe) {
+    const targetScene = h.preferredScene ?? "floor1";
+    const stepIdx = a.steps.findIndex((s) => s.scene === targetScene);
+    if (stepIdx >= 0) {
+      const s = a.steps[stepIdx];
+      Object.assign(a, { scene: s.scene, x: s.tile.x, y: s.tile.y, stepIndex: stepIdx });
+    } else {
+      const spot = visibleSpotIn(targetScene, world);
+      Object.assign(a, { scene: targetScene, x: spot.x, y: spot.y });
+    }
   }
   return a;
 }

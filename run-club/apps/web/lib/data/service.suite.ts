@@ -128,11 +128,13 @@ export function serviceSuite(label: string, make: () => Promise<{ store: Store; 
     });
 
     describe("world view", () => {
-      it("shows active public members, always you, the HUD and a ticker", async () => {
+      it("shows all public signed-up members (even with 0 runs), always you, the HUD and a ticker", async () => {
         const { worldView } = await import("./service");
         const w = await worldView(s, gita, NOW);
         expect(w.members.length).toBeLessThanOrEqual(25);
         expect(w.members[0]).toMatchObject({ handle: "gita", isMe: true });             // private, but it's you
+        // Owner has 0 runs/yoga in demo seed, yet must still appear in the world & Aktif tab
+        expect(w.members.some((m) => m.handle === "owner")).toBe(true);
         const other = await worldView(s, bima, NOW);
         expect(other.members.some((m) => m.handle === "gita")).toBe(false);           // private to others
         expect(other.members.some((m) => m.ranToday)).toBe(true);                      // this morning's runs

@@ -15,7 +15,7 @@ export default async function Onboarding() {
   return (
     <div className="mx-auto max-w-lg space-y-4">
       <OnboardingStepper step={1} />
-      <Panel title="Halo! Bikin ID dulu">
+      <Panel title="Halo! Pilih Nickname dulu">
         <div className="mb-4 flex items-center gap-3 rounded-md border-2 border-black bg-hg-cream p-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -27,7 +27,7 @@ export default async function Onboarding() {
           />
           <p className="text-sm text-neutral-800">
             <b>Higround:</b>{" "}
-            <i>&ldquo;Selamat datang di Run Club! Pertama, pilih nama dan username dulu. Habis itu kita sambungin jam lari &amp; bikin karakter pixel kamu!&rdquo;</i>
+            <i>&ldquo;Selamat datang di Run Club! Pertama, pilih nama tampilan (nickname) kamu dulu. Habis itu kita sambungin jam lari &amp; bikin karakter pixel kamu!&rdquo;</i>
           </p>
         </div>
         <OnboardingForm email={u.email} />

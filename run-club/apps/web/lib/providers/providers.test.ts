@@ -97,4 +97,11 @@ describe("mock provider", () => {
     expect(recent.every((x) => x.startTime >= "2026-11-16")).toBe(true);
     expect(recent.length).toBeGreaterThan(0);
   });
+  it("assigns distinct athleteIds per OAuth state so multiple members can connect in mock mode", async () => {
+    const u1 = new URL(mock.authorizeUrl("state_user_one_123456"), "https://hg.test");
+    const u2 = new URL(mock.authorizeUrl("state_user_two_789012"), "https://hg.test");
+    const t1 = await mock.exchangeCode(u1.searchParams.get("code")!);
+    const t2 = await mock.exchangeCode(u2.searchParams.get("code")!);
+    expect(t1.athleteId).not.toBe(t2.athleteId);
+  });
 });

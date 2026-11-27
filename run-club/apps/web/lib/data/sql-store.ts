@@ -237,14 +237,20 @@ export class SqlStore implements Store {
 
   // Tokens go to Supabase Vault: the table only keeps the secret's id.
   async saveIntegration(i: { userId: string; athleteId: string; scopes: string; token: string; at: number }) {
+    const secretName = `intervals:${i.userId}`;
     const old = await this.db.query<{ access_token_secret_id: string | null }>(
       "select access_token_secret_id from public.integrations where user_id::text = $1 and provider = 'intervals'", [i.userId]);
     let secretId = old[0]?.access_token_secret_id ?? null;
+    if (!secretId) {
+      const existing = await this.db.query<{ id: string }>(
+        "select id from vault.secrets where name = $1 limit 1", [secretName]);
+      secretId = existing[0]?.id ?? null;
+    }
     if (secretId) {
       await this.db.query("select vault.update_secret($1::uuid, $2)", [secretId, i.token]);
     } else {
       const [r] = await this.db.query<{ id: string }>("select vault.create_secret($1, $2, $3) as id",
-                                                       [i.token, `intervals:${i.userId}`, "Intervals.icu access token"]);
+                                                       [i.token, secretName, "Intervals.icu access token"]);
       secretId = r.id;
     }
     await this.db.query(

@@ -11,7 +11,7 @@ export type DrawerTab = "club" | "rewards" | "events" | "online" | null;
 
 const POI_INFO: Record<string, {
   title: string; badge: string; desc: string; tip: string;
-  ctaLabel: string; ctaHref?: string; openDrawer?: DrawerTab;
+  ctaLabel: string; ctaHref?: string; openDrawer?: DrawerTab; locked?: boolean;
 }> = {
   start_gate: {
     title: "START GATE · 0 KM",
@@ -47,11 +47,11 @@ const POI_INFO: Record<string, {
   },
   yoga_quest_board: {
     title: "Papan YOGA QUEST (28 Pose)",
-    badge: "5 Tahap · 1–3★",
-    desc: "Latihan 28 pose yoga berjenjang dengan timer tervalidasi server. Pose terbaikmu otomatis diperagakan karaktermu di Studio Room pagi hari!",
-    tip: "Selesaikan Tahap 1 untuk buka Free Popsicle Gelato.",
-    ctaLabel: "Buka Yoga Quest →",
-    ctaHref: "/yoga",
+    badge: "🔒 Coming Soon",
+    desc: "Latihan 28 pose yoga berjenjang sedang kita siapkan! Nantinya pose terbaikmu otomatis diperagakan karaktermu di Studio Room pagi hari.",
+    tip: "Fitur Yoga Quest masih dikunci sementara — pantengin pengumuman pembukaannya!",
+    ctaLabel: "🔒 Coming Soon",
+    locked: true,
   },
   leaderboard_board: {
     title: "Papan RUN CLUB WEEK",
@@ -107,7 +107,15 @@ export function PoiPopup({
       </p>
       <div className="mt-3 flex items-center justify-end gap-2">
         <button onClick={() => { void sfx.select(); onClose(); }} className="rounded px-2.5 py-1 text-xs font-bold underline">Tutup</button>
-        {info.ctaHref ? (
+        {info.locked ? (
+          <button
+            type="button"
+            disabled
+            className="cursor-not-allowed rounded-md border-2 border-neutral-400 bg-neutral-200 px-3 py-1.5 text-xs font-bold text-neutral-600"
+          >
+            {info.ctaLabel}
+          </button>
+        ) : info.ctaHref ? (
           <Link href={info.ctaHref} onClick={() => void sfx.select()} className="pixel-btn rounded-md bg-hg-orange px-3 py-1.5 text-xs font-bold text-white">
             {info.ctaLabel}
           </Link>

@@ -51,6 +51,7 @@ export interface WorldGame {
 export interface GameOptions {
   members: GameMember[];
   initialScene: SceneKey;
+  initialZoom?: number;
   upgrades: WorldUpgrades;
   hasActiveEvent: boolean;
   onSelect(memberId: string | null): void;
@@ -136,7 +137,10 @@ class WorldScene extends Phaser.Scene {
   hoverLabel!: Phaser.GameObjects.Text;
   rng: Rng = seeded(Date.now() & 0xffff);
   dragging = false;
-  dragStart = { x: 0, y: 0, sx: 0, sy: 0 };
+  hasPanned = false;
+  activePointerId: number | null = null;
+  dragDown = { x: 0, y: 0 };
+  dragPrev = { x: 0, y: 0 };
   lastCounts = "";
 
   constructor(private opts: GameOptions) {
@@ -161,9 +165,37 @@ class WorldScene extends Phaser.Scene {
     return this.studioOverride;
   }
 
+  private clampCamera() {
+    const g = this.world.scenes[this.current];
+    const top = this.corner(g, 0, 0);
+    const right = this.corner(g, g.cols, 0);
+    const bottom = this.corner(g, g.cols, g.rows);
+    const left = this.corner(g, 0, g.rows);
+    const cam = this.cameras.main;
+    const minX = Math.min(top.sx, right.sx, bottom.sx, left.sx) - 180;
+    const maxX = Math.max(top.sx, right.sx, bottom.sx, left.sx) + 180;
+    const minY = Math.min(top.sy, right.sy, bottom.sy, left.sy) - 180;
+    const maxY = Math.max(top.sy, right.sy, bottom.sy, left.sy) + 180;
+    const halfW = cam.width / (2 * cam.zoom);
+    const halfH = cam.height / (2 * cam.zoom);
+    const cx = cam.scrollX + cam.width / 2;
+    const cy = cam.scrollY + cam.height / 2;
+    const clampedCx = Phaser.Math.Clamp(cx, minX - halfW * 0.25, maxX + halfW * 0.25);
+    const clampedCy = Phaser.Math.Clamp(cy, minY - halfH * 0.25, maxY + halfH * 0.25);
+    cam.scrollX = clampedCx - cam.width / 2;
+    cam.scrollY = clampedCy - cam.height / 2;
+  }
+
   create() {
     this.world = buildWorld();
     this.current = this.opts.initialScene;
+    const canvas = this.game.canvas;
+    if (canvas) {
+      canvas.style.touchAction = "none";
+      canvas.style.userSelect = "none";
+      (canvas.style as CSSStyleDeclaration & { webkitUserSelect?: string }).webkitUserSelect = "none";
+    }
+    this.cameras.main.setZoom(this.opts.initialZoom ?? 2);
     this.makeCharacterTextures();
     const hour = wibHour(Date.now());
     for (const m of this.opts.members) this.spawn(m.id, hour, true);
@@ -180,28 +212,56 @@ class WorldScene extends Phaser.Scene {
 
     this.overlay = this.add.rectangle(0, 0, 10, 10, 0xffffff, 0).setOrigin(0).setScrollFactor(0).setDepth(2e6);
     this.drawScene();
+    this.centerOnMeImmediate();
     this.applyDayPhase();
     this.time.addEvent({ delay: 60_000, loop: true, callback: () => this.applyDayPhase() });
-    this.scale.on("resize", () => { this.fitOverlay(); this.centre(); });
+    this.scale.on("resize", () => {
+      this.fitOverlay();
+      if (!this.hasPanned) this.centerOnMeImmediate(false);
+    });
+
+    const resetDrag = () => {
+      this.activePointerId = null;
+      this.dragging = false;
+    };
 
     this.input.on("pointerdown", (p: Phaser.Input.Pointer) => {
+      if (this.activePointerId !== null && this.activePointerId !== p.id) return;
+      this.cameras.main.panEffect.reset();
+      this.activePointerId = p.id;
       this.dragging = false;
-      this.dragStart = { x: p.x, y: p.y, sx: this.cameras.main.scrollX, sy: this.cameras.main.scrollY };
+      this.dragDown = { x: p.x, y: p.y };
+      this.dragPrev = { x: p.x, y: p.y };
     });
     this.input.on("pointermove", (p: Phaser.Input.Pointer) => {
       const cam = this.cameras.main;
-      if (p.isDown) {
-        if (Math.hypot(p.x - this.dragStart.x, p.y - this.dragStart.y) > 5) this.dragging = true;
-        if (this.dragging) {
-          cam.scrollX = this.dragStart.sx - (p.x - this.dragStart.x) / cam.zoom;
-          cam.scrollY = this.dragStart.sy - (p.y - this.dragStart.y) / cam.zoom;
+      if (this.activePointerId === p.id) {
+        if (!p.isDown && !p.wasTouch) {
+          resetDrag();
+          return;
         }
+        if (!this.dragging && Math.hypot(p.x - this.dragDown.x, p.y - this.dragDown.y) > 6) {
+          this.dragging = true;
+          this.hasPanned = true;
+          this.hoverLabel.setVisible(false);
+        }
+        if (this.dragging) {
+          cam.scrollX -= (p.x - this.dragPrev.x) / cam.zoom;
+          cam.scrollY -= (p.y - this.dragPrev.y) / cam.zoom;
+          this.clampCamera();
+        }
+        this.dragPrev = { x: p.x, y: p.y };
         return;
       }
-      this.hover(p.worldX, p.worldY);
+      if (!p.wasTouch && !p.isDown) {
+        this.hover(p.worldX, p.worldY);
+      }
     });
-    this.input.on("pointerup", (_p: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]) => {
-      if (this.dragging) return;
+    this.input.on("pointerup", (p: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]) => {
+      if (this.activePointerId !== null && this.activePointerId !== p.id) return;
+      const wasDragging = this.dragging;
+      resetDrag();
+      if (wasDragging) return;
       const memberHit = over.find((o) => o.getData("memberId"));
       if (memberHit) {
         this.opts.onSelect(memberHit.getData("memberId") as string);
@@ -215,6 +275,9 @@ class WorldScene extends Phaser.Scene {
       }
       this.opts.onSelect(null);
     });
+    this.input.on("pointerupoutside", resetDrag);
+    this.input.on("gameout", resetDrag);
+    canvas?.addEventListener("touchcancel", resetDrag);
   }
 
   makeCharacterTextures() {
@@ -251,12 +314,18 @@ class WorldScene extends Phaser.Scene {
     const a = spawnAgent(
       `${memberId}-${Date.now()}`,
       memberId,
-      { ranToday: !!m?.ranToday, yogaStars: m?.yogaStars ?? 0, isMascot: memberId === MASCOT_ID },
+      {
+        ranToday: !!m?.ranToday,
+        yogaStars: m?.yogaStars ?? 0,
+        isMascot: memberId === MASCOT_ID,
+        isMe: Boolean(m?.isMe),
+        preferredScene: m?.isMe ? this.current : undefined,
+      },
       hour,
       this.rng,
       this.world,
     );
-    if (scatter && !a.loop) {
+    if (scatter && !a.loop && !m?.isMe) {
       for (let i = 0, n = Math.floor(this.rng() * 900); i < n && a.mode !== "gone"; i++) {
         tick(a, 0.1, this.rng, this.world);
       }
@@ -867,13 +936,63 @@ class WorldScene extends Phaser.Scene {
     this.hoverLabel.setText(`${o.label}${hint}`).setPosition(wx + 8, wy - 18).setVisible(true);
   }
 
+  private pulseBeacon(sx: number, sy: number) {
+    const ring = this.add.circle(sx, sy + 2, 10, 0xff5f0e, 0).setDepth(sy + 40);
+    ring.setStrokeStyle(2.5, 0xff5f0e, 0.95);
+    this.tweens.add({
+      targets: ring,
+      scale: 2.6,
+      alpha: 0,
+      duration: 650,
+      repeat: 1,
+      ease: "Quad.easeOut",
+      onComplete: () => ring.destroy(),
+    });
+  }
+
+  centerOnMeImmediate(withBeacon = true): SceneKey | null {
+    const me = this.opts.members.find((m) => m.isMe);
+    if (!me) {
+      this.centre();
+      return null;
+    }
+    let agent = this.agents.find((a) => a.memberId === me.id);
+    if (!agent || agent.mode === "gone") {
+      this.spawn(me.id, wibHour(Date.now()), false);
+      agent = this.agents.find((a) => a.memberId === me.id);
+    }
+    if (!agent) {
+      this.centre();
+      return null;
+    }
+    if (agent.scene !== this.current) {
+      this.current = agent.scene;
+      this.drawScene();
+    }
+    const g = this.world.scenes[agent.scene];
+    const { sx, sy } = this.project(g, agent.x, agent.y);
+    this.cameras.main.centerOn(sx, sy - 10);
+    this.clampCamera();
+    if (withBeacon) this.pulseBeacon(sx, sy);
+    return agent.scene;
+  }
+
   focusMember(memberId: string): SceneKey | null {
-    const agent = this.agents.find((a) => a.memberId === memberId);
-    if (!agent || agent.mode === "gone") return null;
+    let agent = this.agents.find((a) => a.memberId === memberId);
+    if (!agent || agent.mode === "gone") {
+      const exists = this.opts.members.some((m) => m.id === memberId);
+      if (!exists) return null;
+      this.respawnAt.delete(memberId);
+      this.spawn(memberId, wibHour(Date.now()), false);
+      agent = this.agents.find((a) => a.memberId === memberId);
+      if (!agent) return null;
+    }
     if (agent.scene !== this.current) this.setCurrent(agent.scene);
     const g = this.world.scenes[agent.scene];
     const { sx, sy } = this.project(g, agent.x, agent.y);
+    this.hasPanned = true;
     this.cameras.main.pan(sx, sy - 10, 350, "Sine.easeInOut");
+    this.pulseBeacon(sx, sy);
     return agent.scene;
   }
 
@@ -1004,6 +1123,7 @@ class WorldScene extends Phaser.Scene {
 
   setCurrent(k: SceneKey) {
     this.current = k;
+    this.hasPanned = false;
     this.drawScene();
   }
 
@@ -1021,6 +1141,10 @@ export function createWorldGame(parent: HTMLElement, opts: GameOptions): WorldGa
     backgroundColor: "#cfe4ce",
     pixelArt: true,
     roundPixels: true,
+    input: {
+      touch: { capture: true },
+      activePointers: 2,
+    },
     scale: { mode: Phaser.Scale.RESIZE, width: parent.clientWidth, height: parent.clientHeight },
     scene,
     banner: false,
@@ -1035,7 +1159,12 @@ export function createWorldGame(parent: HTMLElement, opts: GameOptions): WorldGa
 
   return {
     setScene: (k) => scene.sys?.isActive() && scene.setCurrent(k),
-    setZoom: (z) => { scene.cameras?.main?.setZoom(z); },
+    setZoom: (z) => {
+      if (scene.cameras?.main) {
+        scene.cameras.main.setZoom(z);
+        if (!scene.hasPanned) scene.centerOnMeImmediate(false);
+      }
+    },
     setStudioMode: (m) => scene.sys?.isActive() && scene.setStudioOverride(m),
     focusMe: () => (scene.sys?.isActive() ? scene.focusMe() : null),
     focusMember: (id) => (scene.sys?.isActive() ? scene.focusMember(id) : null),

@@ -422,27 +422,32 @@ const ISO_WEEK = (iso: string) => {
   return 1 + Math.round(((d.getTime() - firstThu.getTime()) / DAY - 3 + ((firstThu.getUTCDay() + 6) % 7)) / 7);
 };
 
-/** Who is in the world right now (members active in the last 7 days, max 25, you always), the HUD and the ticker. */
+/** Who is in the world right now (all public signed-up members up to 25, you always), the HUD and the ticker. */
 export async function worldView(store: Store, viewer: Member | null, now: number): Promise<WorldView> {
   const nowIso = new Date(now).toISOString();
   const today = localDate(nowIso, rules);
   const thisWeek = weekKey(nowIso, rules);
-  const since = now - 7 * DAY;
   const everyone = await store.members();
-  type Row = { m: Member; acts: StoredActivity[]; ok: StoredActivity[]; atts: YogaAttempt[]; last: number; weekKm: number; totalKm: number };
+  type Row = { m: Member; acts: StoredActivity[]; ok: StoredActivity[]; atts: YogaAttempt[]; last: number; joined: number; weekKm: number; totalKm: number };
   const rows: Row[] = [];
   for (const m of everyone) {
     const acts = await store.activities(m.id);
     const ok = acts.filter((a) => earns(a, approvedIds(acts), rules));
     const atts = (await store.attempts(m.id)).filter((a) => a.status === "approved");
     const last = Math.max(0, ...ok.map((a) => Date.parse(a.startTime)), ...atts.map((a) => a.createdAt));
+    const joined = Date.parse(m.joinedAt) || 0;
     const weekKm = ok.filter((a) => weekKey(a.startTime, rules) === thisWeek).reduce((x, a) => x + a.distanceM, 0) / 1000;
     const totalKm = ok.reduce((x, a) => x + a.distanceM, 0) / 1000;
-    rows.push({ m, acts, ok, atts, last, weekKm, totalKm });
+    rows.push({ m, acts, ok, atts, last, joined, weekKm, totalKm });
   }
   const visible = rows.filter((r) => r.m.isPublic || r.m.id === viewer?.id);
-  const active = visible.filter((r) => r.last >= since || r.m.id === viewer?.id)
-    .sort((a, b) => Number(b.m.id === viewer?.id) - Number(a.m.id === viewer?.id) || b.last - a.last).slice(0, 25);
+  const active = [...visible]
+    .sort((a, b) =>
+      Number(b.m.id === viewer?.id) - Number(a.m.id === viewer?.id) ||
+      b.last - a.last ||
+      b.joined - a.joined,
+    )
+    .slice(0, 25);
 
   const members: WorldMember[] = [];
   for (const r of active) {

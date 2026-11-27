@@ -13,6 +13,7 @@ import {
   syncMember, type CheckinResult, claimTimer, classAward, currentMember, DEMO_COOKIE, flags, getStore, isDemo, rejectAttempt,
   reviewActivity, setWaVerified, startTimer, type ClaimOutcome,
 } from "@/lib/data";
+import { generateUniqueHandle, validateNickname } from "@/lib/nickname";
 import { getProvider } from "@/lib/providers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createSupabase } from "@/lib/supabase/server";
@@ -182,11 +183,10 @@ export async function createProfile(_prev: FormState, formData: FormData): Promi
   if (!u) redirect("/login");
   const store = await getStore();
   if (await store.member(u.id)) redirect("/world");
-  const handle = String(formData.get("handle") ?? "").trim().toLowerCase();
-  const displayName = String(formData.get("displayName") ?? "").trim().replace(/\s+/g, " ");
-  if (!/^[a-z0-9_]{3,24}$/.test(handle)) return { ok: false, message: "Username 3–24 huruf kecil, angka, atau _." };
-  if (displayName.length < 1 || displayName.length > 40) return { ok: false, message: "Nama 1–40 karakter." };
-  if (await store.memberByHandle(handle)) return { ok: false, message: "Username sudah dipakai." };
+  const checked = validateNickname(String(formData.get("displayName") ?? ""));
+  if (!checked.ok) return { ok: false, message: checked.message };
+  const displayName = checked.nickname;
+  const handle = await generateUniqueHandle(displayName, async (c) => Boolean(await store.memberByHandle(c)));
   const initialAvatar = { ...randomAvatar(), customized: false };
   await store.addMember({
     id: u.id, handle, displayName, isPublic: true, role: roleForEmail(u.email), pinnedBadges: [], waVerifiedAt: null,

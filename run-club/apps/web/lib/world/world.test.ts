@@ -120,6 +120,14 @@ describe("agents walk their routine", () => {
     run(a, 600);
     expect(a.mode).not.toBe("gone");
   });
+  it("the logged-in player spawns visibly inside the preferred scene and never disappears", () => {
+    const a = spawnAgent("me", "u1", { ranToday: false, yogaStars: 0, isMe: true, preferredScene: "floor1" }, 14, seeded(8));
+    expect(a.scene).toBe("floor1");
+    expect(a.loop).toBe(true);
+    expect(world.scenes.floor1.walkable[Math.round(a.y)][Math.round(a.x)]).toBe(true);
+    run(a, 600);
+    expect(a.mode).not.toBe("gone");
+  });
 });
 
 describe("time of day", () => {

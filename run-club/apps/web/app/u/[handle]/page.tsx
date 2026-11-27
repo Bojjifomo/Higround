@@ -5,6 +5,7 @@ import { Calendar, PaceTrend, WeeklyKm } from "@/components/Charts";
 import { BadgeChip, Button, Panel, Stat, XpBar } from "@/components/ui";
 import { currentMember, getStore, profileView, type ProfileView, type RunView } from "@/lib/data";
 import { dateLong, dateShort, duration, int, km, pace, PB_LABEL, ruleLabel } from "@/lib/format";
+import { getProvider } from "@/lib/providers";
 import { defaultConfig as yoga } from "@/lib/yoga";
 import { togglePublic } from "../../actions";
 import { Connection } from "./Connection";
@@ -30,6 +31,7 @@ export default async function Profile({ params, searchParams }: {
   if (!p) notFound();
   const { member, level } = p;
   const integ = p.isOwner ? await store.integration(member.id) : null;
+  const isMockIntervals = p.isOwner ? getProvider().name === "intervals-mock" : false;
 
   return (
     <div className="space-y-5">
@@ -54,7 +56,7 @@ export default async function Profile({ params, searchParams }: {
               href={`/create?next=${encodeURIComponent(`/u/${member.handle}`)}`}
               className="rounded-md border-2 border-black bg-hg-yellow px-3 py-1.5 font-bold text-black shadow-[2px_2px_0_#111] hover:brightness-95"
             >
-              🎨 Edit Karakter
+              🎨 Ganti Karakter
             </Link>
             <Link
               href="/share"
@@ -70,7 +72,7 @@ export default async function Profile({ params, searchParams }: {
         )}
       </Panel>
 
-      {p.isOwner && <Connection integ={integ} note={q.intervals} handle={member.handle} welcome={q.welcome === "1"} />}
+      {p.isOwner && <Connection integ={integ} note={q.intervals} handle={member.handle} welcome={q.welcome === "1"} isMock={isMockIntervals} />}
 
       {p.hidden ? (
         <Panel title="Profil privat"><p className="text-sm">{member.displayName} memilih menyembunyikan dashboard-nya.</p></Panel>
@@ -166,7 +168,17 @@ function RunSection({ run }: { run: RunView }) {
 function YogaSection({ p }: { p: ProfileView }) {
   const y = p.yoga!;
   return (
-    <Panel title="Yoga Quest" aside={p.isOwner ? <Link href="/yoga" className="text-sm font-bold text-hg-orange underline">Buka Yoga Quest →</Link> : undefined}>
+    <Panel
+      title="Yoga Quest"
+      aside={
+        <span
+          aria-disabled="true"
+          className="inline-flex cursor-not-allowed items-center gap-1 rounded border border-neutral-400 bg-neutral-100 px-2 py-0.5 text-xs font-bold text-neutral-500"
+        >
+          🔒 Coming Soon
+        </span>
+      }
+    >
       <div className="grid gap-3 sm:grid-cols-5">
         {y.progress.tahap.map((t) => {
           const tahap = yoga.levels.find((l) => l.level === t.level)!;

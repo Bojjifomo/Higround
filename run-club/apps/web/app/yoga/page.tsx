@@ -1,70 +1,58 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Button, Panel } from "@/components/ui";
-import { currentMember, flags, getStore, questView, FLOW_KEY } from "@/lib/data";
-import { defaultConfig as yoga } from "@/lib/yoga";
-import { acceptConsent } from "../actions";
-import { QuestBoard } from "./QuestBoard";
+import { Panel } from "@/components/ui";
+import { currentMember } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
 export default async function YogaPage() {
   const me = await currentMember();
   if (!me) redirect("/login");
-  const q = await questView(await getStore(), me, Date.now(), flags());
 
   return (
-    <div className="space-y-5">
+    <div className="mx-auto max-w-xl space-y-5">
       <div>
-        <h1 className="font-pixel text-4xl leading-none">Yoga Quest</h1>
-        <p className="mt-2 max-w-prose text-sm text-neutral-700">
-          5 tahap, 28 misi. Tahan pose sesuai target untuk dapat 1–3 bintang. Tahap berikutnya terbuka kalau 80% misi
-          di tahap ini sudah ≥2★. Kamu bisa klaim di mana aja pakai timer ini, atau ikut kelas di Higround (Class Mode).
-        </p>
+        <span className="inline-flex items-center gap-1 rounded bg-black px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-hg-yellow">
+          🔒 Coming Soon
+        </span>
+        <h1 className="mt-2 font-pixel text-4xl leading-none">Yoga Quest</h1>
       </div>
 
-      {!q.consentOk ? (
-        <Panel title="Sebelum mulai">
-          <ul className="list-disc space-y-1 pl-5 text-sm">
-            <li><b>Sistem kejujuran.</b> Klaim hanya waktu yang benar-benar kamu tahan, dengan bentuk yang benar. Instruktur bisa membatalkan klaim.</li>
-            <li><b>Keamanan dulu.</b> Untuk inversi dan backbend, bentuk yang benar lebih penting dari durasi. Berhenti kalau nyeri, pusing, atau ada cedera.</li>
-            <li>Timer berjalan di server: waktunya dihitung dari saat kamu tekan Mulai sampai Selesai.</li>
-          </ul>
-          <form action={acceptConsent} className="mt-3"><Button>Saya mengerti dan setuju</Button></form>
-        </Panel>
-      ) : q.waGateEnabled && !q.waVerified ? (
-        <Panel title="Gabung grup WhatsApp dulu">
-          <p className="text-sm">Yoga Quest butuh kamu gabung grup WhatsApp Run Club. Admin akan menandai akunmu setelah kamu masuk.</p>
-          {q.waGroupUrl
-            ? <a href={q.waGroupUrl} target="_blank" rel="noopener" className="mt-3 inline-block rounded-md border-2 border-black bg-[#25D366] px-3 py-1.5 font-bold">Buka grup WhatsApp</a>
-            : <p className="mt-3 inline-block rounded bg-neutral-200 px-3 py-1.5 text-sm font-bold">Segera hadir</p>}
-        </Panel>
-      ) : (
-        <QuestBoard
-          levels={yoga.levels}
-          progress={q.progress}
-          bests={q.bests}
-          cooldowns={q.cooldowns}
-          claimsToday={q.claimsToday}
-          maxClaims={yoga.claim.max_claims_per_day}
-          flow={{ ...yoga.bonus_missions[0], key: FLOW_KEY, unlocked: q.progress.flowUnlocked, done: q.flowDone }}
-        />
-      )}
-
-      {q.recent.length > 0 && (
-        <Panel title="Klaim terakhir">
-          <ul className="divide-y divide-[#EFE6D3] text-sm">
-            {q.recent.map((a) => (
-              <li key={a.id} className="flex flex-wrap gap-x-3 py-1">
-                <span className="font-bold">{yoga.levels.flatMap((l) => l.missions).find((m) => m.key === a.missionKey)?.name ?? "Flow Challenge"}</span>
-                {a.side !== "both" && <span>{a.side === "left" ? "kiri" : "kanan"}</span>}
-                <span>{a.measuredS} dtk · {a.stars}★</span>
-                <span className="text-neutral-500">{a.mode === "class" ? "Class Mode" : "self-reported"}</span>
-                {a.status === "rejected" && <span className="text-hg-red">dibatalkan{a.reason ? `: ${a.reason}` : ""}</span>}
-              </li>
-            ))}
-          </ul>
-        </Panel>
-      )}
+      <Panel title="Fitur Yoga Quest Sedang Disiapkan">
+        <div className="flex items-start gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/assets/world/mascot/guide_idle.png"
+            alt="Maskot Higround"
+            width={56}
+            height={56}
+            className="shrink-0 [image-rendering:pixelated]"
+          />
+          <div className="space-y-2 text-sm text-neutral-700">
+            <p>
+              <b>Higround:</b>{" "}
+              <i>&ldquo;Sabar ya! Yoga Quest (5 tahap, 28 pose) lagi kita poles dulu sebelum dibuka bareng jadwal Studio Room.&rdquo;</i>
+            </p>
+            <p className="text-xs text-neutral-600">
+              Sementara ini, kamu bisa terus kumpulin XP dari lari, cek Misi Klub, dan nongkrong di Dunia Higround!
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link
+            href="/world"
+            className="rounded-md border-2 border-black bg-hg-orange px-4 py-2 text-sm font-bold text-white shadow-[3px_3px_0_#111]"
+          >
+            ← Kembali ke Dunia Higround
+          </Link>
+          <Link
+            href={`/u/${me.handle}`}
+            className="rounded-md border-2 border-black bg-white px-4 py-2 text-sm font-bold"
+          >
+            Buka Profil
+          </Link>
+        </div>
+      </Panel>
     </div>
   );
 }
