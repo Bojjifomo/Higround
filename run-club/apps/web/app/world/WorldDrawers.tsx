@@ -1,12 +1,12 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Avatar } from "@/components/Avatar";
 import { SpringPop } from "@/components/SpringUI";
 import { sfx } from "@/lib/audio/sfx";
 import { CAFE_MENU } from "@/lib/cafe";
 import type { WorldMember, WorldView } from "@/lib/data/service";
-import { km } from "@/lib/format";
+import { dateShort, km } from "@/lib/format";
 import { publicVoucherCatalog } from "@/lib/rewards";
 
 export type DrawerTab = "club" | "leaderboard" | "menu" | "rewards" | "events" | "online" | null;
@@ -170,9 +170,60 @@ export function WorldDrawer({
   onCheerMember: (m: WorldMember) => void;
 }) {
   const [claimedKey, setClaimedKey] = useState<string | null>(null);
+  const [confirmRedeemKey, setConfirmRedeemKey] = useState<string | null>(null);
+  const [redeemBusyKey, setRedeemBusyKey] = useState<string | null>(null);
+  const [redeemErr, setRedeemErr] = useState<string | null>(null);
+  const [redeemedMap, setRedeemedMap] = useState<Record<string, string>>(() => {
+    const init: Record<string, string> = {};
+    for (const v of world.rewards?.vouchers ?? []) {
+      if (v.redeemedAt) init[v.key] = v.redeemedAt;
+    }
+    return init;
+  });
+  const [liveClock, setLiveClock] = useState<string>("");
   const [cheeredId, setCheeredId] = useState<string | null>(null);
   const [menuCat, setMenuCat] = useState<string>("all");
   const [menuQuery, setMenuQuery] = useState<string>("");
+
+  // Anti-screenshot live ticking WIB clock (seconds) whenever kasir voucher card is open
+  useEffect(() => {
+    if (!claimedKey) return;
+    const fmt = new Intl.DateTimeFormat("id-ID", {
+      timeZone: "Asia/Jakarta",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+    const tick = () => setLiveClock(`${fmt.format(new Date())} WIB`);
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [claimedKey]);
+
+  const confirmBaristaRedeem = async (voucherKey: string) => {
+    setRedeemBusyKey(voucherKey);
+    setRedeemErr(null);
+    try {
+      const res = await fetch("/api/rewards/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voucherKey }),
+      });
+      const data = (await res.json()) as { ok?: boolean; record?: { redeemedAt: string }; error?: string };
+      if (!res.ok || !data.ok || !data.record) {
+        setRedeemErr(data.error ?? "Gagal mengkonfirmasi penukaran voucher.");
+        return;
+      }
+      void sfx.cashier();
+      setRedeemedMap((prev) => ({ ...prev, [voucherKey]: data.record!.redeemedAt }));
+      setClaimedKey(null);
+      setConfirmRedeemKey(null);
+    } catch {
+      setRedeemErr("Koneksi terputus. Coba lagi ya.");
+    } finally {
+      setRedeemBusyKey(null);
+    }
+  };
 
   const filteredCategories = CAFE_MENU.categories
     .filter((c) => menuCat === "all" || c.id === menuCat)
@@ -512,53 +563,129 @@ export function WorldDrawer({
                     );
                   })}
                   <span className="ml-1 text-[11px] text-neutral-600">
-                    Start lari dari Higround / QR check-in = +1 Stamp!
+                    Scan QR ngopi di kasir / start lari Higround = <b>+1 Stamp &amp; +25 XP</b>!
                   </span>
                 </div>
               </div>
 
+              {redeemErr && (
+                <p role="alert" className="rounded border-2 border-hg-red bg-white px-2.5 py-1.5 text-xs font-bold text-hg-red">
+                  ⚠️ {redeemErr}
+                </p>
+              )}
+
               {/* Cafe Vouchers */}
               <div className="space-y-2">
-                {world.rewards.vouchers.map((v) => (
-                  <div
-                    key={v.key}
-                    className={`rounded-lg border-2 p-3 ${
-                      v.unlocked ? "border-hg-orange bg-white shadow-[2px_2px_0_#FF5F0E]" : "border-[#2b1d17]/25 bg-[#EFE1C4]/45"
-                    }`}
-                  >
-                    <div className="flex items-start gap-2.5">
-                      <span className="text-2xl">{v.icon}</span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-bold text-[#241917]">{v.name}</span>
-                          <span className="font-mono text-[11px] font-bold text-neutral-600">{v.progressLabel}</span>
-                        </div>
-                        <p className="text-xs text-neutral-600">{v.requirement}</p>
-                        {!v.unlocked ? (
-                          <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full border border-[#2b1d17]/40 bg-white">
-                            <div className="h-full bg-hg-orange" style={{ width: `${Math.round(v.progress * 100)}%` }} />
+                {world.rewards.vouchers.map((v) => {
+                  const redeemedAt = redeemedMap[v.key] ?? v.redeemedAt ?? null;
+                  const isLiveOpen = claimedKey === v.key && !redeemedAt;
+                  const isConfirming = confirmRedeemKey === v.key;
+                  return (
+                    <div
+                      key={v.key}
+                      className={`rounded-lg border-2 p-3 ${
+                        redeemedAt
+                          ? "border-emerald-700/40 bg-emerald-50/60"
+                          : v.unlocked
+                            ? "border-hg-orange bg-white shadow-[2px_2px_0_#FF5F0E]"
+                            : "border-[#2b1d17]/25 bg-[#EFE1C4]/45"
+                      }`}
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <span className="text-2xl">{v.icon}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-bold text-[#241917]">{v.name}</span>
+                            <span className="font-mono text-[11px] font-bold text-neutral-600">{v.progressLabel}</span>
                           </div>
-                        ) : (
-                          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                            <span className="text-[11px] font-medium text-neutral-700">{v.perk}</span>
-                            {claimedKey === v.key ? (
-                              <span className="rounded border-2 border-black bg-hg-yellow px-2.5 py-0.5 font-mono text-xs font-black">
-                                KODE KASIR: {v.code}
+                          <p className="text-xs text-neutral-600">{v.requirement}</p>
+                          {!v.unlocked ? (
+                            <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full border border-[#2b1d17]/40 bg-white">
+                              <div className="h-full bg-hg-orange" style={{ width: `${Math.round(v.progress * 100)}%` }} />
+                            </div>
+                          ) : redeemedAt ? (
+                            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                              <span className="text-[11px] text-neutral-600 line-through">{v.code}</span>
+                              <span className="rounded border border-emerald-700 bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800">
+                                ✅ Sudah Ditukar ({dateShort(redeemedAt)})
                               </span>
-                            ) : (
-                              <button
-                                onClick={() => { void sfx.cashier(); setClaimedKey(v.key); }}
-                                className="pixel-btn rounded bg-hg-orange px-2.5 py-1 text-xs font-bold text-white"
-                              >
-                                Tunjukkan ke Kasir
-                              </button>
-                            )}
-                          </div>
-                        )}
+                            </div>
+                          ) : (
+                            <div className="mt-2 space-y-2">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <span className="text-[11px] font-medium text-neutral-700">{v.perk}</span>
+                                {!isLiveOpen && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      void sfx.cashier();
+                                      setClaimedKey(v.key);
+                                      setConfirmRedeemKey(null);
+                                      setRedeemErr(null);
+                                    }}
+                                    className="pixel-btn rounded bg-hg-orange px-2.5 py-1 text-xs font-bold text-white"
+                                  >
+                                    Tunjukkan ke Kasir
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Anti-screenshot Live Verified Kasir Panel */}
+                              {isLiveOpen && (
+                                <div className="rounded-lg border-2 border-black bg-[#241917] p-2.5 text-[#FFF8EA] space-y-2">
+                                  <div className="flex items-center justify-between gap-2 text-[10px] font-bold">
+                                    <span className="inline-flex items-center gap-1 rounded bg-emerald-600 px-1.5 py-0.5 text-white">
+                                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
+                                      LIVE VERIFIED
+                                    </span>
+                                    <span className="font-mono text-hg-yellow">{liveClock || "--:--:-- WIB"}</span>
+                                  </div>
+                                  <div className="rounded border-2 border-hg-yellow bg-[#FFF8EA] px-2.5 py-1.5 text-center">
+                                    <div className="text-[9px] font-bold uppercase tracking-wider text-neutral-500">
+                                      Tunjukkan Layar Live Ini ke Barista
+                                    </div>
+                                    <div className="font-mono text-base font-black tracking-wider text-[#241917]">
+                                      {v.code}
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-wrap items-center justify-between gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => { setClaimedKey(null); setConfirmRedeemKey(null); }}
+                                      className="rounded border border-neutral-500 px-2 py-1 text-[10px] font-bold text-neutral-200 hover:bg-neutral-700"
+                                    >
+                                      Tutup
+                                    </button>
+                                    {!isConfirming ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => setConfirmRedeemKey(v.key)}
+                                        className="rounded border border-hg-yellow bg-hg-orange px-2.5 py-1 text-[11px] font-bold text-white"
+                                      >
+                                        ✅ Konfirmasi Ditukar (Barista)
+                                      </button>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        disabled={redeemBusyKey === v.key}
+                                        onClick={() => void confirmBaristaRedeem(v.key)}
+                                        className="rounded border-2 border-white bg-emerald-600 px-2.5 py-1 text-[11px] font-black text-white disabled:opacity-50"
+                                      >
+                                        {redeemBusyKey === v.key
+                                          ? "Menyimpan..."
+                                          : "🔒 Tap Lagi (Barista) — Tandai Terpakai"}
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </>
           ) : (

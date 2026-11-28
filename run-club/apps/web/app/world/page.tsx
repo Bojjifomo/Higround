@@ -1,3 +1,4 @@
+import { loadCrmState } from "@/lib/admin/crm-store";
 import { currentMember, getStore, isDemo, syncIfStale, worldView } from "@/lib/data";
 import { getProvider } from "@/lib/providers";
 import { markOnline, onlineUserIds } from "@/lib/world/presence";
@@ -15,6 +16,10 @@ export default async function WorldPage() {
     void syncIfStale(store, getProvider(), me.id, now).catch(() => null);
   }
   const ids = isDemo() ? null : onlineUserIds(now);
-  const w = await worldView(store, me, now, ids);
+  const crm = loadCrmState();
+  const w = await worldView(store, me, now, ids, {
+    coffeeCheckins: crm.coffeeCheckins,
+    voucherRedemptions: crm.voucherRedemptions,
+  });
   return <WorldClient world={w} meHandle={me?.handle ?? null} />;
 }

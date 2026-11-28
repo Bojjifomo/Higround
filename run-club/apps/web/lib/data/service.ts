@@ -5,6 +5,7 @@
 import { dateShort, km as fmtKm } from "../format";
 import { activeEvent, checkinFromClass, eventBadgesOf, syncEvents } from "./events-service";
 import { badgeXpEntries, catalogue, earnedBadges, unlockedCosmetics, type Badge, type MemberStats } from "../badges";
+import type { CoffeeCheckinRecord, VoucherRedemptionRecord } from "../admin/crm";
 import {
   cafeVouchersFor, loyaltyTierOf, memberMilestoneFor, rukoUpgradeFor, weeklyClubQuestFor,
   type CafeVoucher, type LoyaltyTier, type MemberMilestoneQuest, type RukoUpgradeTier, type WeeklyClubQuest,
@@ -507,6 +508,7 @@ export async function worldView(
   viewer: Member | null,
   now: number,
   onlineIds: Set<string> | null = null,
+  crm?: { coffeeCheckins?: CoffeeCheckinRecord[]; voucherRedemptions?: VoucherRedemptionRecord[] },
 ): Promise<WorldView> {
   const nowIso = new Date(now).toISOString();
   const today = localDate(nowIso, rules);
@@ -591,9 +593,27 @@ export async function worldView(
     }
   }
 
+  // Recent daily coffee check-ins appear in the live /world ticker too!
+  for (const c of (crm?.coffeeCheckins ?? []).filter((x) => Date.parse(x.checkedInAt) >= now - 36 * 3_600_000)) {
+    const first = c.displayName.split(" ")[0];
+    events.push({
+      at: Date.parse(c.checkedInAt),
+      text: `☕ ${first} check-in ngopi di Higround! +1 Brew Stamp & +${c.xpAwarded} XP`,
+    });
+  }
+
   const me = viewer ? await levelOf(store, viewer.id) : null;
   const meStats = viewer ? await memberStats(store, viewer.id) : null;
   const meCheckins = viewer ? (await store.checkinsOf(viewer.id)).length : 0;
+  const myCoffeeCheckins = viewer
+    ? (crm?.coffeeCheckins ?? []).filter((c) => c.userId === viewer.id).length
+    : 0;
+  const myRedemptions = new Map<string, string>();
+  if (viewer) {
+    for (const r of crm?.voucherRedemptions ?? []) {
+      if (r.userId === viewer.id) myRedemptions.set(r.voucherKey, r.redeemedAt);
+    }
+  }
   const rewardInput = viewer && me && meStats ? {
     handle: viewer.handle,
     level: me.level,
@@ -602,6 +622,7 @@ export async function worldView(
     higroundStarts: meStats.higroundStarts,
     yogaTahapCleared: meStats.yoga.tahap.filter((t) => t.cleared).length,
     eventCheckins: meCheckins,
+    coffeeCheckins: myCoffeeCheckins,
   } : null;
 
   const ev = await activeEvent(store, now);
@@ -624,6 +645,14 @@ export async function worldView(
     memberMilestone: memberMilestoneFor(everyone.length),
     rukoUpgrade: rukoUpgradeFor(communityTotalKm),
     weeklyLeaders,
-    rewards: rewardInput ? { tier: loyaltyTierOf(rewardInput), vouchers: cafeVouchersFor(rewardInput) } : null,
+    rewards: rewardInput
+      ? {
+          tier: loyaltyTierOf(rewardInput),
+          vouchers: cafeVouchersFor(rewardInput).map((v) => ({
+            ...v,
+            redeemedAt: myRedemptions.get(v.key) ?? null,
+          })),
+        }
+      : null,
   };
 }

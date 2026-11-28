@@ -10,6 +10,7 @@ import { defaultConfig as yoga } from "@/lib/yoga";
 import { rejectClaim, review, verifyWa } from "../actions";
 import { eventConfig } from "@/lib/events";
 import { AdminCrmClient } from "./AdminCrmClient";
+import { CoffeeActivationPanel } from "./CoffeeActivationPanel";
 import { EventForm } from "./EventForm";
 
 export const dynamic = "force-dynamic";
@@ -60,6 +61,10 @@ export default async function Admin() {
         lastLunaSyncAt={crm.lastLunaSyncAt}
         initialAnnouncement={crm.announcement}
         initialChatMessages={listChatMessages(0, 40)}
+      />
+      <CoffeeActivationPanel
+        coffeeCheckins={crm.coffeeCheckins}
+        voucherRedemptions={crm.voucherRedemptions}
       />
       <EventForm templates={eventConfig.templates} />
 

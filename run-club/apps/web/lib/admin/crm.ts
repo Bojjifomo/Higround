@@ -32,11 +32,34 @@ export interface WorldAnnouncement {
   createdAt: string;
 }
 
+export interface CoffeeCheckinRecord {
+  id: string;
+  userId: string;
+  handle: string;
+  displayName: string;
+  dateWib: string;
+  checkedInAt: string;
+  xpAwarded: number;
+}
+
+export interface VoucherRedemptionRecord {
+  id: string;
+  userId: string;
+  handle: string;
+  displayName: string;
+  voucherKey: string;
+  voucherName: string;
+  voucherCode: string;
+  redeemedAt: string;
+}
+
 export interface AdminCrmState {
   lunaByUserId: Record<string, LunaPosRecord>;
   lastLunaSyncAt: string | null;
   giveaways: GiveawayRecord[];
   announcement: WorldAnnouncement | null;
+  coffeeCheckins: CoffeeCheckinRecord[];
+  voucherRedemptions: VoucherRedemptionRecord[];
 }
 
 export interface MemberCrmRow {

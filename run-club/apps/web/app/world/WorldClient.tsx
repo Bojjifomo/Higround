@@ -303,7 +303,7 @@ export function WorldClient({
   };
 
   const phase = dayPhase(hour);
-  const unlockedVouchers = rewards?.vouchers.filter((v) => v.unlocked).length ?? 0;
+  const unlockedVouchers = rewards?.vouchers.filter((v) => v.unlocked && !v.redeemedAt).length ?? 0;
   const xpPct = hud.myXpToNext === null ? 100 : Math.round((hud.myXpIntoLevel / (hud.myXpIntoLevel + hud.myXpToNext)) * 100);
 
   const floorTabs = (compact = false) => (

@@ -56,7 +56,7 @@ export interface LedgerEntry {
   userId: string;
   amount: number;
   ruleKey: string;            // e.g. "distance", "weekly_tier_20", "pb_5k"
-  sourceType: "activity" | "week" | "yoga" | "badge" | "event";
+  sourceType: "activity" | "week" | "yoga" | "badge" | "event" | "adjustment";
   sourceId: string;           // activity id, ISO week key, ...
   idempotencyKey: string;     // unique per (rule, source): re-running never pays twice
 }

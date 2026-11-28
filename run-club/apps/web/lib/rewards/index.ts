@@ -12,6 +12,7 @@ export interface RewardInput {
   higroundStarts: number;
   yogaTahapCleared: number;
   eventCheckins: number;
+  coffeeCheckins?: number;
 }
 
 export interface CafeVoucher {
@@ -24,6 +25,7 @@ export interface CafeVoucher {
   progressLabel: string;
   unlocked: boolean;
   code: string;
+  redeemedAt?: string | null;
 }
 
 export interface LoyaltyTier {
@@ -31,7 +33,7 @@ export interface LoyaltyTier {
   color: string;
   nextName: string | null;
   xpToNext: number;
-  stamps: number;           // 1 stamp per Higround start or event check-in
+  stamps: number;           // 1 stamp per Higround start, event check-in, or daily coffee check-in
   stampsPerFreeDrink: number;
 }
 
@@ -59,7 +61,7 @@ export interface WeeklyClubQuest {
 }
 
 export function loyaltyTierOf(input: RewardInput): LoyaltyTier {
-  const stamps = input.higroundStarts + input.eventCheckins;
+  const stamps = input.higroundStarts + input.eventCheckins + (input.coffeeCheckins ?? 0);
   const xp = input.totalXp;
   if (xp >= 5000) {
     return { name: "Higround Legend", color: "#FF5F0E", nextName: null, xpToNext: 0, stamps, stampsPerFreeDrink: 5 };
@@ -77,7 +79,8 @@ export function cafeVouchersFor(input: RewardInput): CafeVoucher[] {
   const tag = input.handle.toUpperCase().slice(0, 6);
   const clamp = (n: number) => Math.max(0, Math.min(1, n));
 
-  const stamps = input.higroundStarts + input.eventCheckins;
+  const stamps = input.higroundStarts + input.eventCheckins + (input.coffeeCheckins ?? 0);
+  const brewCard = clamp(stamps / 5);
   const startOrLv = Math.max(clamp(input.higroundStarts / 3), clamp(input.level / 3));
   const gelatoStamps = clamp(stamps / 3);
   const km30 = clamp(input.totalKm / 30);
@@ -85,6 +88,17 @@ export function cafeVouchersFor(input: RewardInput): CafeVoucher[] {
   const merch = Math.max(clamp(input.totalKm / 100), clamp(input.level / 20));
 
   return [
+    {
+      key: "free_coffee_stamp",
+      name: "Free Coffee · 5 Brew Stamps",
+      perk: "Tukar 1 minuman kopi/non-kopi favorit langsung di kasir Higround!",
+      icon: "🧋",
+      requirement: "Kumpulkan 5 Brew Stamps (scan QR ngopi harian / start Higround)",
+      progress: brewCard,
+      progressLabel: `${Math.min(5, stamps)}/5 Stamps`,
+      unlocked: stamps >= 5,
+      code: `HG-5STP-${tag}`,
+    },
     {
       key: "free_americano",
       name: "Free Iced Americano",
@@ -153,6 +167,7 @@ export function publicVoucherCatalog(): Pick<CafeVoucher, "key" | "name" | "perk
     higroundStarts: 0,
     yogaTahapCleared: 0,
     eventCheckins: 0,
+    coffeeCheckins: 0,
   }).map(({ key, name, perk, icon, requirement }) => ({ key, name, perk, icon, requirement }));
 }
 
