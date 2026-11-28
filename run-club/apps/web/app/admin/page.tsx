@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
 import { Button, Panel } from "@/components/ui";
+import { buildMemberDirectory } from "@/lib/admin/directory";
 import { currentMember, getStore } from "@/lib/data";
 import { dateLong, km, pace } from "@/lib/format";
 import { defaultConfig as yoga } from "@/lib/yoga";
 import { rejectClaim, review, verifyWa } from "../actions";
 import { eventConfig } from "@/lib/events";
+import { AdminCrmClient } from "./AdminCrmClient";
 import { EventForm } from "./EventForm";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +21,8 @@ export default async function Admin() {
   if (me.role !== "admin") return <Panel title="Khusus admin"><p className="text-sm">Halaman ini cuma untuk admin.</p></Panel>;
   const store = await getStore();
   const members = await store.members();
+  const { rows: crmRows, crm } = await buildMemberDirectory(Date.now());
+  const resendConfigured = Boolean(process.env.RESEND_API_KEY?.trim());
   const name = (id: string) => members.find((m) => m.id === id)?.displayName ?? id;
   const pending = (await store.pendingActivities()).sort((a, b) => b.startTime.localeCompare(a.startTime));
   const claims = await store.recentAttempts(15);
@@ -27,6 +31,12 @@ export default async function Admin() {
   return (
     <div className="space-y-5">
       <h1 className="font-pixel text-4xl leading-none">Admin</h1>
+      <AdminCrmClient
+        rows={crmRows}
+        giveaways={crm.giveaways}
+        lastLunaSyncAt={crm.lastLunaSyncAt}
+        resendConfigured={resendConfigured}
+      />
       <EventForm templates={eventConfig.templates} />
 
       <Panel title={`Aktivitas di-flag (${pending.length})`}>

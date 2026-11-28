@@ -6,10 +6,12 @@ import { AnimatedNumber, LevelUpModal, SpringPop } from "@/components/SpringUI";
 import type { StudioModeOverride, WorldGame } from "@/game/createWorldGame";
 import { sfx } from "@/lib/audio/sfx";
 import { CAFE_MENU, resolvePlaylistEmbed } from "@/lib/cafe";
+import type { WorldChatMessage } from "@/lib/chat/store";
 import type { WorldMember, WorldView } from "@/lib/data/service";
 import { km } from "@/lib/format";
 import { SCENES, type SceneKey } from "@/lib/world/layout";
 import { dayPhase, wibHour } from "@/lib/world/agents";
+import { WorldChatBox } from "./WorldChatBox";
 import { PoiPopup, WorldDrawer, type DrawerTab } from "./WorldDrawers";
 
 const ICON: Record<string, string> = {
@@ -46,6 +48,12 @@ export function WorldClient({
   const [bgmOn, setBgmOn] = useState(false);
   const [musicOpen, setMusicOpen] = useState(false);
   const [musicLoaded, setMusicLoaded] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<WorldChatMessage[]>([]);
+  const [unreadChat, setUnreadChat] = useState(0);
+  const chatOpenRef = useRef(false);
+  chatOpenRef.current = chatOpen;
+  const seenChatIds = useRef<Set<string>>(new Set());
   const [showGamepad, setShowGamepad] = useState(true);
   const [controlMode, setControlMode] = useState<"auto" | "manual">("auto");
   const [activeDir, setActiveDir] = useState<string | null>(null);
@@ -55,6 +63,62 @@ export function WorldClient({
   useEffect(() => {
     setMuted(sfx.isMuted());
     return () => { sfx.stopBgm(); };
+  }, []);
+
+  // Live MMORPG World Chat polling (4s) — new messages pop up as overhead speech bubbles in Phaser!
+  useEffect(() => {
+    let alive = true;
+    let initialized = false;
+    const pollChat = async () => {
+      try {
+        const res = await fetch("/api/world/chat", { cache: "no-store" });
+        if (!res.ok || !alive) return;
+        const data = (await res.json()) as { ok?: boolean; messages?: WorldChatMessage[] };
+        if (!data.ok || !Array.isArray(data.messages) || !alive) return;
+        const incoming = data.messages;
+        const fresh = incoming.filter((m) => !seenChatIds.current.has(m.id));
+        for (const m of fresh) seenChatIds.current.add(m.id);
+        setChatMessages(incoming);
+        if (initialized && fresh.length > 0) {
+          for (const m of fresh) {
+            game.current?.sayMessage(m.userId, m.text);
+          }
+          if (!chatOpenRef.current) {
+            setUnreadChat((n) => Math.min(99, n + fresh.length));
+          }
+        }
+        initialized = true;
+      } catch {
+        // transient network hiccup
+      }
+    };
+    void pollChat();
+    const id = setInterval(pollChat, 4000);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+  }, []);
+
+  const sendChatMessage = useCallback(async (text: string): Promise<{ ok: true } | { ok: false; error: string }> => {
+    try {
+      const res = await fetch("/api/world/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      const data = (await res.json()) as { ok?: boolean; message?: WorldChatMessage; error?: string };
+      if (!res.ok || !data.ok || !data.message) {
+        return { ok: false, error: data.error ?? "Gagal mengirim pesan." };
+      }
+      const msg = data.message;
+      seenChatIds.current.add(msg.id);
+      setChatMessages((prev) => [...prev.slice(-39), msg]);
+      game.current?.sayMessage(msg.userId, msg.text);
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Koneksi terputus." };
+    }
   }, []);
 
   useEffect(() => {
@@ -398,7 +462,33 @@ export function WorldClient({
               )}
               <button
                 type="button"
-                onClick={toggleMusicDrawer}
+                onClick={() => {
+                  void sfx.select();
+                  setMusicOpen(false);
+                  setChatOpen((o) => {
+                    if (!o) setUnreadChat(0);
+                    return !o;
+                  });
+                }}
+                title="World Chat MMORPG Higround"
+                aria-expanded={chatOpen}
+                className={`pixel-btn relative rounded-md px-1.5 py-1 text-[11px] font-bold sm:px-2 ${
+                  chatOpen ? "bg-hg-orange text-white" : "bg-[#FFF8EA] text-[#241917]"
+                }`}
+              >
+                💬
+                {unreadChat > 0 && !chatOpen && (
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-hg-red px-1 text-[9px] font-black text-white">
+                    {unreadChat}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setChatOpen(false);
+                  toggleMusicDrawer();
+                }}
                 title="Playlist Musik Higround (Spotify / YouTube)"
                 aria-expanded={musicOpen}
                 className={`pixel-btn rounded-md px-1.5 py-1 text-[11px] font-bold sm:px-2 ${
@@ -505,8 +595,18 @@ export function WorldClient({
           </div>
         )}
 
+        {/* LIVE MMORPG WORLD CHATBOX (with Indonesian profanity filter + overhead speech bubbles) */}
+        {chatOpen && !drawer && (
+          <WorldChatBox
+            messages={chatMessages}
+            signedIn={Boolean(meHandle)}
+            onSend={sendChatMessage}
+            onClose={() => setChatOpen(false)}
+          />
+        )}
+
         {/* ON-SCREEN VIRTUAL GAMEPAD (D-PAD) + AUTO-WALK STATUS (Bottom-Left) */}
-        {meMember && showGamepad && !musicOpen && !drawer && !selected && !selectedPoi && (
+        {meMember && showGamepad && !musicOpen && !chatOpen && !drawer && !selected && !selectedPoi && (
           <div className="pointer-events-auto absolute bottom-24 left-2.5 z-20 flex flex-col items-center gap-1 select-none sm:bottom-24 sm:left-3">
             <span
               className={`rounded-full border border-[#2b1d17] px-2 py-0.5 text-[9px] font-black tracking-wide shadow-sm ${

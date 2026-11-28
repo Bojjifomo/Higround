@@ -6,8 +6,8 @@ import { dateShort, km as fmtKm } from "../format";
 import { activeEvent, checkinFromClass, eventBadgesOf, syncEvents } from "./events-service";
 import { badgeXpEntries, catalogue, earnedBadges, unlockedCosmetics, type Badge, type MemberStats } from "../badges";
 import {
-  cafeVouchersFor, loyaltyTierOf, rukoUpgradeFor, weeklyClubQuestFor,
-  type CafeVoucher, type LoyaltyTier, type RukoUpgradeTier, type WeeklyClubQuest,
+  cafeVouchersFor, loyaltyTierOf, memberMilestoneFor, rukoUpgradeFor, weeklyClubQuestFor,
+  type CafeVoucher, type LoyaltyTier, type MemberMilestoneQuest, type RukoUpgradeTier, type WeeklyClubQuest,
 } from "../rewards";
 import {
   buildLast31DaysHeatmap, computeProfilePbs, detectRunBuddiesForMember, isWalkActivity,
@@ -483,6 +483,7 @@ export interface WorldView {
   };
   ticker: string[];
   clubQuest: WeeklyClubQuest;
+  memberMilestone: MemberMilestoneQuest;
   rukoUpgrade: RukoUpgradeTier;
   weeklyLeaders: { handle: string; name: string; avatar: Member["avatar"]; weekKm: number; level: number; ranToday: boolean }[];
   rewards: { tier: LoyaltyTier; vouchers: CafeVoucher[] } | null;
@@ -620,6 +621,7 @@ export async function worldView(
     },
     ticker: events.sort((a, b) => b.at - a.at).slice(0, 12).map((e) => e.text),
     clubQuest: weeklyClubQuestFor(communityKmWeek, weekNum),
+    memberMilestone: memberMilestoneFor(everyone.length),
     rukoUpgrade: rukoUpgradeFor(communityTotalKm),
     weeklyLeaders,
     rewards: rewardInput ? { tier: loyaltyTierOf(rewardInput), vouchers: cafeVouchersFor(rewardInput) } : null,

@@ -412,6 +412,25 @@ export function WorldDrawer({
               </p>
             </div>
 
+            {/* Member Milestone → Giveaway Free Drinks */}
+            <div className="pixel-frame rounded-lg bg-[#FFF1E6] p-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-pixel text-base text-[#241917]">🎉 {world.memberMilestone.title}</span>
+                <span className="rounded bg-hg-orange px-2 py-0.5 font-mono text-xs font-bold text-white">
+                  {world.memberMilestone.currentMembers} / {world.memberMilestone.targetMembers} member
+                </span>
+              </div>
+              <div className="mt-2 h-3.5 w-full overflow-hidden rounded-full border-2 border-[#2b1d17] bg-white">
+                <div
+                  className="h-full bg-hg-orange transition-all"
+                  style={{ width: `${world.memberMilestone.pct}%` }}
+                />
+              </div>
+              <p className="mt-1.5 text-[11px] font-bold text-[#3b261c]">
+                ☕ {world.memberMilestone.rewardText}
+              </p>
+            </div>
+
             {/* Zombies, Run! Ruko Visual Upgrade Progression */}
             <div className="pixel-frame rounded-lg bg-[#EFE1C4]/70 p-3">
               <div className="flex items-center justify-between">

@@ -183,6 +183,14 @@ export function rukoUpgradeFor(clubTotalKm: number): RukoUpgradeTier {
   };
 }
 
+export interface MemberMilestoneQuest {
+  title: string;
+  currentMembers: number;
+  targetMembers: number;
+  pct: number;
+  rewardText: string;
+}
+
 export function weeklyClubQuestFor(communityKmWeek: number, weekNumber: number): WeeklyClubQuest {
   const targetKm = 150;
   const pct = Math.min(100, Math.round((communityKmWeek / targetKm) * 100));
@@ -193,6 +201,19 @@ export function weeklyClubQuestFor(communityKmWeek: number, weekNumber: number):
     targetKm,
     pct,
     completed: communityKmWeek >= targetKm,
-    rewardText: "Nyalain dekor Pesta Run Club di Start Gate + Bonus Brew Stamp saat Sunday Long Run!",
+    rewardText: "Giveaway Free Drinks Higround untuk kontributor aktif (dikirim via email) + Bonus Brew Stamp!",
+  };
+}
+
+export function memberMilestoneFor(totalMembers: number): MemberMilestoneQuest {
+  const tiers = [25, 50, 100, 250, 500];
+  const targetMembers = tiers.find((t) => totalMembers < t) ?? Math.ceil((totalMembers + 100) / 100) * 100;
+  const pct = Math.min(100, Math.round((totalMembers / targetMembers) * 100));
+  return {
+    title: `Milestone ${targetMembers} Member Higround`,
+    currentMembers: totalMembers,
+    targetMembers,
+    pct,
+    rewardText: `Saat tembus ${targetMembers} member → Undian Giveaway Free Drinks Higround untuk member terdaftar!`,
   };
 }

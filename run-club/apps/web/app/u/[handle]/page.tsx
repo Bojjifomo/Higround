@@ -10,6 +10,7 @@ import { PB_BADGE_SPECS } from "@/lib/runs";
 import { defaultConfig as yoga } from "@/lib/yoga";
 import { togglePublic } from "../../actions";
 import { Connection } from "./Connection";
+import { RunningCoachCard } from "./RunningCoachCard";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +44,7 @@ export default async function Profile({ params, searchParams }: {
   const { member, level } = p;
   const integ = p.isOwner ? await store.integration(member.id) : null;
   const isMockIntervals = p.isOwner ? getProvider().name === "intervals-mock" : false;
+  const geminiConfigured = Boolean(process.env.GEMINI_API_KEY?.trim());
 
   const runBadges = p.badges.all.filter((b) => b.category !== "yoga");
   const yogaBadgesList = p.badges.all.filter((b) => b.category === "yoga");
@@ -94,6 +96,7 @@ export default async function Profile({ params, searchParams }: {
         <Panel title="Profil privat"><p className="text-sm">{member.displayName} memilih menyembunyikan dashboard-nya.</p></Panel>
       ) : (
         <>
+          {p.isOwner && <RunningCoachCard geminiConfigured={geminiConfigured} />}
           <RunSection run={p.run!} isOwner={p.isOwner} />
           <YogaSection p={p} />
 

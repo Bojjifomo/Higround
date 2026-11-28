@@ -105,18 +105,18 @@ flowchart LR
   - **Stiker Transparan** (PNG transparan buat ditempel di atas foto lari di IG Story ala Strava/NRC)
 
 ### H. Klub, Giveaway, Database & Loyalty Member
-- [ ] **Klub & Quest + Giveaway** *(QA Screenshot 16.47)*:
+- [x] **Klub & Quest + Giveaway** *(QA Screenshot 16.47)*:
   - Misi KM Mingguan & Milestone Jumlah Member → benefit jelas berupa **Giveaway Free Drinks** untuk kontributor.
   - Pemenang giveaway dikirim notifikasi **email otomatis via Resend**.
-- [ ] **Database Member Terkumpul (Admin):**
+- [x] **Database Member Terkumpul (Admin):**
   - Halaman/export admin yang mengumpulkan data member rapi (email, nickname, tanggal gabung, total km, kontribusi misi, status loyalty) untuk keperluan giveaway & CRM.
-- [ ] **Integrasi Loyalty Member Higround (LunaPOS):**
+- [x] **Integrasi Loyalty Member Higround (LunaPOS):**
   - Karena LunaPOS tidak menyediakan public open API, integrasi memakai **Monthly CSV/Excel Upload Sync** di `/admin` (cocokkan via email / no. HP untuk update status/poin loyalty member), ditambah tombol export siap pakai.
 
 ### I. Chat Komunitas & AI Running Coach (Gemini)
-- [ ] **Live Chat / Chatbot Komunitas + Filter Kata Kasar Bahasa Indonesia:**
+- [x] **Live Chat / Chatbot Komunitas + Filter Kata Kasar Bahasa Indonesia:**
   - Kamus profanity filter Bahasa Indonesia (termasuk variasi ejaan/leetspeak umum) agar member tidak bisa kirim kata kasar.
-- [ ] **AI Running Coach bertenaga Gemini API (di Dashboard Profil):**
+- [x] **AI Running Coach bertenaga Gemini API (di Dashboard Profil):**
   - Fokus khusus sebagai **Running Coach** yang membaca histori lari member (volume mingguan, tren pace, konsistensi, PB, recovery) langsung di halaman `/u/[handle]`.
 
 ---
@@ -129,7 +129,7 @@ flowchart LR
 | **Fase B — Character Creator v2** | Smoothness & kontras siluet baju/celana (`36×48`), Mata sipit + wajah negatif/lucu, 5 Atasan, 3 Bawahan, 6 Sepatu unik, Fix alignment Topi + Topeng, 3 Aksesori | **Done** |
 | **Fase C — Profil, Run Buddy & Share Story v2** | Track Jalan Kaki (`Walk`), hapus Elevasi & Riwayat XP, KM/minggu, Heatmap 31 hari jelas, PB Badges (1K–50K), pisah Run vs Yoga Badge, Deteksi Lari Bareng (*Run Buddy*), Share per Run + Share Lari Bareng (Card Pixel + Stiker Transparan) | **Done** |
 | **Fase D — Dunia Pixel & Fitur Kafe** | Virtual Gamepad + auto-walk fallback, Leaderboard KM (khusus Lari) clickable, Medali Top 1–3 di atas kepala, Klik profil orang lain, Menu Higround, Link Google Maps Review, Embed BGM Playlist Higround | **Done** |
-| **Fase E — AI Coach, Komunitas & Bisnis** | AI Running Coach Gemini di Profil, Chat + Filter Kata Kasar Indonesia, Giveaway Email via Resend, Export Database Admin, LunaPOS Monthly CSV/Excel Loyalty Sync | Next |
+| **Fase E — AI Coach, Komunitas & Bisnis** | AI Running Coach Gemini di Profil, Chat + Filter Kata Kasar Indonesia, Giveaway Email via Resend, Export Database Admin, LunaPOS Monthly CSV/Excel Loyalty Sync | **Done** |
 
 ---
 

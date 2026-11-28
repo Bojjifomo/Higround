@@ -48,6 +48,7 @@ export interface WorldGame {
   focusMe(): SceneKey | null;
   focusMember(memberId: string): SceneKey | null;
   cheerMember(memberId: string): void;
+  sayMessage(memberId: string, text: string): void;
   destroy(): void;
 }
 
@@ -1061,6 +1062,14 @@ class WorldScene extends Phaser.Scene {
     }
   }
 
+  /** MMORPG overhead speech bubble when a member sends a message in World Chat! */
+  sayMessage(memberId: string, text: string) {
+    const agent = this.agents.find((a) => a.memberId === memberId);
+    if (!agent) return;
+    const clipped = text.length > 38 ? `${text.slice(0, 37)}…` : text;
+    agent.bubble = { text: `💬 ${clipped}`, ttl: 5.5 };
+  }
+
   private canWalkAt(g: SceneGrid, x: number, y: number): boolean {
     const tx = Math.round(x);
     const ty = Math.round(y);
@@ -1159,7 +1168,6 @@ class WorldScene extends Phaser.Scene {
           a.facing = dx !== 0 ? (dx > 0 ? 1 : -1) : (dy > 0 ? 1 : -1);
           a.mode = "walk";
           a.path = [];
-          a.bubble = null;
           // Smooth camera follow while actively steering
           const pos = this.project(gCur, a.x, a.y);
           const cam = this.cameras.main;
@@ -1174,6 +1182,10 @@ class WorldScene extends Phaser.Scene {
           a.mode = "use";
           a.timer = 1;
           a.path = [];
+        }
+        if (a.bubble) {
+          a.bubble.ttl -= dt;
+          if (a.bubble.ttl <= 0) a.bubble = null;
         }
       } else {
         if (isMeAgent && this.controlMode === "manual") {
@@ -1339,6 +1351,7 @@ export function createWorldGame(parent: HTMLElement, opts: GameOptions): WorldGa
     focusMe: () => (scene.sys?.isActive() ? scene.focusMe() : null),
     focusMember: (id) => (scene.sys?.isActive() ? scene.focusMember(id) : null),
     cheerMember: (id) => scene.sys?.isActive() && scene.cheerMember(id),
+    sayMessage: (id, text) => scene.sys?.isActive() && scene.sayMessage(id, text),
     destroy: () => game.destroy(true),
   };
 }
