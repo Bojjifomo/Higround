@@ -84,16 +84,29 @@ export function WorldChatBox({
             Belum ada obrolan nih. Sapa pelari lain — pesanmu bakal muncul jadi bubble di atas kepala karaktermu! 💬
           </p>
         ) : (
-          messages.map((m) => (
-            <div key={m.id} className="break-words">
-              <span className="text-neutral-400">[{timeWib(m.createdAt)}]</span>{" "}
-              <Link href={`/u/${m.handle}`} className="font-bold text-hg-yellow hover:underline">
-                {m.displayName.split(" ")[0]}
-              </Link>
-              <span className="text-[10px] text-hg-orange"> (Lv{m.level})</span>:{" "}
-              <span>{m.text}</span>
-            </div>
-          ))
+          messages.map((m) =>
+            m.isAdminAnnouncement ? (
+              <div
+                key={m.id}
+                className="break-words rounded border border-hg-orange/70 bg-hg-orange/25 px-1.5 py-1 text-[#FFF8EA]"
+              >
+                <span className="text-neutral-300">[{timeWib(m.createdAt)}]</span>{" "}
+                <span className="rounded bg-hg-orange px-1 py-0.5 text-[9px] font-black text-white">
+                  📣 ADMIN
+                </span>{" "}
+                <span className="font-bold text-hg-yellow">{m.text}</span>
+              </div>
+            ) : (
+              <div key={m.id} className="break-words">
+                <span className="text-neutral-400">[{timeWib(m.createdAt)}]</span>{" "}
+                <Link href={`/u/${m.handle}`} className="font-bold text-hg-yellow hover:underline">
+                  {m.displayName.split(" ")[0]}
+                </Link>
+                <span className="text-[10px] text-hg-orange"> (Lv{m.level})</span>:{" "}
+                <span>{m.text}</span>
+              </div>
+            ),
+          )
         )}
       </div>
 

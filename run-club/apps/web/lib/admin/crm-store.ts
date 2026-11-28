@@ -11,7 +11,7 @@ const DATA_DIR = join(process.cwd(), ".data");
 const CRM_FILE = join(DATA_DIR, "admin_crm.json");
 
 function emptyState(): AdminCrmState {
-  return { lunaByUserId: {}, lastLunaSyncAt: null, giveaways: [] };
+  return { lunaByUserId: {}, lastLunaSyncAt: null, giveaways: [], announcement: null };
 }
 
 export function loadCrmState(): AdminCrmState {
@@ -22,6 +22,7 @@ export function loadCrmState(): AdminCrmState {
       lunaByUserId: parsed.lunaByUserId ?? {},
       lastLunaSyncAt: parsed.lastLunaSyncAt ?? null,
       giveaways: Array.isArray(parsed.giveaways) ? parsed.giveaways : [],
+      announcement: parsed.announcement ?? null,
     };
   } catch {
     return emptyState();

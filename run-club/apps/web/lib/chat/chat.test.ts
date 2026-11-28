@@ -1,6 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { checkProfanity } from "./profanity";
-import { listChatMessages, postChatMessage, resetChatStoreForTests } from "./store";
+import {
+  clearChatMessages,
+  deleteChatMessage,
+  listChatMessages,
+  postAdminBroadcast,
+  postChatMessage,
+  resetChatStoreForTests,
+} from "./store";
 
 describe("Indonesian profanity filter", () => {
   it("allows friendly Indonesian running & coffee chat without false positives", () => {
@@ -54,5 +61,25 @@ describe("World Chat store", () => {
     const r4 = postChatMessage(sender, "Gas lari pagi!", 13_500);
     expect(r4.ok).toBe(true);
     expect(listChatMessages(10_000)).toHaveLength(1);
+  });
+
+  it("supports admin broadcast announcement, single message deletion, and full room clear", () => {
+    const admin = { userId: "admin1", handle: "andreas", displayName: "Andreas" };
+    const b1 = postAdminBroadcast(admin, "Sunday Long Run mulai jam 05:30 WIB!", 20_000);
+    expect(b1.isAdminAnnouncement).toBe(true);
+    expect(b1.text).toBe("Sunday Long Run mulai jam 05:30 WIB!");
+
+    const m2 = postChatMessage({ userId: "u2", handle: "budi", displayName: "Budi", level: 3 }, "Siap gas!", 21_000);
+    expect(m2.ok).toBe(true);
+    expect(listChatMessages()).toHaveLength(2);
+
+    // Delete single message
+    expect(deleteChatMessage(b1.id)).toBe(true);
+    expect(deleteChatMessage("nonexistent")).toBe(false);
+    expect(listChatMessages()).toHaveLength(1);
+
+    // Clear all remaining messages
+    expect(clearChatMessages()).toBe(1);
+    expect(listChatMessages()).toHaveLength(0);
   });
 });

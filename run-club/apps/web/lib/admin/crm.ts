@@ -23,12 +23,20 @@ export interface GiveawayRecord {
   voucherCode: string;
   sentViaResend: boolean;
   sentAt: string;
+  redeemedAt?: string | null;
+}
+
+export interface WorldAnnouncement {
+  text: string;
+  author: string;
+  createdAt: string;
 }
 
 export interface AdminCrmState {
   lunaByUserId: Record<string, LunaPosRecord>;
   lastLunaSyncAt: string | null;
   giveaways: GiveawayRecord[];
+  announcement: WorldAnnouncement | null;
 }
 
 export interface MemberCrmRow {

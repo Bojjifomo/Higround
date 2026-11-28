@@ -5,6 +5,7 @@ import { Avatar } from "@/components/Avatar";
 import { AnimatedNumber, LevelUpModal, SpringPop } from "@/components/SpringUI";
 import type { StudioModeOverride, WorldGame } from "@/game/createWorldGame";
 import { sfx } from "@/lib/audio/sfx";
+import type { WorldAnnouncement } from "@/lib/admin/crm";
 import { CAFE_MENU, resolvePlaylistEmbed } from "@/lib/cafe";
 import type { WorldChatMessage } from "@/lib/chat/store";
 import type { WorldMember, WorldView } from "@/lib/data/service";
@@ -50,6 +51,8 @@ export function WorldClient({
   const [musicLoaded, setMusicLoaded] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<WorldChatMessage[]>([]);
+  const [announcement, setAnnouncement] = useState<WorldAnnouncement | null>(null);
+  const [dismissedAnnouncementAt, setDismissedAnnouncementAt] = useState<string | null>(null);
   const [unreadChat, setUnreadChat] = useState(0);
   const chatOpenRef = useRef(false);
   chatOpenRef.current = chatOpen;
@@ -73,12 +76,17 @@ export function WorldClient({
       try {
         const res = await fetch("/api/world/chat", { cache: "no-store" });
         if (!res.ok || !alive) return;
-        const data = (await res.json()) as { ok?: boolean; messages?: WorldChatMessage[] };
+        const data = (await res.json()) as {
+          ok?: boolean;
+          messages?: WorldChatMessage[];
+          announcement?: WorldAnnouncement | null;
+        };
         if (!data.ok || !Array.isArray(data.messages) || !alive) return;
         const incoming = data.messages;
         const fresh = incoming.filter((m) => !seenChatIds.current.has(m.id));
         for (const m of fresh) seenChatIds.current.add(m.id);
         setChatMessages(incoming);
+        setAnnouncement(data.announcement ?? null);
         if (initialized && fresh.length > 0) {
           for (const m of fresh) {
             game.current?.sayMessage(m.userId, m.text);
@@ -522,6 +530,29 @@ export function WorldClient({
               </div>
             </div>
           </div>
+
+          {/* PINNED ADMIN ANNOUNCEMENT BANNER (dismissible per broadcast) */}
+          {announcement && announcement.createdAt !== dismissedAnnouncementAt && (
+            <div className="flex justify-center">
+              <div className="pixel-frame pointer-events-auto flex max-w-xl items-center gap-2 rounded-lg bg-[#241917] px-2.5 py-1 text-[11px] font-bold text-[#FFF8EA] shadow-md">
+                <span className="shrink-0 rounded bg-hg-orange px-1.5 py-0.5 text-[9px] font-black text-white">
+                  📣 INFO
+                </span>
+                <span className="line-clamp-2 text-hg-yellow">{announcement.text}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void sfx.select();
+                    setDismissedAnnouncementAt(announcement.createdAt);
+                  }}
+                  aria-label="Tutup pengumuman"
+                  className="ml-auto shrink-0 rounded border border-neutral-600 px-1.5 py-0.5 text-[10px] text-neutral-200 hover:bg-neutral-700"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* ROW 3 (only on Floor 2): Studio Mode Toggle */}
           {scene === "floor2" && (

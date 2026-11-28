@@ -1,16 +1,18 @@
 import { NextResponse } from "next/server";
+import { loadCrmState } from "@/lib/admin/crm-store";
 import { currentMember, getStore, levelOf } from "@/lib/data";
 import { listChatMessages, postChatMessage } from "@/lib/chat/store";
 
 export const dynamic = "force-dynamic";
 
-/** GET /api/world/chat?since=<ms> — fetch recent live MMORPG world chat messages. */
+/** GET /api/world/chat?since=<ms> — fetch recent live MMORPG world chat messages + active admin announcement. */
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const since = Number(url.searchParams.get("since") ?? "0") || 0;
   return NextResponse.json({
     ok: true,
     messages: listChatMessages(since, 40),
+    announcement: loadCrmState().announcement,
   });
 }
 

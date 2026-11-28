@@ -12,6 +12,7 @@ export interface WorldChatMessage {
   level: number;
   text: string;
   createdAt: number;
+  isAdminAnnouncement?: boolean;
 }
 
 export const CHAT_MAX_LEN = 140;
@@ -79,6 +80,45 @@ export function postChatMessage(
   }
   s.lastSentByUser.set(sender.userId, now);
   return { ok: true, message: msg };
+}
+
+/** Post an official highlighted Admin announcement into World Chat (bypasses normal rate limit). */
+export function postAdminBroadcast(
+  admin: { userId: string; handle: string; displayName: string },
+  rawText: string,
+  now: number = Date.now(),
+): WorldChatMessage {
+  const s = state();
+  const clean = rawText.replace(/\s+/g, " ").trim().slice(0, 200);
+  const msg: WorldChatMessage = {
+    id: `adm-${now}-${++s.seq}`,
+    userId: admin.userId,
+    handle: admin.handle,
+    displayName: `📣 ${admin.displayName}`,
+    level: 99,
+    text: clean,
+    createdAt: now,
+    isAdminAnnouncement: true,
+  };
+  s.messages.push(msg);
+  if (s.messages.length > CHAT_BUFFER_LIMIT) {
+    s.messages.splice(0, s.messages.length - CHAT_BUFFER_LIMIT);
+  }
+  return msg;
+}
+
+export function deleteChatMessage(id: string): boolean {
+  const s = state();
+  const before = s.messages.length;
+  s.messages = s.messages.filter((m) => m.id !== id);
+  return s.messages.length < before;
+}
+
+export function clearChatMessages(): number {
+  const s = state();
+  const count = s.messages.length;
+  s.messages = [];
+  return count;
 }
 
 export function resetChatStoreForTests() {
