@@ -452,64 +452,61 @@ export function WorldClient({
           )}
         </div>
 
-        {/* FLOATING EMBED BGM PLAYLIST MINI-DRAWER (Opsi B: Spotify/YouTube + optional 8-bit synth) */}
+        {/* SEAMLESS COMPACT BGM MINI-BAR (Opaque, 80px Spotify compact embed, zero top-HUD overlap) */}
         {musicLoaded && (
           <div
-            className={`pixel-frame absolute right-2 top-[116px] z-30 w-[300px] max-w-[calc(100%-16px)] rounded-xl bg-[#FFF8EA]/98 p-2.5 shadow-lg transition-all sm:right-3 sm:top-[108px] ${
-              musicOpen ? "block" : "hidden"
-            }`}
+            className={
+              musicOpen
+                ? "pixel-frame pointer-events-auto absolute inset-x-2 bottom-[104px] z-30 mx-auto w-[calc(100%-16px)] max-w-[360px] rounded-xl bg-[#FFF8EA] p-2 shadow-lg sm:bottom-[92px]"
+                : "pointer-events-none absolute h-0 w-0 overflow-hidden opacity-0"
+            }
+            aria-hidden={!musicOpen}
           >
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <div className="truncate font-pixel text-sm leading-none text-[#241917]">🎵 {PLAYLIST.label}</div>
-                <div className="mt-0.5 text-[10px] text-neutral-600">Vibes ngopi &amp; lari bareng Higround</div>
+            <div className="mb-1.5 flex items-center justify-between gap-1.5">
+              <span className="truncate font-pixel text-xs leading-none text-[#241917]">🎵 {PLAYLIST.label}</span>
+              <div className="flex shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  onClick={toggleSynthBgm}
+                  className={`rounded border border-[#2b1d17] px-1.5 py-0.5 text-[10px] font-bold ${
+                    bgmOn ? "bg-hg-orange text-white" : "bg-white text-[#241917]"
+                  }`}
+                >
+                  {bgmOn ? "🎹 8-Bit ON" : "🎹 8-Bit"}
+                </button>
+                <a
+                  href={PLAYLIST.openUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded border border-[#2b1d17] bg-white px-1.5 py-0.5 text-[10px] font-bold text-hg-navy"
+                  title="Buka di Spotify"
+                >
+                  Spotify ↗
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setMusicOpen(false)}
+                  title="Tutup bar (musik tetap jalan)"
+                  className="rounded border border-[#2b1d17] bg-white px-1.5 py-0.5 text-[10px] font-bold text-[#241917]"
+                >
+                  ✕
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setMusicOpen(false)}
-                className="pixel-btn rounded bg-white px-2 py-0.5 text-[11px] font-bold"
-              >
-                ✕
-              </button>
             </div>
             <iframe
               src={PLAYLIST.embedUrl}
               width="100%"
-              height="152"
+              height="80"
               allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
               loading="lazy"
               title={PLAYLIST.label}
-              className="rounded-lg border-2 border-[#2b1d17] bg-[#181818]"
+              className="block rounded-lg border-2 border-[#2b1d17] bg-[#181818]"
             />
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
-              <button
-                type="button"
-                onClick={toggleSynthBgm}
-                className={`pixel-btn rounded px-2 py-1 font-bold ${
-                  bgmOn ? "bg-hg-orange text-white" : "bg-white text-[#241917]"
-                }`}
-              >
-                {bgmOn ? "🎹 8-Bit BGM: ON" : "🎹 8-Bit BGM"}
-              </button>
-              <a
-                href={PLAYLIST.openUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold text-hg-navy underline"
-              >
-                Buka Playlist ↗
-              </a>
-            </div>
-            {PLAYLIST.provider === "spotify" && (
-              <p className="mt-1 text-[10px] text-neutral-500">
-                Login Spotify di browser untuk putar lagu penuh (non-login: preview 30 dtk).
-              </p>
-            )}
           </div>
         )}
 
         {/* ON-SCREEN VIRTUAL GAMEPAD (D-PAD) + AUTO-WALK STATUS (Bottom-Left) */}
-        {meMember && showGamepad && !drawer && !selected && !selectedPoi && (
+        {meMember && showGamepad && !musicOpen && !drawer && !selected && !selectedPoi && (
           <div className="pointer-events-auto absolute bottom-24 left-2.5 z-20 flex flex-col items-center gap-1 select-none sm:bottom-24 sm:left-3">
             <span
               className={`rounded-full border border-[#2b1d17] px-2 py-0.5 text-[9px] font-black tracking-wide shadow-sm ${
@@ -681,7 +678,7 @@ export function WorldClient({
           )}
         </div>
 
-        {/* BOTTOM FLOATING PIXEL GAME ACTION DOCK */}
+        {/* BOTTOM FLOATING PIXEL GAME ACTION DOCK (Menu removed — access via clicking Kasir ORDER HERE!) */}
         <div className="pointer-events-none absolute inset-x-2 bottom-2 z-20 flex flex-col items-center gap-1.5 sm:inset-x-3 sm:bottom-3">
           {/* Sleek live activity ticker */}
           {ticker.length > 0 && (
@@ -711,13 +708,6 @@ export function WorldClient({
               className={`pixel-btn rounded-lg px-2 py-1 text-[11px] font-bold sm:px-2.5 sm:text-xs ${drawer === "leaderboard" ? "bg-hg-orange text-white" : "bg-white"}`}
             >
               🏅 Ranking
-            </button>
-            <button
-              type="button"
-              onClick={() => setDrawer((d) => (d === "menu" ? null : "menu"))}
-              className={`pixel-btn rounded-lg px-2 py-1 text-[11px] font-bold sm:px-2.5 sm:text-xs ${drawer === "menu" ? "bg-hg-orange text-white" : "bg-white"}`}
-            >
-              🍔 Menu
             </button>
             <button
               type="button"
@@ -774,7 +764,7 @@ export function WorldClient({
 
       <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center text-xs text-neutral-600">
         <span>
-          Pakai <b>Gamepad 🎮 / WASD</b> untuk jalan (idle 4 dtk → Auto-Walk) · Klik <b>karakter</b> untuk buka profil ·{" "}
+          Pakai <b>Gamepad 🎮 / WASD</b> untuk jalan · Klik <b>kasir ORDER HERE!</b> (Lt.1) untuk Menu Kafe · Klik <b>karakter</b> untuk profil ·{" "}
         </span>
         <a
           href={CAFE_MENU.googleMapsUrl}

@@ -40,8 +40,8 @@ const POI_INFO: Record<string, {
     badge: "Gelato & Popsicle",
     desc: "Popsicle mulai 17k & Gelato Scoop (Will & Jerry, Barbie, Miss Lucy, Chocozilla) lengkap dengan free toppings!",
     tip: "Pendinginan abis lari paling enak sambil gelato atau popsicle dingin.",
-    ctaLabel: "🍦 Lihat Menu Gelato",
-    openDrawer: "menu",
+    ctaLabel: "Cek Voucher Kafe",
+    openDrawer: "rewards",
   },
   sandwich_board: {
     title: "Papan Event & Aktivasi",
@@ -78,10 +78,10 @@ const POI_INFO: Record<string, {
   kids_corner: {
     title: "KIDS CORNER · Burger MVP",
     badge: "Family Friendly",
-    desc: "Pojok santai ramah keluarga lengkap dengan Kids Menu (Strawberry Alley, Choco Chunk Hazelnut, Choco Oat Cookie 10k) dan Burger favorit!",
-    tip: "Cek semua menu burger & kids menu langsung dari tombol di bawah.",
-    ctaLabel: "🍔 Lihat Menu & Kids Menu",
-    openDrawer: "menu",
+    desc: "Pojok santai ramah keluarga dengan ring basket mini, buku mewarnai, dan suasana santai bareng teman & keluarga.",
+    tip: "Kumpulkan 30 km total lari untuk klaim Diskon 20% Higround Burger.",
+    ctaLabel: "Lihat Reward Burger",
+    openDrawer: "rewards",
   },
 };
 

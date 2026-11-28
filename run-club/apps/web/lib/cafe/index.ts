@@ -89,8 +89,8 @@ export function resolvePlaylistEmbed(rawUrl?: string | null): PlaylistEmbed {
 
   return {
     provider: "spotify",
-    embedUrl: "https://open.spotify.com/embed/playlist/37i9dQZF1DWWQRwui0ExPn?utm_source=generator&theme=0",
+    embedUrl: "https://open.spotify.com/embed/playlist/0DQmoeWhWcYx5luFiywcm3?utm_source=generator&theme=0",
     openUrl: CAFE_MENU.defaultPlaylistUrl,
-    label: "Spotify Playlist Higround",
+    label: "Playlist Higround",
   };
 }

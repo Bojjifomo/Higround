@@ -24,9 +24,9 @@ describe("resolvePlaylistEmbed", () => {
     expect(res.embedUrl).toBe("https://www.youtube.com/embed/videoseries?list=PL12345_abc");
   });
 
-  it("falls back safely on invalid URLs", () => {
+  it("falls back safely to Higround's official playlist on empty or invalid URLs", () => {
     const res = resolvePlaylistEmbed("javascript:alert(1)");
     expect(res.provider).toBe("spotify");
-    expect(res.embedUrl.startsWith("https://open.spotify.com/embed/")).toBe(true);
+    expect(res.embedUrl).toBe("https://open.spotify.com/embed/playlist/0DQmoeWhWcYx5luFiywcm3?utm_source=generator&theme=0");
   });
 });
