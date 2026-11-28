@@ -573,12 +573,12 @@ export function WorldClient({
           )}
         </div>
 
-        {/* SEAMLESS COMPACT BGM MINI-BAR (Opaque, 80px Spotify compact embed, zero top-HUD overlap) */}
+        {/* SEAMLESS COMPACT BGM MINI-BAR (Opaque, 80px Spotify compact embed, zero top-HUD or bottom-dock overlap) */}
         {musicLoaded && (
           <div
             className={
               musicOpen
-                ? "pixel-frame pointer-events-auto absolute inset-x-2 bottom-[104px] z-30 mx-auto w-[calc(100%-16px)] max-w-[360px] rounded-xl bg-[#FFF8EA] p-2 shadow-lg sm:bottom-[92px]"
+                ? "pixel-frame pointer-events-auto absolute inset-x-2 bottom-[118px] z-30 mx-auto w-[calc(100%-16px)] max-w-[360px] rounded-xl bg-[#FFF8EA] p-2 shadow-lg sm:bottom-[96px]"
                 : "pointer-events-none absolute h-0 w-0 overflow-hidden opacity-0"
             }
             aria-hidden={!musicOpen}
@@ -638,7 +638,7 @@ export function WorldClient({
 
         {/* ON-SCREEN VIRTUAL GAMEPAD (D-PAD) + AUTO-WALK STATUS (Bottom-Left) */}
         {meMember && showGamepad && !musicOpen && !chatOpen && !drawer && !selected && !selectedPoi && (
-          <div className="pointer-events-auto absolute bottom-24 left-2.5 z-20 flex flex-col items-center gap-1 select-none sm:bottom-24 sm:left-3">
+          <div className="pointer-events-auto absolute bottom-[120px] left-2.5 z-20 flex flex-col items-center gap-1 select-none sm:bottom-[100px] sm:left-3">
             <span
               className={`rounded-full border border-[#2b1d17] px-2 py-0.5 text-[9px] font-black tracking-wide shadow-sm ${
                 controlMode === "manual"
@@ -871,14 +871,6 @@ export function WorldClient({
             >
               🎬 Story
             </Link>
-            <button
-              type="button"
-              disabled
-              title="Yoga Quest — Coming Soon"
-              className="cursor-not-allowed rounded-lg border-2 border-neutral-400 bg-neutral-200 px-2 py-1 text-[11px] font-bold text-neutral-500 sm:px-2.5 sm:text-xs"
-            >
-              🔒 Yoga
-            </button>
           </nav>
         </div>
       </div>

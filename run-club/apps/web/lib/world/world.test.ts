@@ -6,7 +6,7 @@ import { buildWorld, reachable, SCENES } from "./layout";
 import { astar, toGrid, toScreen } from "./path";
 import { ANIM_FRAMES, AVATAR_OPTIONS, normalizeAvatar, randomAvatar, renderAvatarPixels, SPRITE_H, SPRITE_W, type AnimPose } from "./sprite";
 import { WORLD_MANIFEST } from "./assetManifest";
-import { cafeVouchersFor, loyaltyTierOf, rukoUpgradeFor, weeklyClubQuestFor } from "../rewards";
+import { cafeVouchersFor, loyaltyTierOf, publicVoucherCatalog, rukoUpgradeFor, weeklyClubQuestFor } from "../rewards";
 
 const world = buildWorld();
 
@@ -208,5 +208,10 @@ describe("character sprites & world manifest", () => {
     expect(rukoUpgradeFor(220).tier).toBe(3);
     expect(rukoUpgradeFor(220).unlocks.mascotBalloon).toBe(true);
     expect(weeklyClubQuestFor(75, 48).pct).toBe(50);
+
+    const catalog = publicVoucherCatalog();
+    expect(catalog.length).toBeGreaterThanOrEqual(5);
+    expect(catalog.some((v) => v.key === "free_americano")).toBe(true);
+    expect(catalog.find((v) => v.key === "free_gelato")?.requirement).toMatch(/Brew Stamps/i);
   });
 });

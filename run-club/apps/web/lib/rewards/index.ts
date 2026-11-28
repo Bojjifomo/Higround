@@ -77,9 +77,10 @@ export function cafeVouchersFor(input: RewardInput): CafeVoucher[] {
   const tag = input.handle.toUpperCase().slice(0, 6);
   const clamp = (n: number) => Math.max(0, Math.min(1, n));
 
+  const stamps = input.higroundStarts + input.eventCheckins;
   const startOrLv = Math.max(clamp(input.higroundStarts / 3), clamp(input.level / 3));
+  const gelatoStamps = clamp(stamps / 3);
   const km30 = clamp(input.totalKm / 30);
-  const yoga1 = clamp(input.yogaTahapCleared / 1);
   const pourOver = Math.max(clamp(input.higroundStarts / 10), clamp(input.level / 10));
   const merch = Math.max(clamp(input.totalKm / 100), clamp(input.level / 20));
 
@@ -98,12 +99,12 @@ export function cafeVouchersFor(input: RewardInput): CafeVoucher[] {
     {
       key: "free_gelato",
       name: "Free Popsicle Gelato",
-      perk: "Klaim langsung di Kios Gelato Lantai 1",
+      perk: "Klaim langsung di Kios Gelato Papakibo Lantai 1",
       icon: "🍦",
-      requirement: "Selesaikan Yoga Quest Tahap 1 (Fondasi Clear)",
-      progress: yoga1,
-      progressLabel: `${input.yogaTahapCleared}/1 Tahap Yoga`,
-      unlocked: input.yogaTahapCleared >= 1,
+      requirement: "Kumpulkan 3 Brew Stamps (check-in kasir / start Higround)",
+      progress: gelatoStamps,
+      progressLabel: `${Math.min(3, stamps)}/3 Stamps`,
+      unlocked: stamps >= 3,
       code: `HG-GEL-${tag}`,
     },
     {
@@ -140,6 +141,19 @@ export function cafeVouchersFor(input: RewardInput): CafeVoucher[] {
       code: `HG-TEE-${tag}`,
     },
   ];
+}
+
+/** Public teaser catalog shown to guests in /world Rewards drawer before signing in. */
+export function publicVoucherCatalog(): Pick<CafeVoucher, "key" | "name" | "perk" | "icon" | "requirement">[] {
+  return cafeVouchersFor({
+    handle: "GUEST",
+    level: 0,
+    totalXp: 0,
+    totalKm: 0,
+    higroundStarts: 0,
+    yogaTahapCleared: 0,
+    eventCheckins: 0,
+  }).map(({ key, name, perk, icon, requirement }) => ({ key, name, perk, icon, requirement }));
 }
 
 export function rukoUpgradeFor(clubTotalKm: number): RukoUpgradeTier {

@@ -20,23 +20,14 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang="id">
       <body className={`${sans.variable} ${pixel.variable} font-sans antialiased`}>
         <header className="border-b-4 border-black bg-hg-orange text-white">
-          <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
-            <Link href="/" className="font-pixel text-2xl leading-none tracking-wide">HIGROUND <span className="text-hg-yellow">RUN CLUB</span></Link>
-            <nav className="ml-auto flex flex-wrap items-center gap-1 text-sm font-bold">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2 sm:gap-x-4 sm:px-4 sm:py-3">
+            <Link href="/" className="font-pixel text-xl leading-none tracking-wide sm:text-2xl">HIGROUND <span className="text-hg-yellow">RUN CLUB</span></Link>
+            <nav className="ml-auto flex flex-wrap items-center gap-0.5 text-xs font-bold sm:gap-1 sm:text-sm">
               <Link className="rounded px-2 py-1 hover:bg-black/15" href="/world">Dunia</Link>
               <Link className="rounded px-2 py-1 hover:bg-black/15" href="/events">Event</Link>
               {me && <Link className="rounded px-2 py-1 hover:bg-black/15" href="/create">Karakter</Link>}
               {me && <Link className="rounded px-2 py-1 hover:bg-black/15" href="/share">IG Story</Link>}
               {me && <Link className="rounded px-2 py-1 hover:bg-black/15" href={`/u/${me.handle}`}>Profil</Link>}
-              {me && (
-                <span
-                  aria-disabled="true"
-                  title="Yoga Quest — Coming Soon"
-                  className="inline-flex cursor-not-allowed items-center gap-1 rounded px-2 py-1 text-white/65"
-                >
-                  🔒 Yoga Quest
-                </span>
-              )}
               {me?.role === "admin" && <Link className="rounded px-2 py-1 hover:bg-black/15" href="/admin">Admin</Link>}
               {staff && <Link className="rounded px-2 py-1 hover:bg-black/15" href="/admin/class">Class Mode</Link>}
               {me ? (

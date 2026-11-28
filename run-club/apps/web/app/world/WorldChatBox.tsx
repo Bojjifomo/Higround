@@ -56,7 +56,7 @@ export function WorldChatBox({
   };
 
   return (
-    <div className="pixel-frame pointer-events-auto absolute inset-x-2 bottom-[104px] z-30 mx-auto w-[calc(100%-16px)] max-w-[380px] rounded-xl bg-[#FFF8EA] p-2.5 shadow-lg sm:bottom-[92px]">
+    <div className="pixel-frame pointer-events-auto absolute inset-x-2 bottom-[118px] z-30 mx-auto w-[calc(100%-16px)] max-w-[380px] rounded-xl bg-[#FFF8EA] p-2.5 shadow-lg sm:bottom-[96px]">
       {/* Header */}
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">

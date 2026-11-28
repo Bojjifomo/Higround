@@ -14,28 +14,28 @@ export default async function Home() {
     <div className="space-y-6">
       <section className="grid items-center gap-6 md:grid-cols-[1.4fr_1fr]">
         <div>
-          <p className="text-sm font-bold uppercase tracking-widest text-hg-orange">Higround Harapan Indah</p>
-          <h1 className="mt-2 font-pixel text-5xl leading-none">Lari, yoga, naik level.</h1>
-          <p className="mt-3 max-w-prose text-neutral-700">
-            Sambungkan jam lu lewat Intervals.icu, bikin karakter pixel kamu sendiri, lalu nongkrong &amp; lari bareng di Dunia Higround!
+          <p className="text-sm font-bold uppercase tracking-widest text-hg-orange">Higround Coffee &amp; Run Club · Harapan Indah</p>
+          <h1 className="mt-2 font-pixel text-4xl leading-none sm:text-5xl">Ngopi, lari, nongkrong di dunia pixel.</h1>
+          <p className="mt-3 max-w-prose text-sm leading-relaxed text-neutral-700 sm:text-base">
+            Intip ruko Higround versi game interaktif, bikin karakter pixel kamu sendiri, kumpulin <b>Brew Stamps &amp; Free Drinks</b>, lalu ikutan event &amp; lari bareng komunitas — tanpa wajib punya smartwatch dulu!
           </p>
+          <div className="mt-3 flex flex-wrap gap-1.5 text-xs font-bold text-[#241917]">
+            <span className="rounded-full border-2 border-black bg-[#FFF8EA] px-2.5 py-1">☕ Brew Stamps &amp; Free Drinks</span>
+            <span className="rounded-full border-2 border-black bg-[#FFF8EA] px-2.5 py-1">🗺️ Ruko Pixel &amp; Menu Kafe</span>
+            <span className="rounded-full border-2 border-black bg-[#FFF8EA] px-2.5 py-1">🏃 Bonus XP Lari &amp; Event</span>
+          </div>
           <div className="mt-4 flex flex-wrap gap-2">
             {me ? (
               <>
-                <Link href="/world" className="rounded-md border-2 border-black bg-hg-orange px-4 py-2 font-bold text-white shadow-[3px_3px_0_#111]">Masuk Dunia Higround</Link>
-                <Link href="/create" className="rounded-md border-2 border-black bg-hg-yellow px-4 py-2 font-bold">Edit Karakter</Link>
+                <Link href="/world" className="rounded-md border-2 border-black bg-hg-orange px-4 py-2 font-bold text-white shadow-[3px_3px_0_#111]">🗺️ Masuk Dunia Higround</Link>
+                <Link href="/create" className="rounded-md border-2 border-black bg-hg-yellow px-4 py-2 font-bold">🎨 Edit Karakter</Link>
                 <Link href={`/u/${me.handle}`} className="rounded-md border-2 border-black bg-white px-4 py-2 font-bold">Profil gue</Link>
-                <button
-                  type="button"
-                  disabled
-                  title="Yoga Quest sedang dikunci (Coming Soon)"
-                  className="cursor-not-allowed rounded-md border-2 border-neutral-400 bg-neutral-100 px-4 py-2 font-bold text-neutral-500"
-                >
-                  🔒 Yoga Quest · Coming Soon
-                </button>
               </>
             ) : (
-              <Link href="/login" className="rounded-md border-2 border-black bg-hg-orange px-4 py-2 font-bold text-white shadow-[3px_3px_0_#111]">Masuk</Link>
+              <>
+                <Link href="/world" className="rounded-md border-2 border-black bg-hg-orange px-4 py-2 font-bold text-white shadow-[3px_3px_0_#111]">🗺️ Jelajahi Dunia Higround</Link>
+                <Link href="/login" className="rounded-md border-2 border-black bg-hg-yellow px-4 py-2 font-bold shadow-[3px_3px_0_#111]">Masuk / Daftar Gratis</Link>
+              </>
             )}
           </div>
         </div>

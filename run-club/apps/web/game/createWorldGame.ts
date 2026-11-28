@@ -566,11 +566,30 @@ class WorldScene extends Phaser.Scene {
           img.setInteractive({ useHandCursor: true }).setData("poiKey", o.key);
           img.on("pointerover", () => img.setTint(0xfff2d6));
           img.on("pointerout", () => img.clearTint());
-          // Tiny floating golden interactive sparkle pin
-          const pin = this.addStatic(
-            this.add.circle(px, py - img.displayHeight * 0.88, 2.5, 0xf7d046, 0.92).setDepth(r.C.sy + 20),
-          );
-          this.tweens.add({ targets: pin, y: pin.y - 3, alpha: 0.45, duration: 750, yoyo: true, repeat: -1 });
+          if (o.key === "order_counter") {
+            const menuTag = this.addStatic(
+              this.add.text(px, py - img.displayHeight * 0.94, "🍔 Menu", {
+                fontFamily: "monospace",
+                fontSize: "8px",
+                fontStyle: "bold",
+                color: "#FFFFFF",
+                backgroundColor: "#FF5F0E",
+                padding: { x: 4, y: 2 },
+              })
+                .setOrigin(0.5, 1)
+                .setResolution(3)
+                .setDepth(r.C.sy + 24)
+                .setInteractive({ useHandCursor: true })
+                .setData("poiKey", "order_counter"),
+            );
+            this.tweens.add({ targets: menuTag, y: menuTag.y - 3, duration: 750, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+          } else {
+            // Tiny floating golden interactive sparkle pin
+            const pin = this.addStatic(
+              this.add.circle(px, py - img.displayHeight * 0.88, 2.5, 0xf7d046, 0.92).setDepth(r.C.sy + 20),
+            );
+            this.tweens.add({ targets: pin, y: pin.y - 3, alpha: 0.45, duration: 750, yoyo: true, repeat: -1 });
+          }
         }
 
         if (o.key === "curved_bar" || o.key === "order_counter") {

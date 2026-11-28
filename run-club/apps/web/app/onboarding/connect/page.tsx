@@ -27,7 +27,7 @@ export default async function OnboardingConnect({ searchParams }: { searchParams
   return (
     <div className="mx-auto max-w-lg space-y-4">
       <OnboardingStepper step={2} />
-      <Panel title="Sambungkan jam (Intervals.icu)">
+      <Panel title="Sambungkan jam lari (Opsional)">
         <div className="mb-4 flex items-center gap-3 rounded-md border-2 border-black bg-hg-cream p-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -40,7 +40,7 @@ export default async function OnboardingConnect({ searchParams }: { searchParams
           <p className="text-sm text-neutral-800">
             <b>Higround:</b>{" "}
             <i>
-              &ldquo;Halo <b>{me.displayName}</b>! Sambungkan akun Intervals.icu supaya lari kamu dari Garmin, COROS, Polar, Suunto, atau Wahoo otomatis jadi XP.&rdquo;
+              &ldquo;Halo <b>{me.displayName}</b>! Kalau kamu rutin lari pakai jam GPS, sambungin lewat Intervals.icu biar otomatis jadi XP. Belum pakai jam? Santai — tinggal lewati dulu, kamu tetap bisa bikin karakter, nongkrong di kafe pixel &amp; kumpulin Brew Stamps!&rdquo;
             </i>
           </p>
         </div>
@@ -59,7 +59,7 @@ export default async function OnboardingConnect({ searchParams }: { searchParams
 
         <div className="space-y-3 text-sm">
           <div className="rounded-md border-2 border-black/20 bg-white p-3 text-xs text-neutral-700 space-y-1.5">
-            <p className="font-bold text-black">Kenapa lewat Intervals.icu?</p>
+            <p className="font-bold text-black">Kalau mau sync lari otomatis (bisa juga nanti dari Profil):</p>
             <ul className="list-disc pl-4 space-y-1">
               <li>Garmin, COROS, Polar, Suunto, dan Wahoo langsung tersambung ke Intervals.icu (Apple Watch lewat HealthFit / RunGap).</li>
               <li>Lari 12 minggu terakhir langsung ditarik buat XP awal kamu.</li>
@@ -68,18 +68,18 @@ export default async function OnboardingConnect({ searchParams }: { searchParams
           </div>
 
           <div className="flex flex-wrap items-center gap-2 pt-1">
+            <Link
+              href="/create?welcome=1"
+              className="rounded-md border-2 border-black bg-hg-yellow px-4 py-2 text-sm font-bold text-[#241917] shadow-[3px_3px_0_#111] hover:translate-x-[-1px] hover:translate-y-[-1px]"
+            >
+              Nanti aja — langsung bikin karakter →
+            </Link>
             <a
               href="/api/intervals/connect?next=%2Fcreate%3Fwelcome%3D1&from=%2Fonboarding%2Fconnect"
               className="rounded-md border-2 border-black bg-hg-orange px-4 py-2 text-sm font-bold text-white shadow-[3px_3px_0_#111] hover:translate-x-[-1px] hover:translate-y-[-1px]"
             >
-              Sambungkan Intervals.icu →
+              ⌚ Sambungkan Intervals.icu
             </a>
-            <Link
-              href="/create?welcome=1"
-              className="rounded-md border-2 border-black bg-white px-3 py-2 text-sm font-bold hover:bg-hg-cream"
-            >
-              Lewati dulu, lanjut bikin karakter
-            </Link>
           </div>
         </div>
       </Panel>

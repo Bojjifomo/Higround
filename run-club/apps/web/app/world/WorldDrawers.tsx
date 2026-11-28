@@ -7,6 +7,7 @@ import { sfx } from "@/lib/audio/sfx";
 import { CAFE_MENU } from "@/lib/cafe";
 import type { WorldMember, WorldView } from "@/lib/data/service";
 import { km } from "@/lib/format";
+import { publicVoucherCatalog } from "@/lib/rewards";
 
 export type DrawerTab = "club" | "leaderboard" | "menu" | "rewards" | "events" | "online" | null;
 
@@ -561,11 +562,48 @@ export function WorldDrawer({
               </div>
             </>
           ) : (
-            <div className="rounded-lg border-2 border-[#2b1d17] bg-white p-4 text-center">
-              <p className="font-bold">Masuk dulu untuk melihat Brew Stamps &amp; Voucher Kafe kamu!</p>
-              <Link href="/login" className="pixel-btn mt-3 inline-block rounded-md bg-hg-orange px-4 py-1.5 text-xs font-bold text-white">
-                Masuk Sekarang
-              </Link>
+            <div className="space-y-3">
+              <div className="pixel-frame-orange rounded-lg bg-white p-3.5 text-center">
+                <span className="inline-block rounded bg-hg-yellow px-2 py-0.5 text-[10px] font-black uppercase text-[#241917]">
+                  ☕ Gratis untuk Member Higround
+                </span>
+                <p className="mt-1.5 font-pixel text-lg leading-tight text-[#241917]">
+                  Kumpulin Brew Stamps &amp; Klaim Free Drinks!
+                </p>
+                <p className="mt-1 text-xs text-neutral-600">
+                  Cukup daftar gratis pakai nickname — kumpulin Brew Stamps dari nongkrong/check-in di kafe, start lari, &amp; misi mingguan komunitas.
+                </p>
+                <Link
+                  href="/login?next=%2Fworld"
+                  className="pixel-btn mt-3 inline-block rounded-md bg-hg-orange px-4 py-1.5 text-xs font-bold text-white"
+                >
+                  Masuk Gratis untuk Mulai Kumpulin →
+                </Link>
+              </div>
+
+              <div className="space-y-2">
+                <p className="font-pixel text-xs text-neutral-600">INTIP HADIAH YANG BISA KAMU BUKA:</p>
+                {publicVoucherCatalog().map((v) => (
+                  <div
+                    key={v.key}
+                    className="rounded-lg border-2 border-[#2b1d17]/30 bg-white/85 p-2.5"
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <span className="text-2xl">{v.icon}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-bold text-[#241917]">{v.name}</span>
+                          <span className="rounded bg-[#EFE1C4] px-1.5 py-0.5 text-[10px] font-bold text-[#3b261c]">
+                            🔒 Masuk
+                          </span>
+                        </div>
+                        <p className="text-xs text-neutral-600">{v.requirement}</p>
+                        <p className="mt-0.5 text-[11px] text-neutral-500">{v.perk}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )
         )}
