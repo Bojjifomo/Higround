@@ -66,17 +66,17 @@ flowchart LR
   - **Polos**, **Kacamata Biasa**, **Medali**.
 
 ### E. Gameplay & Interaksi di `/world`
-- [ ] **Virtual Gamepad / D-Pad Cursor:**
+- [x] **Virtual Gamepad / D-Pad Cursor:**
   - Pemain bisa gerakin karakter sendiri pakai gamepad di layar (dan arrow/WASD di desktop).
   - Kalau gamepad **idle / tidak digerakkan** beberapa detik → karakter otomatis balik ke mode **Auto-Walk**.
-- [ ] **Leaderboard interaktif di dalam dunia:**
+- [x] **Leaderboard interaktif di dalam dunia:**
   - Bisa diklik langsung dari papan di peta / menu → menampilkan **Leaderboard Lari berdasarkan Kilometer** *(khusus Lari; Walk tidak masuk leaderboard)*.
-- [ ] **Medali Unik Top 1, 2, 3 di atas kepala karakter:**
+- [x] **Medali Unik Top 1, 2, 3 di atas kepala karakter:**
   - Juara 1 (Emas), Juara 2 (Perak), Juara 3 (Perunggu) punya **ikon medali unik melayang di atas kepala** karakternya di `/world` yang beda dari member lain.
-- [ ] **Klik karakter / member lain → buka Profil mereka** (bisa cek stats, badge, & aktivitas member lain).
-- [ ] **Menu Kafe Higround:** bisa buka daftar menu kopi/makanan langsung dari dalam app / POI Order Counter.
-- [ ] **Lokasi & Review:** tombol cepat ke **Google Maps lokasi Higround** (`https://maps.app.goo.gl/zWJ7nExLghEzYQjm9`) buat member kasih ulasan/review.
-- [ ] **Musik BGM pakai Embed Playlist Higround (Spotify/YouTube):** drawer/mini-player embed playlist resmi Higround di `/world` (dengan toggle buka/tutup + tetap ada SFX 8-bit Tone.js).
+- [x] **Klik karakter / member lain → buka Profil mereka** (bisa cek stats, badge, & aktivitas member lain).
+- [x] **Menu Kafe Higround:** bisa buka daftar menu kopi/makanan langsung dari dalam app / POI Order Counter.
+- [x] **Lokasi & Review:** tombol cepat ke **Google Maps lokasi Higround** (`https://maps.app.goo.gl/zWJ7nExLghEzYQjm9`) buat member kasih ulasan/review.
+- [x] **Musik BGM pakai Embed Playlist Higround (Spotify/YouTube):** drawer/mini-player embed playlist resmi Higround di `/world` (dengan toggle buka/tutup + tetap ada SFX 8-bit Tone.js).
 
 ### F. Profil & Dashboard Member (`/u/[handle]`)
 - [x] **Track Jalan Kaki (`Walk`)** selain lari — ikut muncul di dashboard & heatmap profil *(tidak ikut Leaderboard Lari)*.
@@ -128,8 +128,8 @@ flowchart LR
 | **Fase A — Stabilisasi & Flow Inti** | Hapus Username (Nickname only, no symbol/emoji), Fix Intervals.icu (onboarding + profil), Fix HUD mobile portrait tumpang tindih, Fix touch-pan peta HP, Fix player tidak ketemu, Online-Only Presence, Lock Yoga Quest, Takeout tombol Karakter di dock bawah | **Done** |
 | **Fase B — Character Creator v2** | Smoothness & kontras siluet baju/celana (`36×48`), Mata sipit + wajah negatif/lucu, 5 Atasan, 3 Bawahan, 6 Sepatu unik, Fix alignment Topi + Topeng, 3 Aksesori | **Done** |
 | **Fase C — Profil, Run Buddy & Share Story v2** | Track Jalan Kaki (`Walk`), hapus Elevasi & Riwayat XP, KM/minggu, Heatmap 31 hari jelas, PB Badges (1K–50K), pisah Run vs Yoga Badge, Deteksi Lari Bareng (*Run Buddy*), Share per Run + Share Lari Bareng (Card Pixel + Stiker Transparan) | **Done** |
-| **Fase D — Dunia Pixel & Fitur Kafe** | Virtual Gamepad + auto-walk fallback, Leaderboard KM (khusus Lari) clickable, Medali Top 1–3 di atas kepala, Klik profil orang lain, Menu Higround, Link Google Maps Review, Embed BGM Playlist Higround | Next |
-| **Fase E — AI Coach, Komunitas & Bisnis** | AI Running Coach Gemini di Profil, Chat + Filter Kata Kasar Indonesia, Giveaway Email via Resend, Export Database Admin, LunaPOS Monthly CSV/Excel Loyalty Sync | Pending |
+| **Fase D — Dunia Pixel & Fitur Kafe** | Virtual Gamepad + auto-walk fallback, Leaderboard KM (khusus Lari) clickable, Medali Top 1–3 di atas kepala, Klik profil orang lain, Menu Higround, Link Google Maps Review, Embed BGM Playlist Higround | **Done** |
+| **Fase E — AI Coach, Komunitas & Bisnis** | AI Running Coach Gemini di Profil, Chat + Filter Kata Kasar Indonesia, Giveaway Email via Resend, Export Database Admin, LunaPOS Monthly CSV/Excel Loyalty Sync | Next |
 
 ---
 

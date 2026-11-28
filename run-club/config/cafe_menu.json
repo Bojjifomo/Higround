@@ -1,0 +1,155 @@
+{
+  "cafeName": "Higround Coffee & Burger",
+  "location": "Harapan Indah, Bekasi",
+  "tagline": "One Bite Says It All · Coffee, Burger & Run Club Hub",
+  "googleMapsUrl": "https://maps.app.goo.gl/zWJ7nExLghEzYQjm9",
+  "menuPdfUrl": "https://drive.google.com/file/d/1uxWolkAArosG4Nlxr2NGkjSPRFI3wUGa/view?usp=sharing",
+  "defaultPlaylistUrl": "https://open.spotify.com/playlist/37i9dQZF1DWWQRwui0ExPn",
+  "categories": [
+    {
+      "id": "burger",
+      "name": "Burger",
+      "icon": "🍔",
+      "note": "Extra topping: Beef Patty +15k · Red Cheddar Slice +8k · Sunny Side Up +8k",
+      "items": [
+        { "name": "The OG", "price": "48k", "desc": "100gr homemade beef patty, lettuce, shredded onion, red cheddar, garlic aioli, smoked tomato", "tag": "favourite" },
+        { "name": "Not So Basic", "price": "45k", "desc": "Cayenne marinated chicken, lettuce, shredded onion, red cheddar, garlic aioli, smoked tomato" },
+        { "name": "Tribute to IKEA", "price": "50k", "desc": "100gr homemade beef patty, mushroom sauce, raspberry, peanut butter" },
+        { "name": "Beef Brisket Sambal Bawang", "price": "48k", "desc": "Slice beef brisket, sambal bawang, onion ring, garlic aioli" },
+        { "name": "All Day Breakfast", "price": "55k", "desc": "100gr homemade beef patty, fried egg, smoked beef, lettuce, relish mayo" },
+        { "name": "Chicken Nanban", "price": "48k", "desc": "Shoyu marinated chicken, lettuce, nanban sauce", "tag": "chef" }
+      ]
+    },
+    {
+      "id": "rice",
+      "name": "Rice & Bowl",
+      "icon": "🍛",
+      "items": [
+        { "name": "Mushroom Baked Rice", "price": "44k", "desc": "Buttered rice, mushroom sauce, chicken luncheon, mozzarella" },
+        { "name": "Philly Cheesesteak Rice", "price": "44k", "desc": "Rice, slice brisket beef, mixed paprika, cheese sauce, mozzarella", "tag": "favourite" },
+        { "name": "Meatballs Baked Rice", "price": "44k", "desc": "Buttered rice, marinara sauce, meatballs, mozzarella" },
+        { "name": "Ricebowl Ayam Ketumbar Sambal Matah", "price": "38k", "desc": "Nasi hangat, ayam ketumbar, telur ceplok, sambal matah" },
+        { "name": "Ricebowl Ayam Ketumbar Sambal Bawang", "price": "38k", "desc": "Nasi hangat, ayam ketumbar, telur ceplok, sambal bawang" },
+        { "name": "Ricebowl Chicken Nanban", "price": "38k", "desc": "Nasi hangat, chicken nanban, telur ceplok, saus nanban" }
+      ]
+    },
+    {
+      "id": "snack",
+      "name": "Snack",
+      "icon": "🍟",
+      "items": [
+        { "name": "Loaded Fries", "price": "38k", "desc": "Fries, sizzled minced beef, relish mayo, cheese sauce" },
+        { "name": "Bearnaisse Fries", "price": "38k", "desc": "Fries, chicken bites, alfredo sauce, cheese sauce", "tag": "chef" },
+        { "name": "Disco Fries", "price": "38k", "desc": "Fries, sizzled minced beef, disco sauce, cheese sauce" },
+        { "name": "Smoked Honey Garlic Wings", "price": "40k", "desc": "Smoked honey garlic wings with mustard mayo" },
+        { "name": "Higround Platter", "price": "40k", "desc": "Bratwurst sausage, fries, chicken strips with relish aioli" },
+        { "name": "French Fries", "price": "32k", "desc": "Classic crispy french fries" },
+        { "name": "Sweet Potato Fries", "price": "32k", "desc": "Classic crispy sweet potato fries" }
+      ]
+    },
+    {
+      "id": "coffee_sig",
+      "name": "Signature Coffee",
+      "icon": "☕",
+      "items": [
+        { "name": "Berycano", "price": "35k", "desc": "Bold espresso aerated with steam into velvety foam, layered over cranberry, orange & butterscotch", "tag": "new" },
+        { "name": "Montblanc", "price": "45k", "desc": "Creamy coffee layered with soft cream, fragrant orange peel, and a touch of nutmeg", "tag": "new" },
+        { "name": "Tiger Bomb", "price": "45k", "desc": "Bold espresso with creamy milk, topped with a smooth caramel-like layer", "tag": "new" },
+        { "name": "Dirty Latte", "price": "35k", "desc": "Bold espresso gently layered over silky cold milk", "tag": "new" },
+        { "name": "Higround Ice Coffee", "price": "28k", "desc": "Signature house iced milk coffee", "tag": "favourite" },
+        { "name": "Rough Five", "price": "35k", "desc": "Cold brew coffee, honey, butterscotch, lemon squeeze", "tag": "barista" },
+        { "name": "Cold Fashioned", "price": "35k", "desc": "Cold brew coffee, mint, passionfruit, tonic water" },
+        { "name": "Black N Tonic", "price": "32k", "desc": "Espresso + tonic water" },
+        { "name": "Butterscotch Latte", "price": "32k", "desc": "Espresso, fresh milk, butterscotch" },
+        { "name": "Salted Caramel", "price": "32k", "desc": "Espresso, fresh milk, salted caramel" },
+        { "name": "Coffee Brule", "price": "35k", "desc": "Silky coffee topped with a crackly caramelized sugar crust" },
+        { "name": "Cookie Latte", "price": "35k", "desc": "A buttery, crunchy biscuit latte" },
+        { "name": "Filter Coffee (V60 / Japanese)", "price": "40k", "desc": "Manual brew beans lineup on display" }
+      ]
+    },
+    {
+      "id": "coffee_classic",
+      "name": "Classic Coffee",
+      "icon": "🫘",
+      "items": [
+        { "name": "Espresso", "price": "25k / 28k", "desc": "One shot 25k · Double shot 28k" },
+        { "name": "Long Black (Hot / Iced)", "price": "28k", "desc": "Available in both hot and iced" },
+        { "name": "Barista Breakfast", "price": "35k", "desc": "Single espresso + hot latte" },
+        { "name": "Piccolo", "price": "30k", "desc": "Ristretto with silky microfoam" },
+        { "name": "Flat White", "price": "32k", "desc": "Smooth espresso with velvety steamed milk" },
+        { "name": "Latte", "price": "32k / 34k", "desc": "Hot 32k · Iced 34k" },
+        { "name": "Cappuccino", "price": "32k", "desc": "Balanced espresso, steamed milk & thick foam" },
+        { "name": "Mocha", "price": "33.5k / 35k", "desc": "Hot 33.5k · Iced 35k" },
+        { "name": "Magic", "price": "32k", "desc": "Double ristretto flat white (the stronger one!)" }
+      ]
+    },
+    {
+      "id": "non_coffee",
+      "name": "Matcha & Non Coffee",
+      "icon": "🍵",
+      "items": [
+        { "name": "Ceremonial Matcha Latte", "price": "48k", "desc": "Matcha Akumidori (Kagoshima, Japan — Yabukita & Okumidori blend)", "tag": "new" },
+        { "name": "Strawberry Matcha", "price": "52k", "desc": "Ceremonial Matcha Akumidori layered with strawberry compote & milk", "tag": "new" },
+        { "name": "Old Pal", "price": "35k", "desc": "Passionfruit, bittersweet, lemon squeeze", "tag": "favourite" },
+        { "name": "Mellow Sugar Cane", "price": "35k", "desc": "A cloud of spun sugar and marshmallow fluff", "tag": "barista" },
+        { "name": "Pink Magic", "price": "35k", "desc": "Pisang Ambon, coconut, lemon squeeze" },
+        { "name": "Endless Summer", "price": "35k", "desc": "Pineapple tepache, passionfruit, bittersweet" },
+        { "name": "Somethin Tropical", "price": "32k", "desc": "Orgeat, pineapple tepache, tonic water" },
+        { "name": "Ice Lychee Tea", "price": "28k", "desc": "Refreshing iced tea with sweet lychee" },
+        { "name": "Chocolate", "price": "32k / 35k", "desc": "Hot 32k · Iced 35k" },
+        { "name": "Choco Banana", "price": "32k / 35k", "desc": "Hot 32k · Iced 35k" }
+      ]
+    },
+    {
+      "id": "tea",
+      "name": "Artisan Tea",
+      "icon": "🫖",
+      "items": [
+        { "name": "Tropical Blue", "price": "32k", "desc": "Butterfly pea flower, spearmint, apple bits, lemongrass, green tea" },
+        { "name": "Dark Opium", "price": "32k", "desc": "Black tea, globe amaranth, cornflower, rosebud, fruit & floral extract" },
+        { "name": "Scarlett", "price": "32k", "desc": "Green tea, hibiscus, blueberry, mango bits, safflower, myosotis" },
+        { "name": "Grandma Favourite", "price": "32k", "desc": "Green tea, star anise, turmeric, fruit & herb extract" },
+        { "name": "Mint Ice Cream", "price": "32k", "desc": "Black tea, spearmint, cornflower, myosotis petal, sugar candy" },
+        { "name": "Chamomile", "price": "32k", "desc": "Whole chamomile blossom" }
+      ]
+    },
+    {
+      "id": "gelato",
+      "name": "Papakibo Gelato",
+      "icon": "🍦",
+      "note": "Free toppings: Froot Loops · Gummy Bear · Granola · Choco Pops · Milo",
+      "items": [
+        { "name": "Gelato Cone (Single / Double)", "price": "20k / 25k", "desc": "Flavours: Will & Jerry (Cheesecake Gummies), Barbie (Strawberry Sprinkles), Miss Lucy (Cornflake Milk), Chocozilla" },
+        { "name": "Gelato Cup (Single / Double)", "price": "28k / 30k", "desc": "Flavours: Will & Jerry, Barbie, Miss Lucy, Chocozilla + free toppings" },
+        { "name": "Popsicle Basic", "price": "17k", "desc": "Fresh Gummy, Bam-Bam, Choco Kibs, Smurfy Lemonade, Watashi Vanilla, Coco Lime Ramune" },
+        { "name": "Popsicle Special", "price": "20k", "desc": "Popsy Mango, Meowcha Matcha, Toe Berry, Joly Pop, Fruit Pearls, Smurfy Cookie, Choco Mint, Justice Cheesecake" },
+        { "name": "To-Go Gelato Cup", "price": "28k", "desc": "Marie Masuk, Khong Afuk, Strawberry Keju, Es Kelapa Muda, Oreo" }
+      ]
+    },
+    {
+      "id": "craft_beer",
+      "name": "Craft Beer",
+      "icon": "🍺",
+      "note": "Promo: BUY 3 GET 1 FREE (21+)",
+      "items": [
+        { "name": "Honey Kolsc", "price": "60k", "desc": "Honey Sweet · Floral · Crisp (Pairing: Higround Platter)" },
+        { "name": "Padiluwih Lager", "price": "60k", "desc": "Rice Sweet · Clean · Smooth (Pairing: Bearnaisse Fries)" },
+        { "name": "Island Hopping", "price": "60k", "desc": "Nutty · Malty · Lightly Bitter (Pairing: Loaded Fries)" },
+        { "name": "Witty White", "price": "60k", "desc": "Citrusy · Spicy · Creamy (Pairing: Smoked Honey Garlic Wings)" },
+        { "name": "Soursop", "price": "60k", "desc": "Tart · Tropical · Refreshing (Pairing: Basque Cheesecake)" },
+        { "name": "Mangotopia", "price": "60k", "desc": "Mango · Fruity · Tangy (Pairing: Disco Fries)" }
+      ]
+    },
+    {
+      "id": "kids",
+      "name": "Kids Menu",
+      "icon": "🧒",
+      "items": [
+        { "name": "Strawberry Alley", "price": "28k", "desc": "Fresh creamy strawberry milk" },
+        { "name": "Choco Chunk Hazelnut", "price": "28k", "desc": "Rich chocolate hazelnut topped with choco chunks" },
+        { "name": "French Fries", "price": "32k", "desc": "Kid-friendly crispy fries" },
+        { "name": "Choco Oat Cookie", "price": "10k", "desc": "Soft-baked chocolate oat cookie" }
+      ]
+    }
+  ]
+}

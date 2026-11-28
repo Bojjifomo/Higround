@@ -154,6 +154,8 @@ export function serviceSuite(label: string, make: () => Promise<{ store: Store; 
         // Online-only filter: only online members (+ viewer) appear in /world
         const onlineOnly = await worldView(s, bima, NOW, new Set([bima.id, rina.id]));
         expect(onlineOnly.members.map((m) => m.handle).sort()).toEqual(["bima", "rina"]);
+        // Top weekly runners receive floating head medals (1, 2, 3)
+        expect(other.members.some((m) => m.weeklyRank === 1)).toBe(true);
       });
     });
 

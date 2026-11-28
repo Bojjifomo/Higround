@@ -464,6 +464,7 @@ export interface WorldMember {
   id: string; handle: string; name: string; avatar: Member["avatar"]; level: number; title: string;
   badges: { name: string; icon: string }[]; ranToday: boolean; yogaStars: number; isMe: boolean;
   weekKm: number; totalKm: number; higroundStarts: number;
+  weeklyRank: 1 | 2 | 3 | null;
 }
 
 export interface WorldView {
@@ -523,6 +524,25 @@ export async function worldView(
     rows.push({ m, acts, ok, atts, last, joined, weekKm, totalKm });
   }
   const visible = rows.filter((r) => r.m.isPublic || r.m.id === viewer?.id);
+
+  // Weekly Run-Only Leaderboard (Opsi A: Walk never counts toward Run Leaderboard)
+  const weeklyLeaders = (await Promise.all(
+    visible.filter((r) => r.m.isPublic).map(async (r) => ({
+      handle: r.m.handle,
+      name: r.m.displayName,
+      avatar: r.m.avatar,
+      weekKm: r.weekKm,
+      level: (await levelOf(store, r.m.id)).level,
+      ranToday: r.ok.some((a) => localDate(a.startTime, rules) === today),
+    })),
+  )).sort((a, b) => b.weekKm - a.weekKm || b.level - a.level).slice(0, 15);
+
+  // Top 1, 2, 3 weekly runners (strictly with weekKm > 0) earn floating head medals in /world
+  const rankByHandle = new Map<string, 1 | 2 | 3>();
+  weeklyLeaders.slice(0, 3).forEach((l, i) => {
+    if (l.weekKm > 0) rankByHandle.set(l.handle, (i + 1) as 1 | 2 | 3);
+  });
+
   const pool = onlineIds
     ? visible.filter((r) => onlineIds.has(r.m.id) || r.m.id === viewer?.id)
     : visible;
@@ -546,23 +566,13 @@ export async function worldView(
       badges: pinned.map((b) => ({ name: b.name, icon: b.icon })), yogaStars: stars, isMe: r.m.id === viewer?.id,
       ranToday: r.ok.some((a) => localDate(a.startTime, rules) === today),
       weekKm: r.weekKm, totalKm: r.totalKm, higroundStarts: stats.higroundStarts,
+      weeklyRank: rankByHandle.get(r.m.handle) ?? null,
     });
   }
 
   const communityKmWeek = rows.reduce((s, r) => s + r.weekKm, 0);
   const communityTotalKm = rows.reduce((s, r) => s + r.totalKm, 0);
   const weekNum = ISO_WEEK(nowIso);
-
-  const weeklyLeaders = (await Promise.all(
-    visible.filter((r) => r.m.isPublic).map(async (r) => ({
-      handle: r.m.handle,
-      name: r.m.displayName,
-      avatar: r.m.avatar,
-      weekKm: r.weekKm,
-      level: (await levelOf(store, r.m.id)).level,
-      ranToday: r.ok.some((a) => localDate(a.startTime, rules) === today),
-    })),
-  )).sort((a, b) => b.weekKm - a.weekKm || b.level - a.level).slice(0, 8);
 
   // Ticker: runs and yoga claims of the last 36 hours, public members only, newest first.
   const missions = new Map(yoga.levels.flatMap((l) => l.missions).map((m) => [m.key, m.name]));

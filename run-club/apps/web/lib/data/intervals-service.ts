@@ -60,6 +60,33 @@ export async function syncEveryone(store: Store, provider: ActivityProvider, now
   return { ok, failed };
 }
 
+export const AUTO_SYNC_STALE_MS = 15 * 60_000;
+const inFlightSyncs = new Map<string, Promise<SyncResult>>();
+
+/**
+ * Auto-sync on visit: if the member is connected to Intervals.icu and hasn't synced within `maxAgeMs`
+ * (default 15 minutes), trigger a deduplicated sync so self-hosted Mac mini deployments stay fresh
+ * even without Vercel Cron or manual webhook setup.
+ */
+export async function syncIfStale(
+  store: Store,
+  provider: ActivityProvider,
+  userId: string,
+  now: number,
+  maxAgeMs: number = AUTO_SYNC_STALE_MS,
+): Promise<SyncResult | null> {
+  const integ = await store.integration(userId);
+  if (!integ) return null;
+  if (integ.lastSyncedAt && now - integ.lastSyncedAt < maxAgeMs) return null;
+  const existing = inFlightSyncs.get(userId);
+  if (existing) return existing;
+  const p = syncMember(store, provider, userId, now).finally(() => {
+    inFlightSyncs.delete(userId);
+  });
+  inFlightSyncs.set(userId, p);
+  return p;
+}
+
 export async function disconnectIntervals(store: Store, provider: ActivityProvider, member: Member): Promise<void> {
   const integ = await store.integration(member.id);
   if (integ?.token) await provider.disconnect(integ.token).catch(() => undefined);

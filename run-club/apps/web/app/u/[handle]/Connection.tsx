@@ -1,7 +1,14 @@
+"use client";
+import { useFormStatus } from "react-dom";
 import { Button, Panel } from "@/components/ui";
 import type { Integration } from "@/lib/data/store";
 import { dateLong } from "@/lib/format";
 import { deleteAccount, disconnectNow, syncNow } from "../../actions";
+
+function SyncButton() {
+  const { pending } = useFormStatus();
+  return <Button disabled={pending}>{pending ? "Menyinkronkan..." : "Sync sekarang"}</Button>;
+}
 
 const NOTE: Record<string, { text: string; err: boolean }> = {
   connected: { text: "Tersambung! Lari 12 minggu terakhir sudah ditarik.", err: false },
@@ -54,10 +61,14 @@ export function Connection({
       )}
       {integ ? (
         <div className="space-y-2 text-sm">
-          <p>Tersambung sebagai atlet <b>{integ.athleteId}</b>. Sync terakhir: {integ.lastSyncedAt ? dateLong(integ.lastSyncedAt) : "belum"}.</p>
+          <p>
+            Tersambung sebagai atlet <b>{integ.athleteId}</b>. Sync terakhir:{" "}
+            <b>{integ.lastSyncedAt ? dateLong(integ.lastSyncedAt) : "belum"}</b>.{" "}
+            <span className="text-xs text-neutral-500">(Auto-sync tiap ≥15 menit saat buka Profil/Dunia)</span>
+          </p>
           {integ.syncError && <p className="font-bold text-hg-red">{integ.syncError}</p>}
           <div className="flex flex-wrap gap-2">
-            <form action={syncNow}><Button>Sync sekarang</Button></form>
+            <form action={syncNow}><SyncButton /></form>
             <form action={disconnectNow}><Button variant="danger">Putuskan &amp; hapus data lari</Button></form>
           </div>
         </div>

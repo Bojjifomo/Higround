@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
 import { Heatmap31, PaceTrend, WeeklyKm } from "@/components/Charts";
 import { BadgeChip, Button, Panel, Stat, XpBar } from "@/components/ui";
-import { currentMember, getStore, profileView, type ProfileView, type RunView } from "@/lib/data";
+import { currentMember, getStore, profileView, syncIfStale, type ProfileView, type RunView } from "@/lib/data";
 import { dateLong, dateShort, duration, int, km, pace } from "@/lib/format";
 import { getProvider } from "@/lib/providers";
 import { PB_BADGE_SPECS } from "@/lib/runs";
@@ -30,7 +30,15 @@ export default async function Profile({ params, searchParams }: {
   const q = await searchParams;
   const viewer = await currentMember();
   const store = await getStore();
-  const p = await profileView(store, handle, viewer, Date.now());
+  const now = Date.now();
+  // Auto-sync Intervals.icu if the signed-in owner visits their own profile and last sync was > 15 min ago
+  if (viewer && viewer.handle === handle) {
+    await Promise.race([
+      syncIfStale(store, getProvider(), viewer.id, now).catch(() => null),
+      new Promise((resolve) => setTimeout(resolve, 4500)),
+    ]);
+  }
+  const p = await profileView(store, handle, viewer, now);
   if (!p) notFound();
   const { member, level } = p;
   const integ = p.isOwner ? await store.integration(member.id) : null;

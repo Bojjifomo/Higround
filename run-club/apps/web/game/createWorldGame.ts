@@ -14,7 +14,7 @@
 import * as Phaser from "phaser";
 import { dayPhase, seeded, spawnAgent, tick, wibHour, type Agent, type Rng } from "@/lib/world/agents";
 import { spriteEntry, WORLD_MANIFEST } from "@/lib/world/assetManifest";
-import { buildWorld, type SceneGrid, type SceneKey, type World, type WorldObject } from "@/lib/world/layout";
+import { buildWorld, inBounds, type SceneGrid, type SceneKey, type World, type WorldObject } from "@/lib/world/layout";
 import { ISO_H, ISO_W, toGrid, toScreen } from "@/lib/world/path";
 import {
   ANIM_FRAMES, MASCOT, MASCOT_PALETTE, renderAvatarPixels, SPRITE_W, type AnimPose, type AvatarColors,
@@ -30,6 +30,7 @@ export interface GameMember {
   yogaStars: number;
   isMe: boolean;
   level: number;
+  weeklyRank?: 1 | 2 | 3 | null;
 }
 
 export interface WorldUpgrades {
@@ -42,6 +43,7 @@ export interface WorldGame {
   setScene(key: SceneKey): void;
   setZoom(z: number): void;
   setStudioMode(mode: StudioModeOverride): void;
+  setMoveInput(dx: number, dy: number): void;
   syncMembers(members: GameMember[]): void;
   focusMe(): SceneKey | null;
   focusMember(memberId: string): SceneKey | null;
@@ -59,6 +61,7 @@ export interface GameOptions {
   onSelectPoi?(poiKey: string): void;
   onSceneCount?(counts: Record<SceneKey, number>): void;
   onStudioModeResolved?(mode: "yoga" | "dine"): void;
+  onControlMode?(mode: "manual" | "auto"): void;
 }
 
 const MASCOT_ID = "__mascot__";
@@ -74,6 +77,8 @@ const DIORAMA_BG: Record<string, number> = {
   subuh: 0x3b385a,
   malam: 0x262b46,
 };
+
+const MANUAL_AUTO_FALLBACK_MS = 4000;
 
 function isYogaHoursWib(nowMs: number): boolean {
   const wib = new Date(nowMs + 7 * 3_600_000);
@@ -143,6 +148,9 @@ class WorldScene extends Phaser.Scene {
   dragDown = { x: 0, y: 0 };
   dragPrev = { x: 0, y: 0 };
   lastCounts = "";
+  manualInput = { dx: 0, dy: 0 };
+  manualUntil = 0;
+  controlMode: "auto" | "manual" = "auto";
 
   constructor(private opts: GameOptions) {
     super("world");
@@ -386,6 +394,31 @@ class WorldScene extends Phaser.Scene {
       parts.push(marker);
       this.tweens.add({ targets: marker, y: -49, duration: 500, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
     }
+    if (!isMascot && m?.weeklyRank) {
+      const rank = m.weeklyRank;
+      const medalY = m.isMe ? -56 : -47;
+      const glowColor = rank === 1 ? 0xffd54f : rank === 2 ? 0xd9e2ec : 0xcd7f32;
+      const badgeBg = rank === 1 ? "#F7D046" : rank === 2 ? "#E5E7EB" : "#E6A57E";
+      const badgeLabel = rank === 1 ? "🥇#1" : rank === 2 ? "🥈#2" : "🥉#3";
+      const medalGlow = this.add.circle(0, medalY - 4, 7, glowColor, 0.45);
+      const medalText = this.add.text(0, medalY, badgeLabel, {
+        fontFamily: "monospace",
+        fontSize: "8px",
+        fontStyle: "bold",
+        color: "#241917",
+        backgroundColor: badgeBg,
+        padding: { x: 2, y: 1 },
+      }).setOrigin(0.5, 1).setResolution(3);
+      parts.push(medalGlow, medalText);
+      this.tweens.add({
+        targets: [medalGlow, medalText],
+        y: "-=3",
+        duration: 700 + rank * 80,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
+    }
     if ((m?.level ?? 0) >= 20) {
       const aura = this.add.ellipse(0, -13, 24, 30, 0xf7d046, 0.22);
       parts.unshift(aura);
@@ -401,7 +434,8 @@ class WorldScene extends Phaser.Scene {
     c.setData("memberId", isMascot ? null : a.memberId)
       .setData("bubble", bubble)
       .setData("img", img)
-      .setData("shadow", shadow);
+      .setData("shadow", shadow)
+      .setData("weeklyRank", m?.weeklyRank ?? null);
     this.sprites.set(a.memberId, c);
     return c;
   }
@@ -1027,6 +1061,41 @@ class WorldScene extends Phaser.Scene {
     }
   }
 
+  private canWalkAt(g: SceneGrid, x: number, y: number): boolean {
+    const tx = Math.round(x);
+    const ty = Math.round(y);
+    return inBounds(g, { x: tx, y: ty }) && g.walkable[ty][tx];
+  }
+
+  private findOpenTile(g: SceneGrid): { x: number; y: number } {
+    const cx = Math.floor(g.cols / 2);
+    const cy = Math.floor(g.rows / 2);
+    for (let radius = 0; radius < Math.max(g.cols, g.rows); radius++) {
+      for (let dy = -radius; dy <= radius; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          const tx = cx + dx;
+          const ty = cy + dy;
+          if (inBounds(g, { x: tx, y: ty }) && g.walkable[ty][tx]) return { x: tx, y: ty };
+        }
+      }
+    }
+    return { x: cx, y: cy };
+  }
+
+  setMoveInput(dx: number, dy: number) {
+    this.manualInput = { dx, dy };
+    if (dx !== 0 || dy !== 0) {
+      this.manualUntil = Date.now() + MANUAL_AUTO_FALLBACK_MS;
+    }
+  }
+
+  private setControlMode(next: "auto" | "manual") {
+    if (this.controlMode !== next) {
+      this.controlMode = next;
+      this.opts.onControlMode?.(next);
+    }
+  }
+
   update(_t: number, deltaMs: number) {
     const dt = Math.min(deltaMs / 1000, 0.1);
     const now = Date.now();
@@ -1052,8 +1121,70 @@ class WorldScene extends Phaser.Scene {
       }
     }
 
+    const me = this.opts.members.find((m) => m.isMe);
+    const manualDriving = Boolean(me && (this.manualInput.dx !== 0 || this.manualInput.dy !== 0 || now < this.manualUntil));
+    if (manualDriving && (this.manualInput.dx !== 0 || this.manualInput.dy !== 0)) {
+      this.manualUntil = now + MANUAL_AUTO_FALLBACK_MS;
+    }
+
     for (const a of this.agents) {
-      tick(a, dt, this.rng, this.world);
+      const isMeAgent = Boolean(me && a.memberId === me.id);
+      if (isMeAgent && manualDriving) {
+        this.setControlMode("manual");
+        if (a.scene !== this.current) {
+          a.scene = this.current;
+          const open = this.findOpenTile(this.world.scenes[this.current]);
+          a.x = open.x;
+          a.y = open.y;
+          a.path = [];
+        }
+        const { dx, dy } = this.manualInput;
+        if (dx !== 0 || dy !== 0) {
+          // Convert screen direction (dx right, dy down) to isometric grid velocity
+          const rawVx = dx + dy;
+          const rawVy = dx - dy;
+          const len = Math.hypot(rawVx, rawVy) || 1;
+          const speed = 3.6;
+          const stepX = (rawVx / len) * speed * dt;
+          const stepY = (rawVy / len) * speed * dt;
+          const gCur = this.world.scenes[a.scene];
+          if (this.canWalkAt(gCur, a.x + stepX, a.y + stepY)) {
+            a.x += stepX;
+            a.y += stepY;
+          } else if (this.canWalkAt(gCur, a.x + stepX, a.y)) {
+            a.x += stepX;
+          } else if (this.canWalkAt(gCur, a.x, a.y + stepY)) {
+            a.y += stepY;
+          }
+          a.facing = dx !== 0 ? (dx > 0 ? 1 : -1) : (dy > 0 ? 1 : -1);
+          a.mode = "walk";
+          a.path = [];
+          a.bubble = null;
+          // Smooth camera follow while actively steering
+          const pos = this.project(gCur, a.x, a.y);
+          const cam = this.cameras.main;
+          const targetScrollX = pos.sx - cam.width / 2;
+          const targetScrollY = pos.sy - 10 - cam.height / 2;
+          cam.scrollX += (targetScrollX - cam.scrollX) * Math.min(1, dt * 8);
+          cam.scrollY += (targetScrollY - cam.scrollY) * Math.min(1, dt * 8);
+          this.clampCamera();
+          this.hasPanned = true;
+        } else {
+          // Waiting during grace period before auto-walk resumes
+          a.mode = "use";
+          a.timer = 1;
+          a.path = [];
+        }
+      } else {
+        if (isMeAgent && this.controlMode === "manual") {
+          this.setControlMode("auto");
+          a.mode = "use";
+          a.timer = 0.25;
+          a.path = [];
+        }
+        tick(a, dt, this.rng, this.world);
+      }
+
       const c = this.sprite(a);
       if (a.mode === "gone") {
         c.setVisible(false);
@@ -1070,7 +1201,7 @@ class WorldScene extends Phaser.Scene {
       const shadow = c.getData("shadow") as Phaser.GameObjects.Ellipse;
       const isMascot = a.memberId === MASCOT_ID;
       const member = this.opts.members.find((m) => m.id === a.memberId);
-      const pose = poseForAgent(a);
+      const pose = isMeAgent && manualDriving ? (this.manualInput.dx !== 0 || this.manualInput.dy !== 0 ? "walk" : "idle") : poseForAgent(a);
       const clock = (this.animClock.get(a.memberId) ?? 0) + dt * fpsForPose(pose);
       this.animClock.set(a.memberId, clock);
 
@@ -1153,11 +1284,16 @@ class WorldScene extends Phaser.Scene {
     }
     this.agents = this.agents.filter((a) => a.memberId === MASCOT_ID || nextIds.has(a.memberId));
 
-    // Spawn members who just came online
+    // Spawn members who just came online & refresh sprite if Top 1-3 medal changed
     const existingIds = new Set(this.agents.map((a) => a.memberId));
     const hour = wibHour(Date.now());
     for (const m of nextMembers) {
       this.ensureMemberTextures(m);
+      const existingSprite = this.sprites.get(m.id);
+      if (existingSprite && (existingSprite.getData("weeklyRank") ?? null) !== (m.weeklyRank ?? null)) {
+        existingSprite.destroy();
+        this.sprites.delete(m.id);
+      }
       if (!existingIds.has(m.id)) {
         this.spawn(m.id, hour, false);
       }
@@ -1198,6 +1334,7 @@ export function createWorldGame(parent: HTMLElement, opts: GameOptions): WorldGa
       }
     },
     setStudioMode: (m) => scene.sys?.isActive() && scene.setStudioOverride(m),
+    setMoveInput: (dx, dy) => scene.sys?.isActive() && scene.setMoveInput(dx, dy),
     syncMembers: (ms) => scene.sys?.isActive() && scene.syncMembers(ms),
     focusMe: () => (scene.sys?.isActive() ? scene.focusMe() : null),
     focusMember: (id) => (scene.sys?.isActive() ? scene.focusMember(id) : null),
