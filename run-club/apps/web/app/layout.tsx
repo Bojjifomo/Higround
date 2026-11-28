@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Pixelify_Sans } from "next/font/google";
 import Link from "next/link";
+import { PwaAndTelemetry } from "@/components/PwaAndTelemetry";
 import { logout } from "./actions";
 import { currentMember, isDemo } from "@/lib/data";
 import "./globals.css";
@@ -9,8 +10,21 @@ const sans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const pixel = Pixelify_Sans({ variable: "--font-pixel", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Higround Run Club",
-  description: "Lari, yoga, dan XP di Higround Harapan Indah.",
+  title: "Higround Coffee & Run Club",
+  description: "Ngopi, lari, nongkrong di dunia pixel Higround Harapan Indah — kumpulin Brew Stamps & Free Drinks!",
+  appleWebApp: {
+    capable: true,
+    title: "Higround",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: "/icons/icon-192.png",
+    apple: "/icons/icon-180.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#FF5F0E",
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -38,6 +52,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             </nav>
           </div>
         </header>
+        <PwaAndTelemetry />
         {isDemo() && (
           <div className="bg-hg-yellow px-4 py-1.5 text-center text-xs font-bold text-black">
             Mode demo: data member dan lari di sini palsu dan hilang saat server restart. Isi env Supabase untuk data asli.

@@ -53,6 +53,14 @@ export interface VoucherRedemptionRecord {
   redeemedAt: string;
 }
 
+export interface ClientErrorRecord {
+  id: string;
+  message: string;
+  path: string;
+  ua: string;
+  at: string;
+}
+
 export interface AdminCrmState {
   lunaByUserId: Record<string, LunaPosRecord>;
   lastLunaSyncAt: string | null;
@@ -60,6 +68,7 @@ export interface AdminCrmState {
   announcement: WorldAnnouncement | null;
   coffeeCheckins: CoffeeCheckinRecord[];
   voucherRedemptions: VoucherRedemptionRecord[];
+  clientErrors: ClientErrorRecord[];
 }
 
 export interface MemberCrmRow {

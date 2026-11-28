@@ -48,6 +48,9 @@ export default async function Admin() {
     intervalsLive: getProvider().name === "intervals",
     geminiConfigured: Boolean(process.env.GEMINI_API_KEY?.trim()),
     resendConfigured: Boolean(process.env.RESEND_API_KEY?.trim()),
+    realtimeConfigured: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()),
+    posthogConfigured: Boolean(process.env.NEXT_PUBLIC_POSTHOG_KEY?.trim()),
+    clientErrorCount: crm.clientErrors.length,
   };
 
   return (

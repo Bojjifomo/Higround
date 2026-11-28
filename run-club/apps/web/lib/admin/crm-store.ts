@@ -18,6 +18,7 @@ function emptyState(): AdminCrmState {
     announcement: null,
     coffeeCheckins: [],
     voucherRedemptions: [],
+    clientErrors: [],
   };
 }
 
@@ -32,6 +33,7 @@ export function loadCrmState(): AdminCrmState {
       announcement: parsed.announcement ?? null,
       coffeeCheckins: Array.isArray(parsed.coffeeCheckins) ? parsed.coffeeCheckins : [],
       voucherRedemptions: Array.isArray(parsed.voucherRedemptions) ? parsed.voucherRedemptions : [],
+      clientErrors: Array.isArray(parsed.clientErrors) ? parsed.clientErrors : [],
     };
   } catch {
     return emptyState();

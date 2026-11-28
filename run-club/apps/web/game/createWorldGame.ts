@@ -39,11 +39,21 @@ export interface WorldUpgrades {
   goldTrophy: boolean;
 }
 
+export interface LiveMovePayload {
+  userId: string;
+  scene: SceneKey;
+  x: number;
+  y: number;
+  facing: 1 | -1;
+  moving: boolean;
+}
+
 export interface WorldGame {
   setScene(key: SceneKey): void;
   setZoom(z: number): void;
   setStudioMode(mode: StudioModeOverride): void;
   setMoveInput(dx: number, dy: number): void;
+  applyRemoteMove(payload: LiveMovePayload): void;
   syncMembers(members: GameMember[]): void;
   focusMe(): SceneKey | null;
   focusMember(memberId: string): SceneKey | null;
@@ -63,10 +73,15 @@ export interface GameOptions {
   onSceneCount?(counts: Record<SceneKey, number>): void;
   onStudioModeResolved?(mode: "yoga" | "dine"): void;
   onControlMode?(mode: "manual" | "auto"): void;
+  onLocalMove?(payload: LiveMovePayload): void;
 }
 
 const MASCOT_ID = "__mascot__";
 const FLAT = new Set(["yoga_mats", "stretch_zone", "stretch_spot", "event_corner"]);
+const WALL_MOUNTED = new Set([
+  "guest_check", "mascot_banner", "run_posters", "mirror_wall", "poster_wall_f2",
+  "yoga_quest_board", "leaderboard_board", "medal_wall",
+]);
 const INTERACTIVE_POIS = new Set([
   "start_gate", "order_counter", "gelato_kiosk", "sandwich_board", "yoga_quest_board", "leaderboard_board", "medal_wall", "kids_corner",
 ]);
@@ -152,6 +167,7 @@ class WorldScene extends Phaser.Scene {
   manualInput = { dx: 0, dy: 0 };
   manualUntil = 0;
   controlMode: "auto" | "manual" = "auto";
+  remoteTargets = new Map<string, { scene: SceneKey; x: number; y: number; facing: 1 | -1; moving: boolean; until: number }>();
 
   constructor(private opts: GameOptions) {
     super("world");
@@ -546,19 +562,38 @@ class WorldScene extends Phaser.Scene {
       const entry = spriteEntry(o.key);
       const texKey = `spr-${o.key}`;
       if (entry && this.textures.exists(texKey)) {
-        const isCutawayRightWall = o.kind === "wall_art" && o.x >= 4.5;
-        const px = isCutawayRightWall ? r.cx - 8 : r.cx;
-        const py = isCutawayRightWall ? r.C.sy - 12 : r.C.sy;
+        const isWallMounted = WALL_MOUNTED.has(o.key);
+        const px = isWallMounted && o.x < 0.5 ? r.A.sx + 4 : r.cx;
+        const py = isWallMounted
+          ? (o.key === "mascot_banner" ? r.cy - 22 : o.y >= 17.0 ? r.cy - 14 : r.cy - 12)
+          : (o.key === "order_counter" || o.key === "curved_bar" ? r.cy + 10 : r.cy + 6);
+        const objDepth = FLAT.has(o.key)
+          ? -500
+          : isWallMounted
+            ? -860
+            : (o.key === "order_counter" || o.key === "curved_bar" ? r.cy + 3 : r.cy);
+
+        // Grounded espresso contact shadow beneath freestanding furniture (higround-pixel-art-bible)
+        if (!FLAT.has(o.key) && !isWallMounted && o.key !== "start_gate") {
+          const footSpan = Math.max(18, Math.min(54, Math.hypot(r.B.sx - r.D.sx, (r.B.sy - r.D.sy) * 0.5) * 0.72));
+          this.addStatic(
+            this.add.ellipse(r.cx, r.cy + 2, footSpan, Math.max(7, footSpan * 0.34), 0x1a1412, 0.2)
+              .setDepth(-498),
+          );
+        }
+
         const img = this.addStatic(
           this.add.image(px, py, texKey)
             .setOrigin(entry.anchorX, entry.anchorY)
-            .setDepth(FLAT.has(o.key) ? -500 : r.C.sy),
+            .setDepth(objDepth),
         );
         const footW = Math.hypot(r.B.sx - r.D.sx, (r.B.sy - r.D.sy) * 0.4);
         if (o.key === "order_counter" || o.key === "curved_bar") {
-          img.setScale(Math.max(0.95, Math.min(1.25, footW / Math.max(img.width, 1))));
+          img.setScale(Math.max(0.9, Math.min(1.15, footW / Math.max(img.width, 1))));
         } else if (o.key === "start_gate") {
-          img.setScale(1.06);
+          img.setScale(1.04);
+        } else if (isWallMounted) {
+          img.setScale(0.85);
         }
 
         // Make key landmarks clickable POIs (Pokémon GO PokéStop style!)
@@ -568,7 +603,7 @@ class WorldScene extends Phaser.Scene {
           img.on("pointerout", () => img.clearTint());
           if (o.key === "order_counter") {
             const menuTag = this.addStatic(
-              this.add.text(px, py - img.displayHeight * 0.94, "🍔 Menu", {
+              this.add.text(px, py - img.displayHeight * 0.92, "🍔 Menu", {
                 fontFamily: "monospace",
                 fontSize: "8px",
                 fontStyle: "bold",
@@ -578,7 +613,7 @@ class WorldScene extends Phaser.Scene {
               })
                 .setOrigin(0.5, 1)
                 .setResolution(3)
-                .setDepth(r.C.sy + 24)
+                .setDepth(2400)
                 .setInteractive({ useHandCursor: true })
                 .setData("poiKey", "order_counter"),
             );
@@ -586,14 +621,14 @@ class WorldScene extends Phaser.Scene {
           } else {
             // Tiny floating golden interactive sparkle pin
             const pin = this.addStatic(
-              this.add.circle(px, py - img.displayHeight * 0.88, 2.5, 0xf7d046, 0.92).setDepth(r.C.sy + 20),
+              this.add.circle(px, py - img.displayHeight * 0.88, 2.5, 0xf7d046, 0.92).setDepth(isWallMounted ? -840 : objDepth + 20),
             );
             this.tweens.add({ targets: pin, y: pin.y - 3, alpha: 0.45, duration: 750, yoyo: true, repeat: -1 });
           }
         }
 
         if (o.key === "curved_bar" || o.key === "order_counter") {
-          this.spawnSteamSource(px, py - 36, r.C.sy + 10);
+          this.spawnSteamSource(px, py - 34, objDepth + 12);
         }
         continue;
       }
@@ -780,12 +815,23 @@ class WorldScene extends Phaser.Scene {
         { x: sk0.sx, y: sk0.sy - H + 2 }, { x: sk1.sx, y: sk1.sy - H + 2 },
         { x: sk1.sx, y: sk1.sy - baseH }, { x: sk0.sx, y: sk0.sy - baseH },
       ], true);
+
+      // Clean cutaway low partition wall framing the kitchen & toilet zone (prevents floating toilet door!)
+      const pA = this.corner(g, 0, g.rows - 30);
+      const pB = this.corner(g, 4.7, g.rows - 30);
+      const pC = this.corner(g, 4.7, g.rows - 25);
+      const partH = 26;
+      w.fillStyle(0xeee4cd, 1);
+      w.fillPoints([{ x: pA.sx, y: pA.sy - partH }, { x: pB.sx, y: pB.sy - partH }, { x: pB.sx, y: pB.sy }, { x: pA.sx, y: pA.sy }], true);
+      w.fillStyle(0xe0d4ba, 1);
+      w.fillPoints([{ x: pB.sx, y: pB.sy - partH }, { x: pC.sx, y: pC.sy - partH }, { x: pC.sx, y: pC.sy }, { x: pB.sx, y: pB.sy }], true);
+      w.lineStyle(1.5, 0xb07a4a, 0.9);
+      w.lineBetween(pA.sx, pA.sy - partH, pB.sx, pB.sy - partH);
+      w.lineBetween(pB.sx, pB.sy - partH, pC.sx, pC.sy - partH);
     }
 
     // Floor 2 Photo 11: Large sunlit studio front window showing lush green tree leaves outside!
     if (this.current === "floor2") {
-      const w0 = this.corner(g, 3, g.rows);
-      const w1 = this.corner(g, 7, g.rows);
       // Place window along back-left upper Studio wall (clearly visible!)
       const u0 = this.corner(g, 0, g.rows - 6);
       const u1 = this.corner(g, 0, g.rows - 1);
@@ -807,10 +853,24 @@ class WorldScene extends Phaser.Scene {
         { x: u1.sx, y: u1.sy - 46 }, { x: u0.sx, y: u0.sy - 46 },
         { x: u0.sx, y: u0.sy - 16 }, { x: u1.sx, y: u1.sy - 16 },
       ], true);
-      void w0; void w1;
+
+      // Clean cutaway back partition separating Run Club Lounge from back storage/restrooms
+      const rA = this.corner(g, 0, g.rows - 32);
+      const rB = this.corner(g, 5.0, g.rows - 32);
+      const partH = 26;
+      w.fillStyle(0xeee4cd, 1);
+      w.fillPoints([{ x: rA.sx, y: rA.sy - partH }, { x: rB.sx, y: rB.sy - partH }, { x: rB.sx, y: rB.sy }, { x: rA.sx, y: rA.sy }], true);
+      w.lineStyle(1.5, 0xb07a4a, 0.9);
+      w.lineBetween(rA.sx, rA.sy - partH, rB.sx, rB.sy - partH);
     }
 
-    w.setDepth(-999);
+    // Subtle low architectural curb along open front-right cutaway edge (B -> C) so rooms feel neatly framed
+    const C = this.corner(g, g.cols, g.rows);
+    w.lineStyle(2.5, 0xb07a4a, 0.7);
+    w.lineBetween(B.sx, B.sy, C.sx, C.sy);
+    w.lineBetween(D.sx, D.sy, C.sx, C.sy);
+
+    w.setDepth(-950);
   }
 
   /** Photo 01 & 02: Iconic Higround storefront with tall glass door, warm wood pillar, and huge ARCH WINDOW! */
@@ -865,6 +925,17 @@ class WorldScene extends Phaser.Scene {
     w.lineBetween(A.sx, A.sy - H, B.sx, B.sy - H);
     w.setDepth(-998);
 
+    // Subtle "COFFEE & BURGER" window lettering matching Photo 02!
+    this.addStatic(
+      this.add.text(wMidX, wMidY - 14, "COFFEE &\nBURGER", {
+        fontFamily: "monospace",
+        fontSize: "6px",
+        fontStyle: "bold",
+        color: "#FFF8EA",
+        align: "center",
+      }).setOrigin(0.5, 0.5).setResolution(3).setDepth(-994),
+    );
+
     // Crisp HIGROUND facade sign cleanly above the roofline (zero overlap!)
     const mid = this.corner(g, 5.2, 0);
     this.addStatic(
@@ -899,28 +970,28 @@ class WorldScene extends Phaser.Scene {
       }
     }
 
-    // Tier 3+: Giant floating Higround Mascot Balloon beside Start Gate on Street!
+    // Tier 3+: Giant floating Higround Mascot Balloon flanking outer-right terrace (zero overlap with Start Gate!)
     if (this.current === "street" && u.mascotBalloon && this.textures.exists("spr-upgrade_balloon")) {
-      const bPos = this.project(g, 9.2, 4.5);
+      const bPos = this.project(g, 10.6, 5.2);
       const bal = this.addStatic(
         this.add.image(bPos.sx, bPos.sy, "spr-upgrade_balloon").setOrigin(0.5, 0.95).setDepth(bPos.sy + 12),
       );
       this.tweens.add({ targets: bal, y: bal.y - 5, duration: 1400, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
     }
 
-    // Tier 4: Gleaming Golden Club Trophy Pedestal in Floor 2 Run Club Lounge!
+    // Tier 4: Gleaming Golden Club Trophy Pedestal neatly placed at Floor 2 Run Club Lounge corner!
     if (this.current === "floor2" && u.goldTrophy && this.textures.exists("spr-upgrade_trophy")) {
-      const tPos = this.project(g, 6.8, 25.5);
+      const tPos = this.project(g, 8.2, 20.5);
       this.addStatic(
         this.add.image(tPos.sx, tPos.sy, "spr-upgrade_trophy").setOrigin(0.5, 0.88).setDepth(tPos.sy + 4),
       );
     }
 
-    // NIKELAND / Zwift: Live active event celebratory pennant over Start Gate!
+    // NIKELAND / Zwift: Live active event celebratory pennant cleanly above Start Gate!
     if (this.current === "street" && this.opts.hasActiveEvent) {
-      const ePos = this.project(g, 7.2, 5.2);
+      const ePos = this.project(g, 7.0, 5.0);
       const tag = this.addStatic(
-        this.add.text(ePos.sx, ePos.sy - 66, "★ EVENT AKTIF! ★", {
+        this.add.text(ePos.sx, ePos.sy - 68, "★ EVENT AKTIF! ★", {
           fontFamily: "monospace",
           fontSize: "8px",
           fontStyle: "bold",
@@ -1157,6 +1228,7 @@ class WorldScene extends Phaser.Scene {
 
     for (const a of this.agents) {
       const isMeAgent = Boolean(me && a.memberId === me.id);
+      const remote = !isMeAgent ? this.remoteTargets.get(a.memberId) : undefined;
       if (isMeAgent && manualDriving) {
         this.setControlMode("manual");
         if (a.scene !== this.current) {
@@ -1187,6 +1259,14 @@ class WorldScene extends Phaser.Scene {
           a.facing = dx !== 0 ? (dx > 0 ? 1 : -1) : (dy > 0 ? 1 : -1);
           a.mode = "walk";
           a.path = [];
+          this.opts.onLocalMove?.({
+            userId: a.memberId,
+            scene: a.scene,
+            x: a.x,
+            y: a.y,
+            facing: a.facing === -1 ? -1 : 1,
+            moving: true,
+          });
           // Smooth camera follow while actively steering
           const pos = this.project(gCur, a.x, a.y);
           const cam = this.cameras.main;
@@ -1206,7 +1286,25 @@ class WorldScene extends Phaser.Scene {
           a.bubble.ttl -= dt;
           if (a.bubble.ttl <= 0) a.bubble = null;
         }
+      } else if (remote && now < remote.until) {
+        if (a.scene !== remote.scene) {
+          a.scene = remote.scene;
+          a.x = remote.x;
+          a.y = remote.y;
+        } else {
+          const lerp = Math.min(1, dt * 10);
+          a.x += (remote.x - a.x) * lerp;
+          a.y += (remote.y - a.y) * lerp;
+        }
+        a.facing = remote.facing;
+        a.mode = remote.moving ? "walk" : "use";
+        a.path = [];
+        if (a.bubble) {
+          a.bubble.ttl -= dt;
+          if (a.bubble.ttl <= 0) a.bubble = null;
+        }
       } else {
+        if (remote) this.remoteTargets.delete(a.memberId);
         if (isMeAgent && this.controlMode === "manual") {
           this.setControlMode("auto");
           a.mode = "use";
@@ -1297,6 +1395,13 @@ class WorldScene extends Phaser.Scene {
     if (this.current === "floor2") this.drawScene();
   }
 
+  applyRemoteMove(payload: LiveMovePayload) {
+    this.remoteTargets.set(payload.userId, {
+      ...payload,
+      until: Date.now() + 4500,
+    });
+  }
+
   /** Add newly online members and remove members who went offline without resetting existing walkers. */
   syncMembers(nextMembers: GameMember[]) {
     const nextIds = new Set(nextMembers.map((m) => m.id));
@@ -1311,6 +1416,7 @@ class WorldScene extends Phaser.Scene {
         this.animClock.delete(a.memberId);
         this.lastBubble.delete(a.memberId);
         this.respawnAt.delete(a.memberId);
+        this.remoteTargets.delete(a.memberId);
       }
     }
     this.agents = this.agents.filter((a) => a.memberId === MASCOT_ID || nextIds.has(a.memberId));
@@ -1366,6 +1472,7 @@ export function createWorldGame(parent: HTMLElement, opts: GameOptions): WorldGa
     },
     setStudioMode: (m) => scene.sys?.isActive() && scene.setStudioOverride(m),
     setMoveInput: (dx, dy) => scene.sys?.isActive() && scene.setMoveInput(dx, dy),
+    applyRemoteMove: (p) => scene.sys?.isActive() && scene.applyRemoteMove(p),
     syncMembers: (ms) => scene.sys?.isActive() && scene.syncMembers(ms),
     focusMe: () => (scene.sys?.isActive() ? scene.focusMe() : null),
     focusMember: (id) => (scene.sys?.isActive() ? scene.focusMember(id) : null),

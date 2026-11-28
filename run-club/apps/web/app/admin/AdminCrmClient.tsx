@@ -23,6 +23,9 @@ export interface AdminSystemStats {
   intervalsLive: boolean;
   geminiConfigured: boolean;
   resendConfigured: boolean;
+  realtimeConfigured: boolean;
+  posthogConfigured: boolean;
+  clientErrorCount: number;
 }
 
 export function AdminCrmClient({
@@ -358,6 +361,20 @@ export function AdminCrmClient({
           <span className={`rounded-full border px-2 py-0.5 ${stats.resendConfigured ? "border-emerald-700 bg-emerald-50 text-emerald-800" : "border-neutral-400 bg-neutral-100 text-neutral-600"}`}>
             📧 Resend Email: {stats.resendConfigured ? "Aktif" : "Belum Diset"}
           </span>
+          <span className="rounded-full border border-emerald-700 bg-emerald-50 px-2 py-0.5 text-emerald-800">
+            📲 PWA App: Ready
+          </span>
+          <span className={`rounded-full border px-2 py-0.5 ${stats.realtimeConfigured ? "border-emerald-700 bg-emerald-50 text-emerald-800" : "border-neutral-400 bg-neutral-100 text-neutral-600"}`}>
+            ⚡ Realtime Sync: {stats.realtimeConfigured ? "Live WebSocket" : "HTTP Poll"}
+          </span>
+          <span className={`rounded-full border px-2 py-0.5 ${stats.posthogConfigured ? "border-emerald-700 bg-emerald-50 text-emerald-800" : "border-neutral-400 bg-neutral-100 text-neutral-600"}`}>
+            📈 PostHog Replay: {stats.posthogConfigured ? "Aktif" : "Opsional"}
+          </span>
+          {stats.clientErrorCount > 0 && (
+            <span className="rounded-full border border-amber-700 bg-amber-50 px-2 py-0.5 text-amber-900">
+              🐞 {stats.clientErrorCount} client error tercatat
+            </span>
+          )}
           {stats.pendingFlags > 0 && (
             <span className="rounded-full border border-hg-red bg-red-50 px-2 py-0.5 text-hg-red">
               ⚠️ {stats.pendingFlags} aktivitas menunggu review

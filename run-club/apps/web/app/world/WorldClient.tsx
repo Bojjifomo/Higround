@@ -10,6 +10,8 @@ import { CAFE_MENU, resolvePlaylistEmbed } from "@/lib/cafe";
 import type { WorldChatMessage } from "@/lib/chat/store";
 import type { WorldMember, WorldView } from "@/lib/data/service";
 import { km } from "@/lib/format";
+import { connectWorldRealtime, type WorldRealtimeHandle } from "@/lib/realtime/worldRealtime";
+import { trackEvent } from "@/lib/telemetry/client";
 import { SCENES, type SceneKey } from "@/lib/world/layout";
 import { dayPhase, wibHour } from "@/lib/world/agents";
 import { WorldChatBox } from "./WorldChatBox";
@@ -108,6 +110,33 @@ export function WorldClient({
     };
   }, []);
 
+  const realtimeRef = useRef<WorldRealtimeHandle | null>(null);
+  const myUserId = meMember?.id ?? null;
+
+  // Plan B: Supabase Realtime Broadcast (<100ms live avatar steering + instant chat bubbles!)
+  useEffect(() => {
+    const rt = connectWorldRealtime({
+      myUserId,
+      onRemoteMove: (payload) => {
+        game.current?.applyRemoteMove(payload);
+      },
+      onRemoteChat: (msg) => {
+        if (seenChatIds.current.has(msg.id)) return;
+        seenChatIds.current.add(msg.id);
+        setChatMessages((prev) => [...prev.slice(-39), msg]);
+        game.current?.sayMessage(msg.userId, msg.text);
+        if (!chatOpenRef.current) {
+          setUnreadChat((n) => Math.min(99, n + 1));
+        }
+      },
+    });
+    realtimeRef.current = rt;
+    return () => {
+      rt.disconnect();
+      realtimeRef.current = null;
+    };
+  }, [myUserId]);
+
   const sendChatMessage = useCallback(async (text: string): Promise<{ ok: true } | { ok: false; error: string }> => {
     try {
       const res = await fetch("/api/world/chat", {
@@ -123,11 +152,13 @@ export function WorldClient({
       seenChatIds.current.add(msg.id);
       setChatMessages((prev) => [...prev.slice(-39), msg]);
       game.current?.sayMessage(msg.userId, msg.text);
+      realtimeRef.current?.broadcastChat(msg);
+      trackEvent("world_chat_send", { scene });
       return { ok: true };
     } catch {
       return { ok: false, error: "Koneksi terputus." };
     }
-  }, []);
+  }, [scene]);
 
   useEffect(() => {
     const fmt = new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit" });
@@ -198,9 +229,13 @@ export function WorldClient({
         onSelectPoi: (poiKey) => {
           setSelected(null);
           setSelectedPoi(poiKey);
+          trackEvent("world_click_poi", { poiKey });
         },
         onSceneCount: setCounts,
         onControlMode: setControlMode,
+        onLocalMove: (payload) => {
+          realtimeRef.current?.broadcastMove(payload);
+        },
       });
     });
     return () => {
